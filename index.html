@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andrew Vu - ADV Click BIOS 5 | Software Engineer UEFI v4.2.1</title>
+    <style>
+        /* Immersive MSI/ASUS BIOS Firmware Interface */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        
+        /* Advanced BIOS Firmware Variables */
+        :root {
+            --msi-red: #ff3333;
+            --msi-red-glow: rgba(255, 51, 51, 0.9);
+            --msi-red-dim: rgba(255, 51, 51, 0.6);
+            --bios-black: #0a0a0a;
+            --bios-dark: #151515;
+            --bios-panel: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+            --metal-gradient: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 35%, #0f0f0f 100%);
+            --border-glow: rgba(255, 51, 51, 0.5);
+            --text-bright: #ffffff;
+            --text-normal: #e0e0e0;
+            --text-dim: #a0a0a0;
+            --noise-pattern: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', 'Share Tech Mono', monospace;
+            background: 
+                var(--noise-pattern),
+                radial-gradient(circle at 15% 15%, rgba(255, 51, 51, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(255, 51, 51, 0.05) 0%, transparent 40%),
+                linear-gradient(135deg, var(--bios-black) 0%, #1a1a1a 40%, var(--bios-black) 100%);
+            background-size: 400px 400px, 800px 800px, 800px 800px, 100% 100%;
+            background-attachment: fixed, fixed, fixed, fixed;
+            animation: subtleShimmer 20s ease-in-out infinite;
+            color: var(--text-normal);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+            cursor: default;
+        }
+        
+        /* Advanced Immersive Background Effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                /* Animated Grid Pattern */
+                linear-gradient(rgba(255, 51, 51, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 51, 51, 0.05) 1px, transparent 1px),
+                /* Subtle Diagonal Lines */
+                linear-gradient(45deg, transparent 48%, rgba(255, 51, 51, 0.02) 49%, rgba(255, 51, 51, 0.02) 51%, transparent 52%);
+            background-size: 40px 40px, 40px 40px, 80px 80px;
+            animation: biosGridMove 30s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+        
+        /* CRT Scanlines Effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 51, 51, 0.03) 2px,
+                rgba(255, 51, 51, 0.03) 4px
+            );
+            animation: scanlines 0.1s linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* Moving Scanline */
+        .scanline-sweep {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--msi-red-glow), transparent);
+            animation: scanlineSweep 4s linear infinite;
+            pointer-events: none;
+            z-index: 2;
+            box-shadow: 0 0 8px var(--msi-red-glow);
+        }
+        
+        @keyframes subtleShimmer {
+            0%, 100% { background-position: 0% 0%, 0% 0%, 100% 100%, 0% 0%; }
+            50% { background-position: 100% 100%, 50% 50%, 0% 0%, 100% 100%; }
+        }
+        
+        @keyframes biosGridMove {
+            0% { 
+                background-position: 0 0, 0 0, 0 0;
+                transform: translateZ(0);
+            }
+            100% { 
+                background-position: 40px 40px, 40px 40px, 80px 80px;
+                transform: translateZ(0);
+            }
+        }
+        
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+        
+        @keyframes scanlineSweep {
+            0% { top: -2px; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        
+        /* Parallax Grid Effect on Mouse Move */
+        .parallax-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            transition: transform 0.1s ease-out;
+        }
+        
+        /* Immersive BIOS Panel System */
+        .bios-panel {
+            background: 
+                var(--metal-gradient),
+                radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            border: 2px solid var(--border-glow);
+            border-radius: 4px;
+            box-shadow: 
+                /* Inner Highlights */
+                inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                inset 1px 0 0 rgba(255, 255, 255, 0.08),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+                inset -1px 0 0 rgba(0, 0, 0, 0.3),
+                /* Outer Glow */
+                0 0 20px var(--msi-red-dim),
+                0 4px 15px rgba(0, 0, 0, 0.8),
+                0 8px 25px rgba(0, 0, 0, 0.5);
+            position: relative;
+            backdrop-filter: blur(2px);
+            overflow: hidden;
+        }
+        
+        .bios-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                var(--msi-red-glow) 20%, 
+                var(--msi-red) 50%, 
+                var(--msi-red-glow) 80%, 
+                transparent 100%);
+            animation: topGlowPulse 3s ease-in-out infinite;
+        }
+        
+        .bios-panel::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            right: 1px;
+            bottom: 1px;
+            background: linear-gradient(145deg, transparent 0%, rgba(255, 51, 51, 0.02) 50%, transparent 100%);
+            border-radius: 2px;
+            pointer-events: none;
+        }
+        
+        @keyframes topGlowPulse {
+            0%, 100% { opacity: 0.6; transform: scaleX(1); }
+            50% { opacity: 1; transform: scaleX(1.02); }
+        }
+        
+        /* Advanced Glowing Text */
+        .glow-text {
+            color: var(--msi-red);
+            text-shadow: 
+                0 0 2px var(--msi-red),
+                0 0 5px var(--msi-red-glow),
+                0 0 10px var(--msi-red-glow),
+                0 0 15px var(--msi-red-dim);
+            animation: textGlowPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes textGlowPulse {
+            0%, 100% { 
+                text-shadow: 
+                    0 0 2px var(--msi-red),
+                    0 0 5px var(--msi-red-glow),
+                    0 0 10px var(--msi-red-glow),
+                    0 0 15px var(--msi-red-dim);
+            }
+            50% { 
+                text-shadow: 
+                    0 0 3px var(--msi-red),
+                    0 0 8px var(--msi-red-glow),
+                    0 0 15px var(--msi-red-glow),
+                    0 0 20px var(--msi-red-dim),
+                    0 0 25px var(--msi-red-dim);
+            }
+        }
+        
+        /* Flickering Text Effect */
+        .flicker-text {
+            animation: biosFlicker 0.15s infinite linear alternate;
+        }
+        
+        @keyframes biosFlicker {
+            0% { opacity: 1; }
+            96% { opacity: 1; }
+            97% { opacity: 0.92; }
+            98% { opacity: 1; }
+            99% { opacity: 0.94; }
+            100% { opacity: 1; }
+        }
+        
+        /* Advanced 3D Buttons */
+        .firmware-button {
+            background: var(--metal-gradient);
+            border: 1px solid var(--border-glow);
+            border-radius: 3px;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+                0 0 8px var(--msi-red-dim),
+                0 2px 4px rgba(0, 0, 0, 0.6);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .firmware-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 150%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.15), 
+                transparent);
+            transition: left 0.6s;
+            transform: skewX(-20deg);
+        }
+        
+        .firmware-button:hover {
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+                0 0 15px var(--msi-red-glow),
+                0 3px 8px rgba(0, 0, 0, 0.7);
+            transform: translateY(-1px);
+            border-color: var(--msi-red);
+        }
+        
+        .firmware-button:hover::before {
+            left: 100%;
+        }
+        
+        .firmware-button:active {
+            transform: translateY(0);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.6),
+                0 0 10px var(--msi-red-glow);
+        }
+
+        /* Immersive POST/Boot Sequence */
+        .boot-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-normal);
+            padding: 20px;
+            overflow: hidden;
+            transition: all 1s ease-out;
+        }
+        
+        .post-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .bios-header {
+            border-bottom: 1px solid var(--msi-red);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .bios-title {
+            color: var(--msi-red);
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--msi-red-glow);
+        }
+        
+        .bios-version {
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .post-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .post-line {
+            opacity: 0;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: postLineAppear 0.1s forwards;
+        }
+        
+        .post-line.typing {
+            border-right: 1px solid var(--msi-red);
+            animation: terminalType 0.05s steps(1) forwards;
+        }
+        
+        .post-line.success {
+            color: #00ff00;
+        }
+        
+        .post-line.info {
+            color: #ffff00;
+        }
+        
+        .post-line.error {
+            color: #ff0000;
+        }
+        
+        @keyframes postLineAppear {
+            to { opacity: 1; }
+        }
+        
+        @keyframes terminalType {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        .memory-test {
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        
+        .progress-bar-ascii {
+            margin: 15px 0;
+            font-family: monospace;
+            color: var(--msi-red);
+        }
+        
+        .boot-complete {
+            text-align: center;
+            margin-top: auto;
+            padding: 20px 0;
+        }
+        
+        .boot-success {
+            color: var(--msi-red);
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 15px var(--msi-red-glow);
+            animation: successPulse 1s ease-in-out infinite alternate;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes successPulse {
+            0% { 
+                text-shadow: 0 0 15px var(--msi-red-glow);
+                transform: scale(1);
+            }
+            100% { 
+                text-shadow: 0 0 25px var(--msi-red-glow), 0 0 35px var(--msi-red-dim);
+                transform: scale(1.02);
+            }
+        }
+        
+        .boot-instruction {
+            color: var(--text-dim);
+            font-size: 12px;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        /* Main UEFI Firmware Interface */
+        .bios-container {
+            display: none;
+            min-height: 100vh;
+            background: var(--bios-black);
+            position: relative;
+            z-index: 2;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .bios-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--noise-pattern);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Authentic BIOS Top Bar */
+        .bios-top-bar {
+            background: var(--bios-black);
+            border-bottom: 1px solid var(--msi-red);
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .bios-logo {
+            color: var(--text-normal);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .bios-mode-indicator {
+            color: var(--msi-red);
+            background: var(--bios-dark);
+            padding: 4px 8px;
+            border-radius: 2px;
+            border: 1px solid var(--msi-red);
+        }
+
+        .bios-top-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .bios-hotkey {
+            color: var(--msi-red);
+            font-size: 11px;
+        }
+
+        .bios-close {
+            color: var(--msi-red);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* BIOS Main Display Area */
+        .bios-main-display {
+            display: flex;
+            background: var(--bios-black);
+            padding: 20px;
+            gap: 30px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        /* Large Clock Display */
+        .bios-left-panel {
+            flex: 0 0 200px;
+        }
+
+        .large-clock {
+            background: var(--bios-black);
+            border: 1px solid var(--border-glow);
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .clock-time {
+            font-size: 48px;
+            color: var(--text-bright);
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .clock-date {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Large Temperature Display */
+        .temperature-display {
+            background: var(--bios-black);
+            border: 1px solid var(--border-glow);
+            padding: 15px;
+        }
+
+        .temp-label {
+            color: var(--msi-red);
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .temp-value {
+            font-size: 36px;
+            color: var(--text-bright);
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        /* CPU Speed Display */
+        .bios-center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .cpu-speed-display {
+            background: var(--bios-black);
+            border: 1px solid var(--border-glow);
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .speed-label {
+            color: var(--msi-red);
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .speed-value {
+            color: var(--msi-red);
+            font-size: 32px;
+            font-weight: bold;
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 15px var(--msi-red-glow);
+        }
+
+        .bios-version-info {
+            background: var(--bios-black);
+            border: 1px solid var(--border-glow);
+            padding: 15px;
+            font-size: 11px;
+            color: var(--text-normal);
+            line-height: 1.6;
+        }
+
+        /* Product Information Panel */
+        .bios-right-panel {
+            flex: 0 0 300px;
+        }
+
+        .product-info {
+            background: var(--bios-black);
+            border: 1px solid var(--border-glow);
+            padding: 15px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .product-label {
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        .product-name {
+            color: var(--text-normal);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .cpu-info, .memory-info, .vcore-info {
+            color: var(--text-normal);
+            margin-bottom: 8px;
+        }
+
+        /* Boot Priority Row */
+        .boot-priority-row {
+            background: var(--bios-black);
+            border-bottom: 1px solid var(--border-glow);
+            padding: 15px 20px;
+        }
+
+        .boot-priority-label {
+            color: var(--msi-red);
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .boot-devices {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .boot-device {
+            background: var(--metal-gradient);
+            border: 2px solid var(--border-glow);
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+            min-width: 80px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .boot-device:hover {
+            border-color: var(--msi-red);
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .device-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .device-label {
+            color: var(--text-normal);
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .usb-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--msi-red);
+            color: white;
+            font-size: 8px;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        
+        .main-content {
+            display: flex;
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - 200px);
+        }
+        
+        /* Authentic BIOS Left Sidebar */
+        .bios-sidebar {
+            width: 220px;
+            background: var(--bios-black);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bios-sidebar-section {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            background: var(--msi-red);
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            background-image: 
+                repeating-linear-gradient(45deg, 
+                    rgba(255, 255, 255, 0.1) 0px, 
+                    rgba(255, 255, 255, 0.1) 2px, 
+                    transparent 2px, 
+                    transparent 20px);
+        }
+        
+        .settings-title {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* OC Panel */
+        .oc-panel {
+            background: var(--bios-dark);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            position: relative;
+        }
+        
+        .oc-title {
+            color: var(--text-normal);
+            font-size: 12px;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        
+        .oc-label {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        /* M-FLASH Panel */
+        .mflash-panel {
+            background: var(--bios-dark);
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: auto;
+            border-top: 1px solid #333;
+        }
+        
+        .mflash-title {
+            color: var(--text-normal);
+            font-size: 12px;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        
+        .mflash-label {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .bios-sidebar-section:hover .settings-panel {
+            background: #ff4444;
+        }
+        
+        .bios-sidebar-section:hover .oc-panel,
+        .bios-sidebar-section:hover .mflash-panel {
+            background: #222;
+        }
+        
+        /* Main BIOS Panel */
+        .bios-main-panel {
+            flex: 1;
+            background: var(--bios-black);
+            padding: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+        }
+        
+        .bios-content-section {
+            display: none;
+        }
+        
+        .bios-content-section.active {
+            display: block;
+        }
+        
+        .settings-breadcrumb {
+            color: var(--text-normal);
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 8px 12px;
+            background: var(--bios-dark);
+            border-left: 3px solid var(--msi-red);
+        }
+        
+        /* BIOS Settings Grid */
+        .bios-settings-grid {
+            margin-bottom: 30px;
+        }
+        
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #333;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
+        
+        .setting-row:hover {
+            background: var(--bios-dark);
+        }
+        
+        .setting-label {
+            color: var(--text-normal);
+            flex: 1;
+        }
+        
+        .setting-value {
+            color: var(--text-bright);
+            font-weight: bold;
+            min-width: 100px;
+            text-align: right;
+        }
+        
+        .setting-value.enabled {
+            color: var(--msi-red);
+        }
+        
+        .setting-value.disabled {
+            color: #666;
+        }
+        
+        /* BIOS Info Panel */
+        .bios-info-panel {
+            background: var(--bios-dark);
+            padding: 20px;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+        
+        .info-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .device-found {
+            color: var(--text-bright);
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .firmware-info, .vendor-info {
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .portfolio-settings {
+            display: grid;
+            gap: 5px;
+        }
+        
+        /* Performance Metrics */
+        .performance-metrics {
+            background: var(--bios-dark);
+            padding: 20px;
+            border: 1px solid #333;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+            font-size: 12px;
+        }
+        
+        .metric-label {
+            color: var(--text-normal);
+        }
+        
+        .metric-value {
+            color: var(--text-bright);
+            font-weight: bold;
+        }
+        
+        .metric-value.enabled {
+            color: var(--msi-red);
+        }
+        
+        /* M-FLASH Info */
+        .mflash-info {
+            background: var(--bios-dark);
+            padding: 20px;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+        
+        .flash-status, .flash-version, .flash-date {
+            color: var(--text-normal);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .portfolio-links {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .link-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: var(--bios-dark);
+            border: 1px solid #333;
+            transition: background 0.2s ease;
+        }
+        
+        .link-row:hover {
+            background: #222;
+            border-color: var(--msi-red);
+        }
+        
+        .link-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .link-label {
+            flex: 1;
+            color: var(--text-normal);
+            font-size: 12px;
+        }
+        
+        .link-status {
+            color: var(--msi-red);
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        /* BIOS Help Panel */
+        .bios-help-panel {
+            width: 280px;
+            background: var(--bios-black);
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .help-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bios-dark);
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .hotkey-indicator {
+            color: var(--text-normal);
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .hotkey-symbol {
+            color: var(--msi-red);
+            font-size: 14px;
+        }
+        
+        .help-button {
+            background: var(--msi-red);
+            color: white;
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+        
+        .help-content {
+            flex: 1;
+            padding: 20px 15px;
+            background: var(--bios-dark);
+        }
+        
+        .help-title {
+            color: var(--text-bright);
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        
+        .help-text {
+            color: var(--text-normal);
+            font-size: 11px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        
+        .help-details {
+            color: var(--text-dim);
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        .navigation-help {
+            background: var(--bios-black);
+            padding: 15px;
+            border-top: 1px solid #333;
+            margin-top: auto;
+        }
+        
+        .nav-instruction {
+            color: var(--text-normal);
+            font-size: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nav-instruction:before {
+            content: attr(data-key);
+            color: var(--msi-red);
+            font-weight: bold;
+        }
+        
+
+        
+        /* Advanced Apply & Save Button */
+        .apply-save {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: 
+                linear-gradient(145deg, var(--neon-red), #ff6666),
+                radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border: 2px solid var(--border-color);
+            padding: 18px 35px;
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 2px;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+                var(--shadow-glow),
+                0 8px 32px rgba(0, 0, 0, 0.8);
+            animation: buttonPulse 3s ease-in-out infinite;
+            z-index: 1000;
+        }
+        
+        @keyframes buttonPulse {
+            0%, 100% { 
+                box-shadow: 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+                    0 0 15px var(--neon-red-glow),
+                    0 8px 32px rgba(0, 0, 0, 0.8);
+            }
+            50% { 
+                box-shadow: 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+                    0 0 30px var(--neon-red-glow),
+                    0 8px 32px rgba(0, 0, 0, 0.8);
+            }
+        }
+        
+        .apply-save:hover {
+            background: 
+                linear-gradient(145deg, #ff6666, #ff9999),
+                radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+                0 0 40px var(--neon-red-glow),
+                0 12px 40px rgba(0, 0, 0, 0.9);
+            animation: none;
+        }
+        
+        .apply-save:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            border: 2px solid #ff3333;
+            border-radius: 8px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-header {
+            color: #ff3333;
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            color: #ff3333;
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .form-input {
+            width: 100%;
+            background: #0d0d0d;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #ff3333;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #ff3333;
+            color: #fff;
+        }
+        
+        .btn-secondary {
+            background: #333;
+            color: #e0e0e0;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #ff3333;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Interface Animation */
+        @keyframes interfaceFadeIn {
+            from { 
+                opacity: 0; 
+                transform: scale(1.02); 
+                filter: blur(1px);
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1); 
+                filter: blur(0);
+            }
+        }
+
+        /* Advanced Responsive Design */
+        @media (max-width: 1024px) {
+            .content-area {
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .bios-main-display {
+                flex-direction: column;
+                padding: 15px;
+                gap: 15px;
+            }
+
+            .bios-left-panel, .bios-right-panel {
+                flex: none;
+            }
+
+            .cpu-speed-display {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .speed-value {
+                font-size: 24px;
+            }
+
+            .clock-time {
+                font-size: 36px;
+            }
+
+            .temp-value {
+                font-size: 28px;
+            }
+
+            .boot-devices {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .boot-device {
+                min-width: 60px;
+                padding: 8px;
+            }
+
+            .device-icon {
+                font-size: 20px;
+            }
+
+            .device-label {
+                font-size: 8px;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .bios-sidebar {
+                width: 100%;
+                flex-direction: row;
+                height: auto;
+            }
+            
+            .bios-sidebar-section {
+                flex: 1;
+                min-height: 60px;
+            }
+            
+            .settings-panel, .oc-panel, .mflash-panel {
+                padding: 15px 10px;
+                text-align: center;
+            }
+            
+            .settings-title, .oc-label, .mflash-label {
+                font-size: 12px;
+            }
+            
+            .oc-title, .mflash-title {
+                display: none;
+            }
+            
+            .bios-main-panel {
+                padding: 15px;
+            }
+            
+            .bios-help-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #333;
+            }
+            
+            .help-content {
+                padding: 15px;
+            }
+            
+            .apply-save {
+                position: relative;
+                margin: 20px auto;
+                display: block;
+                bottom: auto;
+                left: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-area {
+                padding: 15px;
+            }
+            
+            .boot-drives {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-item {
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            
+            .nav-item i {
+                font-size: 20px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+                letter-spacing: 1px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Immersive POST/Boot Sequence -->
+    <div class="boot-overlay" id="bootOverlay">
+        <div class="post-screen">
+            <div class="bios-header">
+                            <div class="bios-title">ADV Click BIOS 5 - Software Engineer UEFI</div>
+            <div class="bios-version">Andrew Vu Portfolio System v4.2.1</div>
+            </div>
+            
+            <div class="post-content" id="postContent">
+                <!-- POST messages will be dynamically added here -->
+            </div>
+            
+            <div class="boot-complete" id="bootComplete" style="display: none;">
+                <div class="boot-success">BOOT SUCCESSFUL</div>
+                <div class="boot-instruction">Press any key to enter Portfolio Interface...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Moving Scanline Effect -->
+    <div class="scanline-sweep"></div>
+
+    <!-- Main UEFI Firmware Interface -->
+    <div class="bios-container" id="biosInterface">
+        <!-- Authentic BIOS Header Bar -->
+        <div class="bios-top-bar">
+            <div class="bios-logo">
+                <span style="color: var(--msi-red);">ADV</span> CLICK BIOS 5
+            </div>
+            <div class="bios-mode-indicator">Advanced (F7)</div>
+            <div class="bios-top-right">
+                <span class="bios-hotkey">🖱️ F12</span>
+                <span class="bios-hotkey">❤️</span>
+                <span class="bios-hotkey">🏠</span>
+                <span class="bios-hotkey">🌐 English</span>
+                <span class="bios-close">✕</span>
+            </div>
+        </div>
+
+        <!-- System Information Display (Like Real BIOS) -->
+        <div class="bios-main-display">
+            <!-- Left Side: Large Clock and Temperatures -->
+            <div class="bios-left-panel">
+                <div class="large-clock">
+                    <div class="clock-time" id="biosTime">16:39</div>
+                    <div class="clock-date" id="biosDate">Mon 22 Jul, 2019</div>
+                </div>
+                
+                <div class="temperature-display">
+                    <div class="temp-label">Code Quality</div>
+                    <div class="temp-value"><span class="flicker-text">98.2</span>%</div>
+                    <div class="temp-label">Project Success Rate</div>
+                    <div class="temp-value"><span class="flicker-text">96.8</span>%</div>
+                </div>
+            </div>
+
+            <!-- Center: CPU Speed and System Info -->
+            <div class="bios-center-panel">
+                <div class="cpu-speed-display">
+                    <div class="speed-label">Development Speed</div>
+                    <div class="speed-value"><span class="flicker-text">4.2</span> GHz</div>
+                    <div class="speed-label">GitHub Activity</div>
+                    <div class="speed-value"><span class="flicker-text">365</span> commits</div>
+                </div>
+                
+                <div class="bios-version-info">
+                    <div>Portfolio Ver: Andrew_Vu_v4.2.1</div>
+                    <div>Build Date: 12/08/2024</div>
+                    <div>Mode: Full-Stack/ML</div>
+                </div>
+            </div>
+
+            <!-- Right Side: Product Information -->
+            <div class="bios-right-panel">
+                <div class="product-info">
+                    <div class="product-label">Product:</div>
+                    <div class="product-name">Andrew Vu Portfolio System (AV-PS-2024)</div>
+                    <div class="cpu-info">Engine: Andrew Vu Software Engineer Core i7-13700K @ 4.2GHz</div>
+                    <div class="memory-info">Experience: <span class="flicker-text">4+ Years</span></div>
+                    <!-- <div class="vcore-info">Revenue: <span class="flicker-text">$900K+</span></div> -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Boot Priority Row -->
+        <div class="boot-priority-row">
+            <div class="boot-priority-label">Boot Priority</div>
+            <div class="boot-devices">
+                <a href="resume.pdf" target="_blank" class="boot-device" style="text-decoration: none; color: inherit;">
+                    <div class="device-icon">💾</div>
+                    <div class="device-label">RESUME</div>
+                    <div class="usb-indicator">📄</div>
+                </a>
+                <a href="https://github.com/adv-andrew" target="_blank" class="boot-device" style="text-decoration: none; color: inherit;">
+                    <div class="device-icon">🔗</div>
+                    <div class="device-label">GITHUB</div>
+                    <div class="usb-indicator">🔗</div>
+                </a>
+                <a href="https://linkedin.com/in/adv-andrew-d-vu" target="_blank" class="boot-device" style="text-decoration: none; color: inherit;">
+                    <div class="device-icon">💼</div>
+                    <div class="device-label">LINKEDIN</div>
+                    <div class="usb-indicator">💼</div>
+                </a>
+                <a href="mailto:andrewv4312@gmail.com" class="boot-device" style="text-decoration: none; color: inherit;">
+                    <div class="device-icon">📧</div>
+                    <div class="device-label">EMAIL</div>
+                    <div class="usb-indicator">📧</div>
+                </a>
+                <div class="boot-device" onclick="switchBIOSSection('settings')">
+                    <div class="device-icon">💿</div>
+                    <div class="device-label">PORTFOLIO</div>
+                    <div class="usb-indicator">💿</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Authentic BIOS Left Sidebar -->
+            <div class="bios-sidebar">
+                <!-- Settings Panel -->
+                <div class="bios-sidebar-section active" data-section="settings" onclick="switchBIOSSection('settings')">
+                    <div class="settings-panel">
+                        <div class="settings-title">SETTINGS</div>
+                    </div>
+                </div>
+                
+                <!-- Overclocking Settings -->
+                <div class="bios-sidebar-section" data-section="oc" onclick="switchBIOSSection('oc')">
+                    <div class="oc-panel">
+                        <div class="oc-title">Overclocking settings</div>
+                        <div class="oc-label">OC</div>
+                    </div>
+                </div>
+                
+                <!-- M-FLASH Section -->
+                <div class="bios-sidebar-section" data-section="mflash" onclick="switchBIOSSection('mflash')">
+                    <div class="mflash-panel">
+                        <div class="mflash-title">Use USB to flash BIOS</div>
+                        <div class="mflash-label">M-FLASH</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main BIOS Settings Area -->
+            <div class="bios-main-panel">
+                <!-- Settings Section (Default Active) -->
+                <div class="bios-content-section active" id="settings">
+                    <div class="settings-breadcrumb">Settings\Security\Trusted Computing</div>
+                    
+                    <div class="bios-settings-grid">
+                        <div class="setting-row">
+                            <div class="setting-label">Development Environment</div>
+                            <div class="setting-value enabled">[Active]</div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Code Repository</div>
+                            <div class="setting-value">[GitHub Active]</div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">CI/CD Pipeline</div>
+                            <div class="setting-value">[Enabled]</div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Testing Framework</div>
+                            <div class="setting-value">[Unit/Integration]</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bios-info-panel">
+                        <div class="info-header">
+                            <div class="device-found">Portfolio System Active</div>
+                            <div class="firmware-info">Portfolio Version: <span class="flicker-text">4.2.1</span></div>
+                            <div class="vendor-info">Developer: <span class="flicker-text">Andrew Vu</span></div>
+                        </div>
+                        
+                        <div class="portfolio-settings">
+                            <div class="setting-row">
+                                <div class="setting-label">Software Engineering Intern</div>
+                                <div class="setting-value enabled">[Adtran - Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Lead Developer & Owner</div>
+                                <div class="setting-value enabled">[VuPlay Creative - Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">ML Research Assistant</div>
+                                <div class="setting-value enabled">[UCF - Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">UI/UX Designer</div>
+                                <div class="setting-value enabled">[Freelance - Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Project Manager</div>
+                                <div class="setting-value enabled">[GatorAI - Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Roblox Game Development</div>
+                                <div class="setting-value enabled">[130M+ Plays]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Revenue Generated</div>
+                                <div class="setting-value enabled">[$900K+]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Education Status</div>
+                                <div class="setting-value">[UF CS/Stats - Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Portfolio Status</div>
+                                <div class="setting-value">[Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Experience Level</div>
+                                <div class="setting-value">4+ Years</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Project Completion Rate</div>
+                                <div class="setting-value enabled">[98.2%]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">GitHub Contributions</div>
+                                <div class="setting-value enabled">[Active]</div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-label">Code Quality Index</div>
+                                <div class="setting-value enabled">[High]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OC Section -->
+                <div class="bios-content-section" id="oc">
+                    <div class="settings-breadcrumb">Settings\Overclocking\CPU Performance</div>
+                    
+                    <div class="bios-settings-grid">
+                        <div class="setting-row">
+                            <div class="setting-label">Development Ratio</div>
+                            <div class="setting-value">Auto</div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Code Quality Level</div>
+                            <div class="setting-value">High</div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Project Frequency</div>
+                            <div class="setting-value">Active</div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Performance Profile</div>
+                            <div class="setting-value enabled">[Optimized]</div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-metrics">
+                        <div class="metric-row">
+                            <div class="metric-label">Current Development Performance</div>
+                            <div class="metric-value"><span class="flicker-text">4.2</span> GHz</div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">Full-Stack Development</div>
+                            <div class="metric-value enabled">[Enabled]</div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">Game Development Boost</div>
+                            <div class="metric-value"><span class="flicker-text">130M+</span></div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">Python/Django Runtime</div>
+                            <div class="metric-value enabled">[Active]</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- M-FLASH Section -->
+                <div class="bios-content-section" id="mflash">
+                    <div class="settings-breadcrumb">Utilities\M-FLASH\Portfolio Update</div>
+                    
+                    <div class="mflash-info">
+                        <div class="flash-status">Portfolio Update Status: Ready</div>
+                        <div class="flash-version">Current Version: Andrew_Vu_v4.2.1</div>
+                        <div class="flash-date">Build Date: 2024/12/08</div>
+                    </div>
+                    
+                    <div class="portfolio-links">
+                        <div class="link-row">
+                            <div class="link-icon">📄</div>
+                            <div class="link-label">Resume.PDF</div>
+                            <div class="link-status">Ready</div>
+                        </div>
+                        <div class="link-row">
+                            <div class="link-icon">🔗</div>
+                            <div class="link-label">GitHub Repository</div>
+                            <div class="link-status">Connected</div>
+                        </div>
+                        <div class="link-row">
+                            <div class="link-icon">💼</div>
+                            <div class="link-label">LinkedIn Profile</div>
+                            <div class="link-status">Active</div>
+                        </div>
+                        <div class="link-row">
+                            <div class="link-icon">📧</div>
+                            <div class="link-label">andrewv4312@gmail.com</div>
+                            <div class="link-status">Available</div>
+                        </div>
+                        <div class="link-row">
+                            <div class="link-icon">🎮</div>
+                            <div class="link-label">VuPlay Creative LLC</div>
+                            <div class="link-status">Active</div>
+                        </div>
+                        <div class="link-row">
+                            <div class="link-icon">🏢</div>
+                            <div class="link-label">Adtran Internship</div>
+                            <div class="link-status">Active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BIOS Help Panel -->
+            <div class="bios-help-panel">
+                <div class="help-header">
+                    <div class="hotkey-indicator">HOT KEY</div>
+                    <div class="hotkey-symbol">⚡</div>
+                    <div class="help-button">HELP</div>
+                </div>
+                
+                <div class="help-content" id="helpContent">
+                    <div class="help-title">Portfolio Information</div>
+                    <div class="help-text">
+                        Software Engineering Intern at Adtran with 4+ years experience in full-stack development. 
+                        Lead Developer & Owner of VuPlay Creative LLC, generating $900K+ revenue from 130M+ Roblox plays.
+                    </div>
+                    <div class="help-details">
+                        Core expertise includes Python, Django, MongoDB, Docker, Lua game development, and ML research. 
+                        Experience with CI/CD, microservices, and production-level backend services.
+                    </div>
+                </div>
+                
+                <div class="navigation-help">
+                    <div class="nav-instruction">↑↓: Move</div>
+                    <div class="nav-instruction">Enter: Select</div>
+                    <div class="nav-instruction">+/-: Value</div>
+                    <div class="nav-instruction">ESC: Exit</div>
+                    <div class="nav-instruction">F1: General Help</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apply & Save Button -->
+    <button class="apply-save" onclick="openContactModal()">
+        Apply & Save Changes
+    </button>
+
+    <!-- Contact Modal -->
+    <div class="modal" id="contactModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeContactModal()">&times;</button>
+            <div class="modal-header">Contact Configuration</div>
+            <form onsubmit="submitContact(event)">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Subject</label>
+                    <input type="text" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-input" rows="4" required></textarea>
+                </div>
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeContactModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audio elements for sound effects -->
+    <audio id="hoverSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+PxvmEaBS2O1fPSfysEHnDA8+CVQX1c1e98pDr8cxJNJnO0jcfvtJBgJV4qfKq6rGKxsXy0vKhX8Km7pGHMrHy0vaqX8K6xoGGOq3y5xKq82Ky8sm2zqXy5yayD0q+ytGOtq3z0xrKG1LeytmavhWgGY=" type="audio/wav">
+    </audio>
+
+    <script>
+        // Advanced BIOS Firmware JavaScript
+        
+        // BIOS Sound System
+        function playBIOSBeep(frequency = 800, duration = 100) {
+            if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                const audioContext = new (AudioContext || webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.1;
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            }
+        }
+
+        // Advanced POST Boot Sequence
+        const postMessages = [
+            "Initializing Software Engineer BIOS...",
+            "Detecting Engine: Andrew Vu Development Core",
+            "Memory Test: 130M+ Roblox Plays OK",
+            "Loading Python Framework Drivers...",
+            "Django Engine: OK",
+            "TensorFlow Core: OK",
+            "Initializing Full-Stack Subsystems...",
+            "Boot Device: Portfolio Interface",
+            "Starting Portfolio Services...",
+            "Software Engineering Services: ACTIVE"
+        ];
+
+        let currentMessageIndex = 0;
+
+        function typePostMessage(message, element, callback) {
+            element.textContent = '';
+            element.className = 'post-line typing';
+            
+            let charIndex = 0;
+            const typeInterval = setInterval(() => {
+                if (charIndex < message.length) {
+                    element.textContent += message[charIndex];
+                    charIndex++;
+                } else {
+                    clearInterval(typeInterval);
+                    element.className = 'post-line';
+                    if (callback) callback();
+                }
+            }, 30);
+        }
+
+        function showNextPostMessage() {
+            if (currentMessageIndex < postMessages.length) {
+                const postContent = document.getElementById('postContent');
+                const messageElement = document.createElement('div');
+                messageElement.className = 'post-line';
+                postContent.appendChild(messageElement);
+                
+                typePostMessage(postMessages[currentMessageIndex], messageElement, () => {
+                    currentMessageIndex++;
+                    if (currentMessageIndex < postMessages.length) {
+                        setTimeout(showNextPostMessage, 200);
+                    } else {
+                        setTimeout(showBootComplete, 500);
+                    }
+                });
+            }
+        }
+
+        function showBootComplete() {
+            const bootComplete = document.getElementById('bootComplete');
+            bootComplete.style.display = 'block';
+            playBIOSBeep(1000, 200);
+            
+            setTimeout(() => {
+                document.getElementById('bootOverlay').style.opacity = '0';
+                document.getElementById('bootOverlay').style.transform = 'scale(0.98)';
+                
+                setTimeout(() => {
+                    document.getElementById('bootOverlay').style.display = 'none';
+                    document.getElementById('biosInterface').style.display = 'block';
+                    startFirmwareInterface();
+                }, 1000);
+            }, 2000);
+        }
+
+        // Initialize BIOS Interface
+        function startFirmwareInterface() {
+            updateSystemTime();
+            setInterval(updateSystemTime, 1000);
+            
+            // Initialize parallax effect
+            initializeParallax();
+            
+            // Start number flicker effects
+            startNumberFlickers();
+            
+            // Initialize BIOS interface
+            initializeBIOSInterface();
+            
+            playBIOSBeep(800, 150);
+        }
+
+        // BIOS Time Update
+        function updateSystemTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            const dateString = now.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+            
+            const biosTimeElement = document.getElementById('biosTime');
+            const biosDateElement = document.getElementById('biosDate');
+            
+            if (biosTimeElement) {
+                biosTimeElement.textContent = timeString;
+            }
+            if (biosDateElement) {
+                biosDateElement.textContent = dateString;
+            }
+        }
+
+        // Parallax Grid Effect
+        function initializeParallax() {
+            document.addEventListener('mousemove', (e) => {
+                const x = (e.clientX - window.innerWidth / 2) / window.innerWidth;
+                const y = (e.clientY - window.innerHeight / 2) / window.innerHeight;
+                
+                const gridElement = document.querySelector('body::before');
+                if (gridElement) {
+                    document.documentElement.style.setProperty('--mouse-x', x * 5 + 'px');
+                    document.documentElement.style.setProperty('--mouse-y', y * 5 + 'px');
+                }
+            });
+        }
+
+        // Number Flicker Effects
+        function startNumberFlickers() {
+            const flickerElements = document.querySelectorAll('.flicker-text');
+            flickerElements.forEach(element => {
+                setInterval(() => {
+                    element.style.opacity = Math.random() > 0.1 ? '1' : '0.8';
+                }, Math.random() * 100 + 50);
+            });
+        }
+
+
+
+        // Modal System
+        function openContactModal() {
+            document.getElementById('contactModal').style.display = 'block';
+            playBIOSBeep(800, 120);
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').style.display = 'none';
+            playBIOSBeep(600, 80);
+        }
+
+        function submitContact(event) {
+            event.preventDefault();
+            playBIOSBeep(1200, 200);
+            
+            // Simulate BIOS-style confirmation
+            const confirmation = document.createElement('div');
+            confirmation.innerHTML = 'MESSAGE SENT - SYSTEM ACKNOWLEDGED';
+            confirmation.style.cssText = `
+                position: fixed; 
+                top: 50%; 
+                left: 50%; 
+                transform: translate(-50%, -50%); 
+                background: var(--metal-gradient); 
+                border: 2px solid var(--msi-red); 
+                padding: 20px; 
+                color: var(--msi-red); 
+                font-family: 'Orbitron', monospace; 
+                z-index: 10000;
+                text-shadow: 0 0 10px var(--msi-red-glow);
+            `;
+            document.body.appendChild(confirmation);
+            
+            setTimeout(() => {
+                document.body.removeChild(confirmation);
+                closeContactModal();
+            }, 2000);
+        }
+
+        // BIOS Event System
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add BIOS hover sounds to interactive elements
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('mouseenter', () => playBIOSBeep(400, 60));
+            });
+
+            document.querySelectorAll('.firmware-button').forEach(button => {
+                button.addEventListener('mouseenter', () => playBIOSBeep(500, 70));
+                button.addEventListener('click', () => playBIOSBeep(800, 100));
+            });
+
+            // Boot device sounds
+            document.querySelectorAll('.boot-device').forEach(device => {
+                device.addEventListener('mouseenter', () => playBIOSBeep(550, 80));
+                device.addEventListener('click', () => playBIOSBeep(900, 120));
+            });
+
+            // Apply & Save button effects
+            const applyButton = document.querySelector('.apply-save');
+            if (applyButton) {
+                applyButton.addEventListener('mouseenter', () => playBIOSBeep(600, 90));
+                applyButton.addEventListener('click', () => {
+                    playBIOSBeep(1000, 150);
+                    openContactModal();
+                });
+            }
+
+            // Modal event listeners
+            const contactModal = document.getElementById('contactModal');
+            if (contactModal) {
+                contactModal.addEventListener('click', function(event) {
+                    if (event.target === this) {
+                        closeContactModal();
+                    }
+                });
+            }
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeContactModal();
+                }
+                // Skip boot sequence on any key press
+                if (document.getElementById('bootOverlay').style.display !== 'none') {
+                    showBootComplete();
+                }
+            });
+
+            // Start POST sequence after short delay
+            setTimeout(showNextPostMessage, 1000);
+        });
+
+        // Dynamic System Status Updates
+        function updateSystemStatus() {
+            const statusMessages = [
+                'DEPLOYING RAG CHATBOT',
+                'PROCESSING ROBOX GAMES', 
+                'TRAINING ML MODELS',
+                'ANALYZING TRADING DATA',
+                'COMPILING CODE BASE',
+                'OPTIMIZING MICROSERVICES',
+                'BUILDING CI/CD PIPELINES'
+            ];
+            
+            const tempElement = document.querySelector('.system-temp .flicker-text');
+            if (tempElement) {
+                const randomMessage = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+                tempElement.textContent = randomMessage;
+            }
+        }
+
+        // Update system status every 8 seconds
+        setInterval(updateSystemStatus, 8000);
+
+        // Initialize BIOS Interface Settings
+        function initializeBIOSInterface() {
+            // Set default active section
+            switchBIOSSection('settings');
+            
+            // Add hover effects to setting rows
+            document.querySelectorAll('.setting-row').forEach(row => {
+                row.addEventListener('mouseenter', () => playBIOSBeep(300, 40));
+            });
+            
+            // Add click effects to portfolio links
+            document.querySelectorAll('.link-row').forEach(row => {
+                row.addEventListener('click', () => playBIOSBeep(600, 100));
+            });
+        }
+
+        // BIOS Section Switching
+        function switchBIOSSection(sectionName) {
+            // Remove active class from all sidebar sections and content sections
+            document.querySelectorAll('.bios-sidebar-section').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.bios-content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Add active class to selected sidebar section and content section
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+            document.getElementById(sectionName).classList.add('active');
+
+            // Play BIOS beep
+            playBIOSBeep(600, 80);
+            
+            // Update help content based on section
+            updateHelpContent(sectionName);
+        }
+        
+        // Update Help Panel Content
+        function updateHelpContent(section) {
+            const helpContent = document.getElementById('helpContent');
+            
+            const helpTexts = {
+                settings: {
+                    title: 'Portfolio Information',
+                    text: 'Software Engineering Intern at Adtran with 4+ years experience in full-stack development. Lead Developer & Owner of VuPlay Creative LLC, generating $900K+ revenue from 130M+ Roblox plays.',
+                    details: 'Core expertise includes Python, Django, MongoDB, Docker, Lua game development, and ML research. Experience with CI/CD, microservices, and production-level backend services.'
+                },
+                oc: {
+                    title: 'Performance Settings',
+                    text: 'Advanced development performance optimization settings. Configure full-stack development acceleration, game development boost ratios, and Python/Django runtime optimizations.',
+                    details: 'These settings control the performance characteristics of software development workloads and production-level backend service execution efficiency.'
+                },
+                mflash: {
+                    title: 'Portfolio Links',
+                    text: 'Quick access to portfolio resources including resume, GitHub repositories, LinkedIn profile, and contact information.',
+                    details: 'Use these links to explore projects, view code repositories, connect professionally, or get in touch for opportunities.'
+                }
+            };
+            
+            const content = helpTexts[section] || helpTexts.settings;
+            
+            helpContent.innerHTML = `
+                <div class="help-title">${content.title}</div>
+                <div class="help-text">${content.text}</div>
+                <div class="help-details">${content.details}</div>
+            `;
+        }
+
+        // Initialize BIOS Interface on Page Load
+        window.addEventListener('load', function() {
+            // BIOS startup sound
+            setTimeout(() => playBIOSBeep(440, 300), 500);
+        });
+    </script>
+</body>
+</html> 
