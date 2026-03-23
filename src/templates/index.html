@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    <!-- <WhoAmI /> -->
+    {% call fieldset("cat README.md") %}
+      <div class="flex flex-col lg:flex-row gap-3 text-lg">
+        <article class="text-black text-lg prose-p:m-0 flex flex-col gap-4">
+          <p>
+            I'm a Computer Science &amp; Statistics double-major at the
+            <a href="https://ufl.edu">University of Florida</a> (class of
+            2027) and the Applied Lead for
+            <a href="https://github.com/GatorAIOrg">GatorAI</a>, a student AI
+            club where I organize and support AI projects.
+          </p>
+          <p>
+            I like building things, Roblox development, hackathons, and
+            pickleball.
+          </p>
+          <p>
+            I also run
+            <a href="#">VuPlay Creative LLC</a>, a Roblox development studio
+            where I've freelanced for 80+ clients and worked contracted with
+            <a href="https://gamefam.com">Gamefam Inc.</a> on virtual concert
+            technology reaching tens of millions of players.
+          </p>
+          <p>
+            This summer I'll be at
+            <a href="https://nvidia.com">NVIDIA</a> as a Solutions Architect
+            Intern. Previously I interned at
+            <a href="https://adtran.com">Adtran</a>.
+          </p>
+        </article>
+        <img
+          src="/assets/me.jpg"
+          alt="me"
+          class="h-[350px] object-cover"
+          loading="eager"
+        />
+      </div>
+    {% endcall %}
+    {% call fieldset("ls ~/projects") %}
+      {{ lists["projects"]|safe }}
+    {% endcall %}
+    {% call fieldset("cat ~/links.md") %}
+      <article>
+        Cool people and places on the internet
+        <ul>
+          <li><a href="https://github.com/adv-andrew">GitHub</a></li>
+          <li><a href="https://linkedin.com/in/adv-andrew">LinkedIn</a></li>
+          <li><a href="https://tiktok.com/@adv.andrew">TikTok</a></li>
+          <li><a href="https://devforum.roblox.com/">Roblox DevForum</a></li>
+        </ul>
+      </article>
+    {% endcall %}
+  </div>
+{% endblock %}
