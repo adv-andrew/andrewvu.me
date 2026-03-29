@@ -10,7 +10,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 first_name = "Andrew"
 last_name = "Vu"
-name = f"{first_name} {last_name}"
+nickname = "Andy"
+name = f"{first_name} ({nickname}) {last_name}"
 domain = "andrewvu.me"
 generic_username = "adv-andrew"
 twitter_username = f"@{generic_username}"

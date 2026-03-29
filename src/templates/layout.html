@@ -44,16 +44,21 @@
       <div
         class="flex flex-col sm:flex-row justify-between gap-2 align-middle items-center my-1"
       >
-        {% call button("https://linkedin.com/in/adv-andrew", "w-32 bg-[#0077b5] text-white") %}
+        {% call button("https://www.linkedin.com/in/adv-andrew-d-vu/", "w-32 bg-[#0077b5] text-white") %}
           <div style="mask-image: url('/assets/linkedin.svg');" class="icon"></div>
           <span class="ms-1">LinkedIn</span>
         {% endcall %}
-        {%
-          call
-          button("https://github.com/adv-andrew", "w-32")
-        %}
+        {% call button("https://github.com/adv-andrew", "w-32") %}
           <div style="mask-image: url('/assets/github.svg');" class="icon"></div>
           <span class="ms-1">GitHub</span>
+        {% endcall %}
+        {% call button("https://x.com/iStaridium", "w-32 bg-black text-white") %}
+          <div style="mask-image: url('/assets/x.svg');" class="icon"></div>
+          <span class="ms-1">X</span>
+        {% endcall %}
+        {% call button("https://www.roblox.com/users/96753261/profile", "w-32") %}
+          <div style="mask-image: url('/assets/roblox.svg');" class="icon"></div>
+          <span class="ms-1">Roblox</span>
         {% endcall %}
         <!-- {% call button("/assets/resume.pdf", "w-32") %}
           <span class="ms-1">Resume</span>
