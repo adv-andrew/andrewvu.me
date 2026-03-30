@@ -54,15 +54,11 @@ html_static() {
     html &
     hpid=$!
 
-    static &
-    spid=$!
+    static
 
-    my_wait $hpid $spid
+    my_wait $hpid
 
-    opt_imgs &
-    opid=$!
-
-    my_wait $opid
+    opt_imgs
 }
 
 rm -rf dist && mkdir dist
