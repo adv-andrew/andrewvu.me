@@ -1,0 +1,433 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+
+{% block head_extra %}
+  <style>
+    .case-shell {
+      overflow: hidden;
+      background: #f4efe6;
+      border: 1px solid rgba(0, 0, 0, 0.24);
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .case-hero {
+      padding: 1rem 1rem 0.85rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+        #ebe4d7;
+    }
+
+    .case-hero h2,
+    .case-hero p {
+      margin: 0;
+    }
+
+    .case-hero h2 {
+      font-size: 1.45rem;
+      line-height: 1;
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+
+    .case-hero p {
+      margin-top: 0.45rem;
+      max-width: 56ch;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      opacity: 0.78;
+    }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem 0.8rem;
+      padding: 1rem;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent 18%),
+        #f4efe6;
+    }
+
+    .case-slot {
+      position: relative;
+      min-height: 240px;
+      padding: 0.4rem 0.4rem 1.35rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      text-align: center;
+    }
+
+    .case-slot::after {
+      content: "";
+      position: absolute;
+      left: 0.35rem;
+      right: 0.35rem;
+      bottom: 0.25rem;
+      height: 12px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent),
+        #8a5b39;
+      box-shadow:
+        0 4px 0 #5d3820,
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    .trophy {
+      --metal: #d0a63d;
+      --metal-shadow: #9b7621;
+      --metal-highlight: #f6de84;
+      position: relative;
+      width: 92px;
+      height: 116px;
+      margin-bottom: 0.75rem;
+      filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.14));
+    }
+
+    .trophy.nvidia {
+      --metal: #76b900;
+      --metal-shadow: #4f7b00;
+      --metal-highlight: #c9ef7a;
+    }
+
+    .trophy.roblox {
+      --metal: #e2231a;
+      --metal-shadow: #9e1812;
+      --metal-highlight: #ff9f99;
+    }
+
+    .trophy.adtran {
+      --metal: #1f74c9;
+      --metal-shadow: #154d86;
+      --metal-highlight: #a8d0fb;
+    }
+
+    .trophy.swamp {
+      --metal: #ff8c2a;
+      --metal-shadow: #a75814;
+      --metal-highlight: #ffd2ab;
+    }
+
+    .trophy.shpe {
+      --metal: #6b5dd3;
+      --metal-shadow: #43388b;
+      --metal-highlight: #d1c8ff;
+    }
+
+    .trophy.usf {
+      --metal: #0b8a55;
+      --metal-shadow: #065534;
+      --metal-highlight: #8fe0bc;
+    }
+
+    .trophy.anthropic {
+      --metal: #c9783c;
+      --metal-shadow: #7d4922;
+      --metal-highlight: #efc3a2;
+    }
+
+    .trophy.sase {
+      --metal: #f2a531;
+      --metal-shadow: #a96a12;
+      --metal-highlight: #ffe0a6;
+    }
+
+    .trophy.rl {
+      --metal: #3f7cff;
+      --metal-shadow: #274d9b;
+      --metal-highlight: #bad0ff;
+    }
+
+    .trophy.swim {
+      --metal: #3cb6c9;
+      --metal-shadow: #237380;
+      --metal-highlight: #b8eef6;
+    }
+
+    .trophy.climb {
+      --metal: #7a8f54;
+      --metal-shadow: #4c5c33;
+      --metal-highlight: #d4e4b3;
+    }
+
+    .trophy-bowl {
+      position: absolute;
+      left: 24px;
+      top: 8px;
+      width: 44px;
+      height: 34px;
+      background: var(--metal);
+      border: 2px solid var(--metal-shadow);
+      border-radius: 0 0 12px 12px;
+      box-shadow: inset 0 3px 0 var(--metal-highlight);
+    }
+
+    .trophy-bowl::before,
+    .trophy-bowl::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      width: 14px;
+      height: 14px;
+      border: 4px solid var(--metal-shadow);
+      border-radius: 999px;
+    }
+
+    .trophy-bowl::before {
+      left: -16px;
+      border-right: none;
+    }
+
+    .trophy-bowl::after {
+      right: -16px;
+      border-left: none;
+    }
+
+    .trophy-stem {
+      position: absolute;
+      left: 41px;
+      top: 46px;
+      width: 10px;
+      height: 22px;
+      background: var(--metal);
+      border-left: 2px solid var(--metal-shadow);
+      border-right: 2px solid var(--metal-shadow);
+    }
+
+    .trophy-foot {
+      position: absolute;
+      left: 32px;
+      top: 68px;
+      width: 28px;
+      height: 10px;
+      background: var(--metal);
+      border: 2px solid var(--metal-shadow);
+      box-shadow: inset 0 2px 0 var(--metal-highlight);
+    }
+
+    .trophy-base {
+      position: absolute;
+      left: 22px;
+      top: 84px;
+      width: 48px;
+      height: 18px;
+      background: #3f2b1e;
+      border: 2px solid #24170f;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .trophy-plaque {
+      width: 100%;
+      max-width: 168px;
+      padding: 0.7rem 0.75rem;
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .trophy-plaque p {
+      margin: 0;
+    }
+
+    .trophy-title {
+      font-size: 0.98rem;
+      line-height: 1.18;
+      text-transform: lowercase;
+    }
+
+    .trophy-meta {
+      margin-top: 0.4rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      opacity: 0.64;
+    }
+
+    @media (max-width: 900px) {
+      .case-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .case-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    {% call fieldset("cat ~/random/wins.md") %}
+      <div class="case-shell">
+        <section class="case-hero">
+          <h2>trophy case</h2>
+          <p>
+            mostly just milestones i wanted to keep somewhere. this page is
+            meant to feel more like a shelf than a scoreboard.
+          </p>
+        </section>
+
+        <section class="case-grid">
+          <article class="case-slot">
+            <div class="trophy nvidia">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">nvidia internship</p>
+              <p class="trophy-meta">2026 - solutions architect intern</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy adtran">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">adtran internship</p>
+              <p class="trophy-meta">2025 - 2026 - software engineering</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy roblox">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">145m+ plays</p>
+              <p class="trophy-meta">across 5 launched roblox games</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy roblox">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">rdc 2022</p>
+              <p class="trophy-meta">invite to roblox developer conference</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy rl">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">rocket league champion</p>
+              <p class="trophy-meta">still counts as athletic achievement</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy swim">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">varsity swimmer</p>
+              <p class="trophy-meta">pb: 100y free 53:03 100y breast 1:09.12</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy climb">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">v5 rock climber</p>
+              <p class="trophy-meta">(at least in my gym)</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy sase">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">sasehacks sponsor</p>
+              <p class="trophy-meta">added a track prize and judged</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy swamp">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">swamphacks winner</p>
+              <p class="trophy-meta">university of florida - prize winner</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy shpe">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">shpe hackathon winner</p>
+              <p class="trophy-meta">university of florida - prize winner</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy usf">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">usf hackathon winner</p>
+              <p class="trophy-meta">university of south florida - overall winner</p>
+            </div>
+          </article>
+
+          <article class="case-slot">
+            <div class="trophy anthropic">
+              <div class="trophy-bowl"></div>
+              <div class="trophy-stem"></div>
+              <div class="trophy-foot"></div>
+              <div class="trophy-base"></div>
+            </div>
+            <div class="trophy-plaque">
+              <p class="trophy-title">claude buildathon winner</p>
+              <p class="trophy-meta">anthropic - overall winner</p>
+            </div>
+          </article>
+        </section>
+      </div>
+    {% endcall %}
+  </div>
+{% endblock %}

@@ -247,6 +247,18 @@ custom_pages = [
             "description": f"{name}'s bouncing album cover wall",
             "image": urljoin(url, "/assets/me.jpg"),
         },
+    },
+    {
+        "template": "random/wins.html",
+        "output": ("random", "wins.html"),
+        "title": f"{name} | Wins",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/random/wins"),
+            "title": f"{name} | Wins",
+            "description": f"{name}'s trophy case of wins and milestones",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
     }
 ]
 
