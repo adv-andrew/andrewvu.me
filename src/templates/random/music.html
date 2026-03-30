@@ -174,55 +174,72 @@
     }
 
     .music-shelf {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: flex;
+      flex-direction: column;
       gap: 0.9rem;
-      padding: 1rem;
+      padding: 1.25rem;
       border-top: 1px solid rgba(0, 0, 0, 0.14);
       background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.015)),
-        #ffffff;
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.35), transparent 22%),
+        radial-gradient(circle at top right, rgba(0, 0, 0, 0.06), transparent 18%),
+        #d4d4d8;
     }
 
-    .music-vibe {
-      padding: 0.95rem 1rem 1rem;
-      border: 1px solid rgba(0, 0, 0, 0.16);
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.06);
-      text-align: center;
+    .music-lineup-row {
+      display: grid;
+      grid-template-columns: 80px 150px minmax(0, 1fr);
+      gap: 1rem;
+      align-items: start;
     }
 
-    .music-vibe p {
-      margin: 0;
-      line-height: 1.15;
+    .music-lineup-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
     }
 
     .music-vibe-name {
+      display: inline-block;
+      padding: 0.18rem 0.5rem;
       font-family: "IBM Plex Mono", monospace;
-      font-size: 0.74rem;
-      letter-spacing: 0.16em;
-      opacity: 0.58;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      background: #2bd9b4;
+      color: #111111;
+      text-transform: uppercase;
+    }
+
+    .music-vibe-name.is-late-night {
+      background: #ff6d6d;
+      color: #ffffff;
     }
 
     .music-vibe-headliners {
-      margin-top: 0.7rem;
-      font-size: 1.12rem;
+      margin: 0;
+      font-size: 1.28rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      line-height: 0.9;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
+    }
+
+    .music-lineup-headliners {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      align-items: flex-start;
     }
 
     .music-vibe-row {
-      margin-top: 0.45rem;
-      font-size: 0.86rem;
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      line-height: 1.35;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      opacity: 0.82;
-    }
-
-    .music-vibe-row.is-small {
-      font-size: 0.74rem;
-      opacity: 0.64;
+      color: rgba(0, 0, 0, 0.92);
     }
 
     @media (max-width: 900px) {
@@ -247,7 +264,22 @@
       }
 
       .music-shelf {
+        padding: 0.9rem;
+      }
+
+      .music-lineup-row {
         grid-template-columns: 1fr;
+        gap: 0.55rem;
+      }
+
+      .music-lineup-label {
+        align-items: flex-start;
+      }
+
+      .music-lineup-headliners {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
       }
     }
   </style>
@@ -598,29 +630,74 @@
       const vibes = [
         {
           name: "LOCKED IN",
-          headliners: ["Travis Scott", "Kanye West", "Playboi Carti"],
-          rows: [
-            ["Lil Uzi Vert", "21 Savage", "Baby Keem"],
-            ["Don Toliver", "A$AP Rocky", "Drake"],
-            ["Bruno Mars", "The Kid LAROI", "Yung Gravy"]
+          accent: "",
+          headliners: ["Travis Scott", "Kanye West"],
+          artists: [
+            "Playboi Carti",
+            "Lil Uzi Vert",
+            "21 Savage",
+            "Baby Keem",
+            "Don Toliver",
+            "A$AP Rocky",
+            "Kendrick Lamar",
+            "Future",
+            "Gunna",
+            "Yeat",
+            "Lucki",
+            "ian",
+            "Drake",
+            "The Kid LAROI",
+            "Yung Gravy",
+            "Bruno Mars",
+            "Rihanna"
           ]
         },
         {
           name: "WINDOWS DOWN",
-          headliners: ["Drake", "Steve Lacy", "Bruno Mars"],
-          rows: [
-            ["Clairo", "Yung Gravy", "The Kid LAROI"],
-            ["Paramore", "Green Day", "Imagine Dragons"],
-            ["Twenty One Pilots", "Feng", "Baby Keem"]
+          accent: "",
+          headliners: ["Drake", "Steve Lacy"],
+          artists: [
+            "Bruno Mars",
+            "Clairo",
+            "Yung Gravy",
+            "The Kid LAROI",
+            "Paramore",
+            "Green Day",
+            "Imagine Dragons",
+            "Twenty One Pilots",
+            "Feng",
+            "Justin Bieber",
+            "TWICE",
+            "NewJeans",
+            "Maroon 5",
+            "Coldplay",
+            "Rihanna",
+            "SZA",
+            "Baby Keem"
           ]
         },
         {
           name: "LATE NIGHT WALKS",
-          headliners: ["Frank Ocean", "Daniel Caesar", "The Marias"],
-          rows: [
-            ["Joji", "Dijon", "Cigarettes After Sex"],
-            ["Radiohead", "Lil Peep", "Juice WRLD"],
-            ["XXXTENTACION", "Mk.gee", "ian", "Nate Sib"]
+          accent: " is-late-night",
+          headliners: ["Frank Ocean", "Daniel Caesar"],
+          artists: [
+            "The Marias",
+            "Joji",
+            "Dijon",
+            "Cigarettes After Sex",
+            "Radiohead",
+            "Lil Peep",
+            "Juice WRLD",
+            "XXXTENTACION",
+            "Mk.gee",
+            "Nate Sib",
+            "Giveon",
+            "PARTYNEXTDOOR",
+            "Brent Faiyaz",
+            "Summer Walker",
+            "Sonder",
+            "dhruv",
+            "d4vd"
           ]
         }
       ];
@@ -640,18 +717,22 @@
         shelf.innerHTML = vibes
           .map(
             (vibe) => `
-              <section class="music-vibe">
-                <p class="music-vibe-name">${vibe.name}</p>
-                <p class="music-vibe-headliners">${vibe.headliners.join(" / ")}</p>
-                ${vibe.rows
-                  .map(
-                    (row, index) => `
-                      <p class="music-vibe-row${index === vibe.rows.length - 1 ? " is-small" : ""}">
-                        ${row.join(" / ")}
-                      </p>
-                    `
-                  )
-                  .join("")}
+              <section class="music-lineup-row">
+                <div class="music-lineup-label">
+                  <p class="music-vibe-name${vibe.accent}">${vibe.name}</p>
+                </div>
+                <div class="music-lineup-headliners">
+                  ${vibe.headliners
+                    .map(
+                      (artist) => `
+                        <p class="music-vibe-headliners">${artist}</p>
+                      `
+                    )
+                    .join("")}
+                </div>
+                <div>
+                  <p class="music-vibe-row">${vibe.artists.join(" &bull; ")}</p>
+                </div>
               </section>
             `
           )

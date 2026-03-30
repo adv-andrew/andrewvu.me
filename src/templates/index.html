@@ -6,11 +6,11 @@
   <div class="flex flex-col gap-4">
     <!-- <WhoAmI /> -->
     {% call fieldset("whoami") %}
-      <article class="text-black text-lg prose-p:m-0">
+      <article class="text-black text-lg prose-p:m-0 flex flex-col-reverse sm:block">
         <img
           src="/assets/me.jpg"
           alt="Portrait of Andrew Vu"
-          class="float-right mt-0 ml-4 mb-4 w-48 sm:w-52 md:w-60 lg:w-64 object-cover"
+          class="mt-4 mx-auto w-40 max-w-full object-cover sm:float-right sm:mt-0 sm:ml-4 sm:mb-4 sm:mx-0 sm:w-52 md:w-60 lg:w-64"
           loading="eager"
         />
         <div class="flex flex-col gap-4">
@@ -36,12 +36,17 @@
     {% endcall %}
     {% call fieldset("cat ~/random.md") %}
       <div class="flex flex-col gap-3">
-        <p class="text-lg m-0">small side quests and fun pages</p>
-        <div class="flex flex-wrap gap-2">
-          {% call button("/random/travel", "w-32") %}
+        <div class="flex flex-col gap-1">
+          <p class="text-base m-0">My life motto</p>
+          <p class="text-lg italic m-0">
+            "Let the weather be the weather" - some redditor in r/stoicism
+          </p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+          {% call button("/random/travel", "w-full h-9 text-base font-bold me-0 !justify-start") %}
             <span>Travel</span>
           {% endcall %}
-          {% call button("/random/music", "w-32") %}
+          {% call button("/random/music", "w-full h-9 text-base font-bold me-0 !justify-start") %}
             <span>Music</span>
           {% endcall %}
         </div>
@@ -49,7 +54,7 @@
     {% endcall %}
     {% call fieldset("cat ~/experience.md") %}
       <div class="text-black text-lg">
-        <p class="m-0">A few places I've worked and built things.</p>
+        <!-- <p class="m-0">A few places I've worked and built things.</p> -->
         <div class="flex flex-col gap-4 mt-4">
           <div class="border border-black/30 p-3">
             <div class="flex items-start gap-3">
@@ -232,23 +237,23 @@
         <p class="text-sm mt-1">Current visits as of 03/29/2026.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <a
-            href="https://www.roblox.com/games/102004471989393/Make-a-Military-Army"
+            href="https://www.roblox.com/games/8549047195/Anime-Warriors-Simulator"
             class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
             <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
               <img
-                src="/assets/games/make-a-military-army.jpg"
-                alt="Make a Military Army thumbnail"
+                src="/assets/games/anime-warriors-simulator.jpg"
+                alt="Anime Warriors Simulator thumbnail"
                 class="!w-full !h-full object-cover"
                 loading="lazy"
               />
             </div>
             <div class="p-3">
               <p class="font-semibold leading-tight text-base m-0">
-                Make a Military Army!
+                Anime Warriors Simulator
               </p>
-              <p class="text-sm mt-1 m-0">Created 09/18/2025</p>
-              <p class="text-sm mt-1 m-0">Visits 4,364,561</p>
+              <p class="text-sm mt-1 m-0">Created 01/15/2022</p>
+              <p class="text-sm mt-1 m-0">Visits 57,170,413</p>
             </div>
           </a>
           <a
@@ -272,23 +277,23 @@
             </div>
           </a>
           <a
-            href="https://www.roblox.com/games/8549047195/Anime-Warriors-Simulator"
+            href="https://www.roblox.com/games/5991118999/Mowing-Masters-Simulator"
             class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
             <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
               <img
-                src="/assets/games/anime-warriors-simulator.jpg"
-                alt="Anime Warriors Simulator thumbnail"
+                src="/assets/games/mowing-masters-simulator.jpg"
+                alt="Mowing Masters Simulator thumbnail"
                 class="!w-full !h-full object-cover"
                 loading="lazy"
               />
             </div>
             <div class="p-3">
               <p class="font-semibold leading-tight text-base m-0">
-                Anime Warriors Simulator
+                Mowing Masters! Simulator
               </p>
-              <p class="text-sm mt-1 m-0">Created 01/15/2022</p>
-              <p class="text-sm mt-1 m-0">Visits 57,170,413</p>
+              <p class="text-sm mt-1 m-0">Created 11/23/2020</p>
+              <p class="text-sm mt-1 m-0">Visits 27,920,282</p>
             </div>
           </a>
           <a
@@ -312,23 +317,23 @@
             </div>
           </a>
           <a
-            href="https://www.roblox.com/games/5991118999/Mowing-Masters-Simulator"
+            href="https://www.roblox.com/games/102004471989393/Make-a-Military-Army"
             class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
             <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
               <img
-                src="/assets/games/mowing-masters-simulator.jpg"
-                alt="Mowing Masters Simulator thumbnail"
+                src="/assets/games/make-a-military-army.jpg"
+                alt="Make a Military Army thumbnail"
                 class="!w-full !h-full object-cover"
                 loading="lazy"
               />
             </div>
             <div class="p-3">
               <p class="font-semibold leading-tight text-base m-0">
-                Mowing Masters! Simulator
+                Make a Military Army!
               </p>
-              <p class="text-sm mt-1 m-0">Created 11/23/2020</p>
-              <p class="text-sm mt-1 m-0">Visits 27,920,282</p>
+              <p class="text-sm mt-1 m-0">Created 09/18/2025</p>
+              <p class="text-sm mt-1 m-0">Visits 4,364,561</p>
             </div>
           </a>
         </div>
