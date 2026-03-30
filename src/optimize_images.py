@@ -2,8 +2,12 @@
 
 import os
 import subprocess
-from threading import Thread
+from threading import Thread, Lock
 from glob import glob
+
+
+successful_conversions = []
+lock = Lock()
 
 
 def is_img(fname: str):
@@ -17,21 +21,31 @@ def optimized_name(fname: str):
 
 def optimize_image(fname: str):
     outname = optimized_name(fname)
-    subprocess.run(["cwebp", "-q", "80", fname, "-o", outname, "-quiet"], check=True)
+    result = subprocess.run(["cwebp", "-q", "80", fname, "-o", outname, "-quiet"])
+
+    if result.returncode != 0:
+        print(f"Skipped {fname} (cwebp failed)")
+        return
 
     os.remove(fname)
+
+    with lock:
+        successful_conversions.append(os.path.basename(fname))
 
     print(f"Optimized {fname}")
 
 
 imgs = [f for f in glob("dist/assets/**/*", recursive=True) if is_img(f)]
-threads = []
+img_threads = []
 
 for img in imgs:
     t = Thread(target=optimize_image, args=(img,))
     t.start()
+    img_threads.append(t)
 
-    threads.append(t)
+# Wait for all image conversions to complete
+for t in img_threads:
+    t.join()
 
 
 def replace_in_html(html: str, img_basenames: list):
@@ -47,14 +61,14 @@ def replace_in_html(html: str, img_basenames: list):
     print(f"Replaced in {html}")
 
 
+# Only replace references for successfully converted images
 htmls = [f for f in glob("dist/**/*.html", recursive=True)]
-img_basenames = [os.path.basename(img) for img in imgs]
+html_threads = []
 
 for html in htmls:
-    t = Thread(target=replace_in_html, args=(html, img_basenames))
+    t = Thread(target=replace_in_html, args=(html, successful_conversions))
     t.start()
+    html_threads.append(t)
 
-    threads.append(t)
-
-for t in threads:
+for t in html_threads:
     t.join()
