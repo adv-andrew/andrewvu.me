@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% from "components/fieldset.html" import fieldset %}
+{% from "components/button.html" import button %}
 
 {% block content %}
   <div class="flex flex-col gap-4">
@@ -14,32 +15,210 @@
         />
         <div class="flex flex-col gap-4">
           <p>
-            Hii!! I'm Andy, a CS student at UF and Roblox game developer 
+            Hii!! I'm Andy, a CS student at UF and Roblox game developer
             (you've probably played one of my games before)
           </p>
           <p>
-            Most of my time goes into software, game development, trying out the trendiest ai tools
-            (cough...openclaw...)
-            , and building whatever idea I've convinced myself "will only take a
-            weekend"
+            Most of my time goes into software, game development, trying out
+            the trendiest ai tools (cough...openclaw...), and building whatever
+            idea I've convinced myself "will only take a weekend"
           </p>
           <p>
             When I'm not working on something, I'm probably rock climbing,
             hiking, playing video games, or a late night walk (and snack)
           </p>
-          <p> 
+          <p>
             Feel free to reach out to me on LinkedIn!
           </p>
         </div>
         <div class="clear-right"></div>
       </article>
     {% endcall %}
+    {% call fieldset("cat ~/experience.md") %}
+      <div class="text-black text-lg">
+        <p class="m-0">A few places I've worked and built things.</p>
+        <div class="flex flex-col gap-4 mt-4">
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/nvidia.png"
+                alt="NVIDIA logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <div>
+                    <p class="font-semibold text-base m-0">NVIDIA</p>
+                    <p class="text-sm m-0">Solutions Architect Intern</p>
+                  </div>
+                  <p class="text-sm m-0">05/2026 - ???</p>
+                </div>
+                <p class="text-xs opacity-60 mt-1 m-0">Santa Clara, California</p>
+              </div>
+            </div>
+          </div>
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/adtran.png"
+                alt="Adtran logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-base m-0">Adtran</p>
+                <div class="mt-3 pt-3 border-t border-black/30">
+                  <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <div>
+                      <p class="text-sm font-semibold m-0">
+                        Software Engineer Intern, Part-time
+                      </p>
+                      <p class="text-sm mt-1 m-0">Technical Documentation Team</p>
+                    </div>
+                    <p class="text-sm m-0">08/2025 - present</p>
+                  </div>
+                  <p class="text-xs opacity-60 mt-1 m-0">Remote</p>
+                </div>
+                <div class="mt-3 pt-3 border-t border-black/30">
+                  <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <div>
+                      <p class="text-sm font-semibold m-0">
+                        Software Engineer Intern
+                      </p>
+                      <p class="text-sm mt-1 m-0">Technical Documentation Team</p>
+                    </div>
+                    <p class="text-sm m-0">05/2025 - 08/2025</p>
+                  </div>
+                  <p class="text-xs opacity-60 mt-1 m-0">Atlanta, Georgia, On-site</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/gatorai.png"
+                alt="GatorAI logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <div>
+                    <p class="font-semibold text-base m-0">GatorAI</p>
+                    <p class="text-sm m-0">Applied Tech Lead</p>
+                  </div>
+                  <p class="text-sm m-0">04/2025 - present</p>
+                </div>
+                <p class="text-xs opacity-60 mt-1 m-0">Gainesville, Florida</p>
+                <p class="text-sm mt-1 m-0">
+                  Managing 13 AI/ML projects end-to-end
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/vuplay.png"
+                alt="VuPlay logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <div>
+                    <p class="font-semibold text-base m-0">VuPlay Creative LLC</p>
+                    <p class="text-sm m-0">Founder</p>
+                  </div>
+                  <p class="text-sm m-0">12/2021 - present</p>
+                </div>
+                <p class="text-xs opacity-60 mt-1 m-0">Orlando, Florida, Hybrid</p>
+                <p class="text-sm mt-1 m-0">
+                  Launched 5 Roblox games, 145+ million plays
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/ucf.png"
+                alt="UCF logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <div>
+                    <p class="font-semibold text-base m-0">
+                      University of Central Florida
+                    </p>
+                    <p class="text-sm m-0">Machine Learning Research Assistant</p>
+                  </div>
+                  <p class="text-sm m-0">09/2023 - 05/2024</p>
+                </div>
+                <p class="text-xs opacity-60 mt-1 m-0">Orlando, Florida, Hybrid</p>
+                <p class="text-sm mt-1 m-0">Photovoltaic anomaly detection</p>
+              </div>
+            </div>
+          </div>
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/roblox.svg"
+                alt="Roblox logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-2 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <div>
+                    <p class="font-semibold text-base m-0">Roblox</p>
+                    <p class="text-sm m-0">
+                      Game Developer, Roblox Developer Conference 2022
+                    </p>
+                  </div>
+                  <p class="text-sm m-0">09/2022</p>
+                </div>
+                <p class="text-xs opacity-60 mt-1 m-0">San Francisco, California, On-site</p>
+                <p class="text-sm mt-1 m-0">
+                  Invite-only conference for top Roblox developers and creators.
+                  82 million plays at the time
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="border border-black/30 p-3">
+            <div class="flex items-start gap-3">
+              <img
+                src="/assets/experience/gamefam.png"
+                alt="Gamefam logo"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <div>
+                    <p class="font-semibold text-base m-0">Gamefam</p>
+                    <p class="text-sm m-0">Project Manager and Developer</p>
+                  </div>
+                  <p class="text-sm m-0">02/2021 - 05/2021</p>
+                </div>
+                <p class="text-xs opacity-60 mt-1 m-0">Los Angeles, California, Remote</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endcall %}
     {% call fieldset("ls ~/projects") %}
       {{ lists["projects"]|safe }}
     {% endcall %}
     {% call fieldset("cat ~/roblox-games.md") %}
       <div class="text-black text-lg">
-        <p>Games I made as a Roblox developer.</p>
+        <p>my games :D</p>
         <p class="text-sm mt-1">Current visits as of 03/29/2026.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <a
@@ -147,12 +326,32 @@
     {% endcall %}
     {% call fieldset("cat ~/links.md") %}
       <article>
-        Cool people and places on the internet
+        links!
         <ul>
           <li><a href="https://github.com/adv-andrew">GitHub</a></li>
           <li><a href="https://www.linkedin.com/in/adv-andrew-d-vu/">LinkedIn</a></li>
           <li><a href="https://x.com/iStaridium">X</a></li>
           <li><a href="https://www.roblox.com/users/96753261/profile">Roblox</a></li>
+        </ul>
+      </article>
+    {% endcall %}
+    {% call fieldset("cat ~/random.md") %}
+      <div class="flex flex-col gap-3">
+        <p class="text-lg m-0">small side quests and fun pages</p>
+        <div class="flex flex-wrap gap-2">
+          {% call button("/random/travel", "w-32") %}
+            <span>Travel</span>
+          {% endcall %}
+        </div>
+      </div>
+    {% endcall %}
+    {% call fieldset("cat ~/friends.md") %}
+      <article>
+        cool friends
+        <ul>
+          <li><a href="https://matheus.wiki/">Matheus Maldaner</a></li>
+          <li><a href="https://www.awangyisu.com/">Alexander Wang</a></li>
+          <li><a href="https://www.dvidal.dev/">Dylan Vidal</a></li>
         </ul>
       </article>
     {% endcall %}

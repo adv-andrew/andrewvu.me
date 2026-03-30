@@ -59,6 +59,17 @@ def write_output(content, *path):
         f.write(content)
 
 
+def render_template(template_name, **context):
+    template = env.get_template(template_name)
+    rendered = template.render(**context)
+    soup = bs(rendered)
+
+    for img_tag in soup.find_all("img"):
+        img_tag_rule(img_tag)
+
+    return soup
+
+
 make_html: mistune.Markdown = mistune.create_markdown(
     escape=False,
     plugins=["strikethrough", "footnotes", "table", "speedup", "math"],
@@ -206,13 +217,32 @@ og = og_tags(
 twitter = twitter_tags({**seo_common, "card": "summary"})
 seotags = og + twitter
 
-index = env.get_template("index.html")
-rendered = index.render(lists=lists, name=name, title=name)
-soup = bs(rendered)
+index_soup = render_template("index.html", lists=lists, name=name, title=name)
 for item in seotags:
-    soup.head.append(bs(item))
+    index_soup.head.append(bs(item))
 
-for img_tag in soup.find_all("img"):
-    img_tag_rule(img_tag)
+write_output(index_soup.encode_contents().decode("utf-8"), "index.html")
 
-write_output(soup.encode_contents().decode("utf-8"), "index.html")
+custom_pages = [
+    {
+        "template": "random/travel.html",
+        "output": ("random", "travel.html"),
+        "title": f"{name} | Travel",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/random/travel"),
+            "title": f"{name} | Travel",
+            "description": f"{name}'s travel map and bucket list",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    }
+]
+
+for page in custom_pages:
+    soup = render_template(page["template"], name=name, title=page["title"])
+    page_tags = og_tags({**page["seo"], "type": "website"}) + twitter_tags(page["seo"])
+
+    for item in page_tags:
+        soup.head.append(bs(item))
+
+    write_output(soup.encode_contents().decode("utf-8"), *page["output"])

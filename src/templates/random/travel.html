@@ -1,0 +1,698 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+
+{% block head_extra %}
+  <style>
+    .travel-shell {
+      overflow: hidden;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.24);
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .travel-stage {
+      position: relative;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.025) 0,
+          rgba(0, 0, 0, 0.025) 1px,
+          transparent 1px,
+          transparent 18px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.025) 0,
+          rgba(0, 0, 0, 0.025) 1px,
+          transparent 1px,
+          transparent 18px
+        ),
+        #ffffff;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .travel-stage:active {
+      cursor: grabbing;
+    }
+
+    .globe-canvas {
+      width: min(72vw, 560px);
+      max-width: 100%;
+      aspect-ratio: 1;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.12));
+    }
+
+    .travel-hud {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      padding: 0.55rem 0.7rem;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08);
+    }
+
+    .travel-legend {
+      position: absolute;
+      left: 1rem;
+      bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      padding: 0.7rem 0.8rem;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+    }
+
+    .travel-tooltip {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+      transform: translate(-50%, calc(-100% - 14px));
+      padding: 0.4rem 0.55rem;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(0, 0, 0, 0.22);
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.08);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 120ms ease;
+    }
+
+    .travel-tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .travel-legend-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .legend-check {
+      width: 14px;
+      height: 14px;
+      background: #1ca34b;
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .legend-pin {
+      position: relative;
+      width: 12px;
+      height: 12px;
+      background: #d7263d;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .legend-pin::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 2px;
+      height: 10px;
+      margin-left: -1px;
+      background: #7c1320;
+    }
+
+    .travel-marquee {
+      overflow: hidden;
+      border-top: 1px solid rgba(0, 0, 0, 0.14);
+      background: #ffffff;
+    }
+
+    .travel-track {
+      display: flex;
+      width: max-content;
+      gap: 1rem;
+      padding: 1rem;
+      animation: travel-scroll 40s linear infinite;
+    }
+
+    .travel-card {
+      width: 260px;
+      flex: 0 0 auto;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      background: #ffffff;
+      padding: 0.75rem;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .travel-card img {
+      width: 100%;
+      height: 176px;
+      object-fit: cover;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      margin: 0;
+    }
+
+    .travel-card p {
+      margin: 0.65rem 0 0;
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    @keyframes travel-scroll {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .travel-stage {
+        min-height: 320px;
+        padding: 0.5rem;
+      }
+
+      .globe-canvas {
+        width: min(82vw, 420px);
+      }
+
+      .travel-card {
+        width: 220px;
+      }
+
+      .travel-card img {
+        height: 150px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    {% call fieldset("cat ~/random/travel.md") %}
+      <div class="travel-shell">
+        <div class="travel-stage" id="travel-globe-wrap">
+          <canvas
+            id="travel-globe"
+            class="globe-canvas"
+            width="420"
+            height="420"
+          ></canvas>
+
+          <div class="travel-tooltip" id="travel-tooltip"></div>
+
+          <div class="travel-hud">
+            <div>travel.exe</div>
+            <div>drag to rotate</div>
+            <div>start: united states</div>
+            <div>wheel or pinch to zoom</div>
+          </div>
+
+          <div class="travel-legend">
+            <div class="travel-legend-row">
+              <span class="legend-check">v</span>
+              <span>been there</span>
+            </div>
+            <div class="travel-legend-row">
+              <span class="legend-pin"></span>
+              <span>bucket list</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="travel-marquee">
+          <div class="travel-track">
+            <div class="travel-card">
+              <img src="/assets/travel/da nang vietnam.jpg" alt="Da Nang Vietnam" />
+              <p>Da Nang, Vietnam</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/hanoi vietnam.jpg" alt="Hanoi Vietnam" />
+              <p>Hanoi, Vietnam</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/minnesota.jpg" alt="Minnesota" />
+              <p>Mankato, Minnesota</p>
+            </div>
+            <div class="travel-card">
+              <img
+                src="/assets/travel/new symrna beach florida.jpg"
+                alt="New Smyrna Beach Florida"
+              />
+              <p>New Smyrna Beach, Florida</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/new york city.jpg" alt="New York City" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/nyc again.jpg" alt="NYC again" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/nyc againnnn.jpg" alt="NYC againnnn" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/nyc.jpg" alt="NYC" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img
+                src="/assets/travel/sapphire north carolina.jpg"
+                alt="Sapphire North Carolina"
+              />
+              <p>Sapphire, North Carolina</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/SLC utah.jpg" alt="SLC Utah" />
+              <p>Salt Lake City, Utah</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/tokyo japan.jpg" alt="Tokyo Japan" />
+              <p>Tokyo, Japan</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/da nang vietnam.jpg" alt="Da Nang Vietnam" />
+              <p>Da Nang, Vietnam</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/hanoi vietnam.jpg" alt="Hanoi Vietnam" />
+              <p>Hanoi, Vietnam</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/minnesota.jpg" alt="Minnesota" />
+              <p>Mankato, Minnesota</p>
+            </div>
+            <div class="travel-card">
+              <img
+                src="/assets/travel/new symrna beach florida.jpg"
+                alt="New Smyrna Beach Florida"
+              />
+              <p>New Smyrna Beach, Florida</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/new york city.jpg" alt="New York City" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/nyc again.jpg" alt="NYC again" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/nyc againnnn.jpg" alt="NYC againnnn" />
+              <p>New York City</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/nyc.jpg" alt="NYC" />
+              <p>NYC</p>
+            </div>
+            <div class="travel-card">
+              <img
+                src="/assets/travel/sapphire north carolina.jpg"
+                alt="Sapphire North Carolina"
+              />
+              <p>Sapphire, North Carolina</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/SLC utah.jpg" alt="SLC Utah" />
+              <p>Salt Lake City, Utah</p>
+            </div>
+            <div class="travel-card">
+              <img src="/assets/travel/tokyo japan.jpg" alt="Tokyo Japan" />
+              <p>Tokyo, Japan</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endcall %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script>
+    (() => {
+      const wrap = document.getElementById("travel-globe-wrap");
+      const canvas = document.getElementById("travel-globe");
+      const tooltip = document.getElementById("travel-tooltip");
+      const ctx = canvas.getContext("2d");
+
+      const visited = [
+        { name: "New York City", coords: [-74.006, 40.7128], kind: "visited" },
+        { name: "Kyoto", coords: [135.7681, 35.0116], kind: "visited" },
+        { name: "Osaka", coords: [135.5023, 34.6937], kind: "visited" },
+        { name: "Tokyo", coords: [139.6917, 35.6895], kind: "visited" },
+        { name: "Seoul", coords: [126.978, 37.5665], kind: "visited" },
+        { name: "Seattle", coords: [-122.3321, 47.6062], kind: "visited" },
+        { name: "Washington, D.C.", coords: [-77.0369, 38.9072], kind: "visited" },
+        { name: "Orlando", coords: [-81.3792, 28.5383], kind: "visited" },
+        { name: "Gainesville", coords: [-82.3248, 29.6516], kind: "visited" },
+        { name: "Tampa", coords: [-82.4572, 27.9506], kind: "visited" },
+        { name: "St. Augustine", coords: [-81.3124, 29.9012], kind: "visited" },
+        { name: "Cocoa Beach", coords: [-80.6081, 28.3200], kind: "visited" },
+        { name: "Atlanta", coords: [-84.388, 33.749], kind: "visited" },
+        { name: "Philadelphia", coords: [-75.1652, 39.9526], kind: "visited" },
+        { name: "Salt Lake City", coords: [-111.891, 40.7608], kind: "visited" },
+        { name: "Sapphire", coords: [-83.004, 35.1112], kind: "visited" },
+        { name: "Savannah", coords: [-81.0912, 32.0809], kind: "visited" },
+        { name: "Mankato", coords: [-93.9994, 44.1636], kind: "visited" },
+        { name: "Singapore", coords: [103.8198, 1.3521], kind: "visited" },
+        { name: "Hanoi", coords: [105.8342, 21.0278], kind: "visited" },
+        { name: "Da Nang", coords: [108.2022, 16.0544], kind: "visited" },
+        { name: "Ho Chi Minh City", coords: [106.6297, 10.8231], kind: "visited" }
+      ];
+
+      const wishlist = [
+        { name: "Denmark", coords: [10.0, 56.0], kind: "wishlist" },
+        { name: "Berlin", coords: [13.405, 52.52], kind: "wishlist" },
+        { name: "Italy", coords: [12.5, 42.8], kind: "wishlist" },
+        { name: "Los Angeles", coords: [-118.2437, 34.0522], kind: "wishlist" },
+        { name: "Shanghai", coords: [121.4737, 31.2304], kind: "wishlist" },
+        { name: "Beijing", coords: [116.4074, 39.9042], kind: "wishlist" },
+        { name: "New Zealand", coords: [172.0, -41.0], kind: "wishlist" },
+        { name: "Sweden", coords: [15.0, 62.0], kind: "wishlist" },
+        { name: "Oregon", coords: [-120.5542, 43.8041], kind: "wishlist" },
+        { name: "Guatemala", coords: [-90.2308, 15.7835], kind: "wishlist" },
+        { name: "Thailand", coords: [100.9925, 15.87], kind: "wishlist" },
+        { name: "Toronto", coords: [-79.3832, 43.6532], kind: "wishlist" }
+      ];
+
+      const projection = d3
+        .geoOrthographic()
+        .translate([canvas.width / 2, canvas.height / 2])
+        .scale(canvas.width * 0.41)
+        .clipAngle(90)
+        .precision(0.3)
+        .rotate([98, -39]);
+
+      const path = d3.geoPath(projection, ctx);
+      const graticule = d3.geoGraticule10();
+      const sphere = { type: "Sphere" };
+      const markers = [...wishlist, ...visited];
+      const pointerMap = new Map();
+      const baseScale = canvas.width * 0.41;
+      const minScale = canvas.width * 0.28;
+      const maxScale = canvas.width * 0.68;
+
+      let countries = null;
+      let isDragging = false;
+      let dragStart = null;
+      let rotationStart = projection.rotate().slice();
+      let autoSpin = true;
+      let autoSpinTimer = null;
+      let hoveredMarker = null;
+      let hoveredPoint = null;
+      let pinchStartDistance = null;
+      let pinchStartScale = projection.scale();
+
+      function setTooltip(marker, point) {
+        if (!marker || !point) {
+          tooltip.classList.remove("is-visible");
+          hoveredMarker = null;
+          hoveredPoint = null;
+          return;
+        }
+
+        hoveredMarker = marker;
+        hoveredPoint = point;
+        tooltip.textContent = marker.name;
+        tooltip.style.left = `${point[0]}px`;
+        tooltip.style.top = `${point[1]}px`;
+        tooltip.classList.add("is-visible");
+      }
+
+      function clampScale(nextScale) {
+        return Math.max(minScale, Math.min(maxScale, nextScale));
+      }
+
+      function scheduleAutoSpin() {
+        if (autoSpinTimer) {
+          clearTimeout(autoSpinTimer);
+        }
+
+        autoSpinTimer = setTimeout(() => {
+          if (!isDragging && pointerMap.size === 0) {
+            autoSpin = true;
+          }
+        }, 5000);
+      }
+
+      function markInteraction() {
+        autoSpin = false;
+        scheduleAutoSpin();
+      }
+
+      function distanceBetweenPointers() {
+        const points = [...pointerMap.values()];
+        if (points.length < 2) {
+          return null;
+        }
+
+        const dx = points[0].x - points[1].x;
+        const dy = points[0].y - points[1].y;
+        return Math.hypot(dx, dy);
+      }
+
+      function zoomBy(factor) {
+        projection.scale(clampScale(projection.scale() * factor));
+        draw();
+      }
+
+      function getVisiblePoint(marker) {
+        const point = projection(marker.coords);
+        if (!point) {
+          return null;
+        }
+
+        const center = projection.invert(point);
+        if (!center) {
+          return null;
+        }
+
+        const visible = d3.geoDistance(center, marker.coords) < Math.PI / 2;
+        return visible ? point : null;
+      }
+
+      function findMarkerAtPoint(x, y) {
+        for (const marker of markers) {
+          const point = getVisiblePoint(marker);
+          if (!point) {
+            continue;
+          }
+
+          const hitRadius = marker.kind === "visited" ? 10 : 12;
+          if (Math.hypot(point[0] - x, point[1] - y) <= hitRadius) {
+            return { marker, point };
+          }
+        }
+
+        return null;
+      }
+
+      function drawPixelCheck(x, y) {
+        ctx.save();
+        ctx.translate(Math.round(x), Math.round(y));
+        ctx.fillStyle = "#1ca34b";
+        ctx.fillRect(-7, -7, 14, 14);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(-4, 0, 2, 2);
+        ctx.fillRect(-2, 2, 2, 2);
+        ctx.fillRect(0, 0, 2, 2);
+        ctx.fillRect(2, -2, 2, 2);
+        ctx.fillRect(4, -4, 2, 2);
+        ctx.restore();
+      }
+
+      function drawPushPin(x, y) {
+        ctx.save();
+        ctx.translate(Math.round(x), Math.round(y));
+        ctx.fillStyle = "#d7263d";
+        ctx.beginPath();
+        ctx.arc(0, -4, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#7c1320";
+        ctx.fillRect(-1, 2, 2, 10);
+        ctx.restore();
+      }
+
+      function drawMarker(marker) {
+        const point = getVisiblePoint(marker);
+        if (!point) {
+          return;
+        }
+
+        if (marker.kind === "visited") {
+          drawPixelCheck(point[0], point[1]);
+        } else {
+          drawPushPin(point[0], point[1] - 2);
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        path(sphere);
+        ctx.clip();
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.025)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (countries) {
+          ctx.beginPath();
+          path(countries);
+          ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+          ctx.fill();
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.16)";
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        path(graticule);
+        ctx.lineWidth = 0.55;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.12)";
+        ctx.stroke();
+
+        markers.forEach(drawMarker);
+        ctx.restore();
+
+        ctx.beginPath();
+        path(sphere);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        ctx.stroke();
+
+        if (hoveredMarker) {
+          const point = getVisiblePoint(hoveredMarker);
+          if (point) {
+            setTooltip(hoveredMarker, point);
+          } else {
+            setTooltip(null, null);
+          }
+        }
+      }
+
+      function animate() {
+        if (autoSpin && !isDragging) {
+          const [lambda, phi, gamma] = projection.rotate();
+          projection.rotate([lambda - 0.07, phi, gamma]);
+        }
+
+        draw();
+        requestAnimationFrame(animate);
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        pointerMap.set(event.pointerId, { x: event.offsetX, y: event.offsetY });
+        isDragging = true;
+        markInteraction();
+        dragStart = [event.clientX, event.clientY];
+        rotationStart = projection.rotate().slice();
+        canvas.setPointerCapture(event.pointerId);
+
+        if (pointerMap.size === 2) {
+          pinchStartDistance = distanceBetweenPointers();
+          pinchStartScale = projection.scale();
+          isDragging = false;
+          dragStart = null;
+        }
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        pointerMap.set(event.pointerId, { x: event.offsetX, y: event.offsetY });
+
+        if (pointerMap.size >= 2) {
+          markInteraction();
+          const currentDistance = distanceBetweenPointers();
+          if (pinchStartDistance && currentDistance) {
+            projection.scale(
+              clampScale(pinchStartScale * (currentDistance / pinchStartDistance))
+            );
+            draw();
+          }
+          return;
+        }
+
+        if (isDragging && dragStart) {
+          markInteraction();
+          const dx = event.clientX - dragStart[0];
+          const dy = event.clientY - dragStart[1];
+          projection.rotate([
+            rotationStart[0] + dx * 0.35,
+            Math.max(-65, Math.min(65, rotationStart[1] - dy * 0.35)),
+            rotationStart[2]
+          ]);
+          draw();
+          return;
+        }
+
+        const hit = findMarkerAtPoint(event.offsetX, event.offsetY);
+        if (hit) {
+          setTooltip(hit.marker, hit.point);
+        } else {
+          setTooltip(null, null);
+        }
+      });
+
+      function stopDragging(event) {
+        pointerMap.delete(event.pointerId);
+        isDragging = false;
+        dragStart = null;
+        if (pointerMap.size < 2) {
+          pinchStartDistance = null;
+          pinchStartScale = projection.scale();
+        }
+        scheduleAutoSpin();
+      }
+
+      canvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        markInteraction();
+        zoomBy(event.deltaY > 0 ? 0.94 : 1.06);
+      });
+
+      canvas.addEventListener("pointerup", stopDragging);
+      canvas.addEventListener("pointercancel", stopDragging);
+      canvas.addEventListener("pointerleave", (event) => {
+        if (!isDragging) {
+          setTooltip(null, null);
+        }
+        stopDragging(event);
+      });
+
+      fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+        .then((response) => response.json())
+        .then((world) => {
+          countries = topojson.feature(world, world.objects.countries);
+          draw();
+        })
+        .catch(() => {
+          draw();
+        });
+
+      animate();
+    })();
+  </script>
+{% endblock %}
