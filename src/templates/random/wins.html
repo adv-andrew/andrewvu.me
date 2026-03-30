@@ -257,7 +257,27 @@
 
     @media (max-width: 560px) {
       .case-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .case-slot {
+        min-height: 200px;
+      }
+
+      .trophy {
+        transform: scale(0.85);
+      }
+
+      .trophy-plaque {
+        padding: 0.5rem;
+      }
+
+      .trophy-title {
+        font-size: 0.85rem;
+      }
+
+      .trophy-meta {
+        font-size: 0.65rem;
       }
     }
   </style>
