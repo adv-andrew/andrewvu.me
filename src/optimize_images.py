@@ -24,7 +24,7 @@ def optimize_image(fname: str):
     print(f"Optimized {fname}")
 
 
-imgs = [f for f in glob("dist/assets/*", recursive=True) if is_img(f)]
+imgs = [f for f in glob("dist/assets/**/*", recursive=True) if is_img(f)]
 threads = []
 
 for img in imgs:
