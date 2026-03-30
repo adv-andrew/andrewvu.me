@@ -235,6 +235,18 @@ custom_pages = [
             "description": f"{name}'s travel map and bucket list",
             "image": urljoin(url, "/assets/me.jpg"),
         },
+    },
+    {
+        "template": "random/music.html",
+        "output": ("random", "music.html"),
+        "title": f"{name} | Music",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/random/music"),
+            "title": f"{name} | Music",
+            "description": f"{name}'s bouncing album cover wall",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
     }
 ]
 

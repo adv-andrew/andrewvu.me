@@ -1,0 +1,638 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+
+{% block head_extra %}
+  <style>
+    .music-shell {
+      overflow: hidden;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.24);
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .music-stage {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      min-height: 320px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.05) 0,
+          rgba(255, 255, 255, 0.05) 1px,
+          transparent 1px,
+          transparent 18px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.05) 0,
+          rgba(255, 255, 255, 0.05) 1px,
+          transparent 1px,
+          transparent 18px
+        ),
+        #050505;
+      cursor: pointer;
+    }
+
+    .music-stage.is-paused {
+      cursor: default;
+    }
+
+    .music-hud {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 10;
+      padding: 0.6rem 0.75rem;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      line-height: 1.45;
+    }
+
+    .music-hover {
+      position: absolute;
+      left: 1rem;
+      bottom: 1rem;
+      z-index: 10;
+      min-width: 220px;
+      max-width: min(340px, calc(100% - 2rem));
+      padding: 0.7rem 0.8rem;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .music-hover p {
+      margin: 0;
+    }
+
+    .music-hover .music-hover-label {
+      font-size: 0.72rem;
+      opacity: 0.6;
+      margin-bottom: 0.28rem;
+    }
+
+    .music-hover .music-hover-title {
+      font-size: 0.95rem;
+      line-height: 1.25;
+      font-weight: 600;
+    }
+
+    .music-hover .music-hover-artist {
+      margin-top: 0.22rem;
+      font-size: 0.82rem;
+      opacity: 0.75;
+    }
+
+    .music-sprite {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 90px;
+      height: 90px;
+      user-select: none;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 14px 24px rgba(0, 0, 0, 0.32);
+      overflow: hidden;
+      background: #111111;
+      transition: transform 120ms ease, border-color 120ms ease;
+      will-change: transform;
+    }
+
+    .music-sprite:hover {
+      border-color: rgba(255, 255, 255, 0.95);
+      transform: scale(1.06);
+      z-index: 5;
+    }
+
+    .music-sprite img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .music-shelf {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      padding: 1rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.14);
+      background: #ffffff;
+    }
+
+    .music-shelf-item {
+      padding: 0.7rem 0.8rem;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .music-shelf-item p {
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .music-shelf-item .music-shelf-title {
+      font-size: 0.94rem;
+      font-weight: 600;
+    }
+
+    .music-shelf-item .music-shelf-artist {
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+      opacity: 0.68;
+    }
+
+    @media (max-width: 900px) {
+      .music-stage {
+        min-height: 240px;
+      }
+
+      .music-hud {
+        top: 0.65rem;
+        left: 0.65rem;
+      }
+
+      .music-hover {
+        left: 0.65rem;
+        bottom: 0.65rem;
+        min-width: 0;
+      }
+
+      .music-sprite {
+        width: 72px;
+        height: 72px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    {% call fieldset("cat ~/random/music.md") %}
+      <div class="music-shell">
+        <div class="music-stage" id="music-stage">
+          <div class="music-hud">
+            <div>music.exe</div>
+            <div>click stage: pause/resume</div>
+            <div>corner hits: <span id="music-corners">0</span></div>
+          </div>
+
+          <div class="music-hover">
+            <p class="music-hover-label">now hovering</p>
+            <p class="music-hover-title" id="music-hover-title">Views</p>
+            <p class="music-hover-artist" id="music-hover-artist">Drake</p>
+          </div>
+        </div>
+
+        <div class="music-shelf" id="music-shelf"></div>
+      </div>
+    {% endcall %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (() => {
+      const albums = [
+        {
+          artist: "Drake",
+          title: "Views",
+          image: "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Drake",
+          title: "Take Care",
+          image: "https://cdn-images.dzcdn.net/images/cover/6e7a6c8f36669dcd11abe7e7c3222e91/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Drake",
+          title: "Certified Lover Boy",
+          image: "https://cdn-images.dzcdn.net/images/cover/ea8f80f2edb20885ac8aed8751716794/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Drake",
+          title: "More Life",
+          image: "https://cdn-images.dzcdn.net/images/cover/8f0187ad83cdd1f47f1c55420f9df227/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Frank Ocean",
+          title: "Blonde",
+          image: "https://cdn-images.dzcdn.net/images/cover/aa7e6de00b0810f5051aa60b489f58d8/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Frank Ocean",
+          title: "channel ORANGE",
+          image: "https://cdn-images.dzcdn.net/images/cover/519400e29d268f449cf00af879e71af6/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Daniel Caesar",
+          title: "NEVER ENOUGH",
+          image: "https://cdn-images.dzcdn.net/images/cover/0d571082af7c78114321031d7f84d331/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Daniel Caesar",
+          title: "Freudian",
+          image: "https://cdn-images.dzcdn.net/images/cover/282e45bef1995c2c6f2901e34c4ab560/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Daniel Caesar",
+          title: "CASE STUDY 01",
+          image: "https://cdn-images.dzcdn.net/images/cover/c32f7865d203fa246bd2c19635153d2c/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Kanye West",
+          title: "Graduation",
+          image: "https://cdn-images.dzcdn.net/images/cover/8c6578a2099561992fb7544e6826f767/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Kanye West",
+          title: "The College Dropout",
+          image: "https://cdn-images.dzcdn.net/images/cover/069a5dba671436da9301aad36fc9a983/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Kanye West",
+          title: "The Life Of Pablo",
+          image: "https://cdn-images.dzcdn.net/images/cover/e055ecc8d01680cda0460017087728be/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Mk.gee",
+          title: "Two Star & The Dream Police",
+          image: "https://cdn-images.dzcdn.net/images/cover/bad5645e8c13a579a5bba9263c3a522a/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Joji",
+          title: "BALLADS 1",
+          image: "https://cdn-images.dzcdn.net/images/cover/63ff8d3ecdf658d156d34d40058442c1/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Joji",
+          title: "Nectar",
+          image: "https://cdn-images.dzcdn.net/images/cover/122fd1b9f6498e9fb8e1c148926a7d55/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Joji",
+          title: "SMITHEREENS",
+          image: "https://cdn-images.dzcdn.net/images/cover/36aecc47636b326efc3987120dcf4c65/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Lil Uzi Vert",
+          title: "Eternal Atake",
+          image: "https://cdn-images.dzcdn.net/images/cover/7a532d945074ced10587b69150598049/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Lil Uzi Vert",
+          title: "Luv Is Rage 2",
+          image: "https://cdn-images.dzcdn.net/images/cover/5786e1b86286cc386722ae62a4f3e6f1/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Lil Uzi Vert",
+          title: "Lil Uzi Vert vs. The World",
+          image: "https://cdn-images.dzcdn.net/images/cover/e67037fb4abb754a234bd3f77752450d/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Feng",
+          title: "What The Feng",
+          image: "https://cdn-images.dzcdn.net/images/cover/e768eadd0d3797e6ace6b28fc8b350dd/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Dijon",
+          title: "Baby",
+          image: "https://cdn-images.dzcdn.net/images/cover/59580cf37c2182da329172cc1a79af41/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Dijon",
+          title: "Absolutely",
+          image: "https://cdn-images.dzcdn.net/images/cover/d6761ca2c8d99b2153f4c4cb8abb3d4f/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "A$AP Rocky",
+          title: "LONG.LIVE.A$AP",
+          image: "https://cdn-images.dzcdn.net/images/cover/ca42a0630c1d60391ac44f3be6abcac0/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Green Day",
+          title: "American Idiot",
+          image: "https://cdn-images.dzcdn.net/images/cover/9e17c202b5ab081171f31c81eb32dc5d/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Green Day",
+          title: "Dookie",
+          image: "https://cdn-images.dzcdn.net/images/cover/1e17054b7bfa6576f64ea867b71ef479/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Paramore",
+          title: "Paramore",
+          image: "https://cdn-images.dzcdn.net/images/cover/485d7cab7695e48f1420182647273de4/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Paramore",
+          title: "Riot!",
+          image: "https://cdn-images.dzcdn.net/images/cover/1a48b36fe9dd29b2bef2f5058cbe0c25/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Radiohead",
+          title: "Pablo Honey",
+          image: "https://cdn-images.dzcdn.net/images/cover/1dd56fd8824492e1a5106c99a00a85ec/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Steve Lacy",
+          title: "Apollo XXI",
+          image: "https://cdn-images.dzcdn.net/images/cover/2f152c3d4d7a7e607e985d77339af1de/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Cigarettes After Sex",
+          title: "Cigarettes After Sex",
+          image: "https://cdn-images.dzcdn.net/images/cover/2db20377876da16feb8ec9652e835a81/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Clairo",
+          title: "Charm",
+          image: "https://cdn-images.dzcdn.net/images/cover/6dfa4ea965a74b93870a85daa74b7ca3/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Lil Peep",
+          title: "Crybaby",
+          image: "https://cdn-images.dzcdn.net/images/cover/cafdcecef6f86bf4bc84b9a3d8be4430/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Juice WRLD",
+          title: "Goodbye & Good Riddance",
+          image: "https://cdn-images.dzcdn.net/images/cover/cf9d0827a0f6089f22c1719b8d171f50/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Juice WRLD",
+          title: "Legends Never Die",
+          image: "https://cdn-images.dzcdn.net/images/cover/7a03f611f0d25cb00d19e4e01623178f/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "The Marias",
+          title: "Superclean, Vol. II",
+          image: "https://cdn-images.dzcdn.net/images/cover/2a602946ca93ca9d3acebc10f99d9a04/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Playboi Carti",
+          title: "Die Lit",
+          image: "https://cdn-images.dzcdn.net/images/cover/f2d66b587ca8d3f0fa222c3501d23564/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Playboi Carti",
+          title: "Whole Lotta Red",
+          image: "https://cdn-images.dzcdn.net/images/cover/3c5f5f3f5f41ff96f961afd7df7eb4d9/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Nate Sib",
+          title: "for you",
+          image: "https://cdn-images.dzcdn.net/images/cover/fee22e51f2b04372eae250a78d9ea99d/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "XXXTENTACION",
+          title: "Bad Vibes Forever",
+          image: "https://cdn-images.dzcdn.net/images/cover/cec40f144f8dda85a284559d1d052b30/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Don Toliver",
+          title: "OCTANE",
+          image: "https://cdn-images.dzcdn.net/images/cover/123eb0268dfea84370a28c4a2114dc28/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "The Kid LAROI",
+          title: "BEFORE I FORGET",
+          image: "https://cdn-images.dzcdn.net/images/cover/b4efb39affdedb4152b2109a7ec36f63/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "ian",
+          title: "Valedictorian",
+          image: "https://cdn-images.dzcdn.net/images/cover/a73aaa7673c6735f6ef425f05eb0f265/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Travis Scott",
+          title: "UTOPIA",
+          image: "https://cdn-images.dzcdn.net/images/cover/6c91e64b7157f1332a4f6b0de9e4c714/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Travis Scott",
+          title: "ASTROWORLD",
+          image: "https://cdn-images.dzcdn.net/images/cover/7df7ac6028591a5622f24cf32a555510/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Drake",
+          title: "For All The Dogs",
+          image: "https://cdn-images.dzcdn.net/images/cover/6c213c1300cd2922d7987e0167eb9f5a/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Baby Keem",
+          title: "The Melodic Blue",
+          image: "https://cdn-images.dzcdn.net/images/cover/c6fcd7ca0e6c55251ddce2d7b67cae26/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "21 Savage",
+          title: "i am > i was",
+          image: "https://cdn-images.dzcdn.net/images/cover/616e7359251e6c79f7747a83b3aecf80/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Yung Gravy",
+          title: "Snow Cougar",
+          image: "https://cdn-images.dzcdn.net/images/cover/625708c5dfdd779b740fd4a0f9b845c6/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Yung Gravy",
+          title: "Sensational",
+          image: "https://cdn-images.dzcdn.net/images/cover/db90a938ac7c33c94867346a12b1cfbe/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Kanye West",
+          title: "Donda",
+          image: "https://cdn-images.dzcdn.net/images/cover/330da8bf0a57b47c2078db2d3761dc5e/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Imagine Dragons",
+          title: "Evolve",
+          image: "https://cdn-images.dzcdn.net/images/cover/247b228179aea3b083eef43522b78b45/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Fall Out Boy",
+          title: "American Beauty/American Psycho",
+          image: "https://cdn-images.dzcdn.net/images/cover/c0a1d1281570ad3becbb6146c6d54c0c/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Twenty One Pilots",
+          title: "Trench",
+          image: "https://cdn-images.dzcdn.net/images/cover/765dc8aba0e893fc6d55af08572fc902/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Twenty One Pilots",
+          title: "Blurryface",
+          image: "https://cdn-images.dzcdn.net/images/cover/dbbde1014cda9b101412a8e27add0ad2/1000x1000-000000-80-0-0.jpg"
+        },
+        {
+          artist: "Bruno Mars",
+          title: "24K Magic",
+          image: "https://cdn-images.dzcdn.net/images/cover/012b27906b430a37ec1d8f793d5c4fa6/1000x1000-000000-80-0-0.jpg"
+        }
+      ];
+
+      const stage = document.getElementById("music-stage");
+      const shelf = document.getElementById("music-shelf");
+      const hoverTitle = document.getElementById("music-hover-title");
+      const hoverArtist = document.getElementById("music-hover-artist");
+      const cornerCounter = document.getElementById("music-corners");
+      const sprites = [];
+      let animationFrame = null;
+      let lastTime = null;
+      let paused = false;
+      let cornerHits = 0;
+
+      function makeShelf() {
+        shelf.innerHTML = albums
+          .map(
+            (album) => `
+              <div class="music-shelf-item">
+                <p class="music-shelf-title">${album.title}</p>
+                <p class="music-shelf-artist">${album.artist}</p>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      function updateHover(album) {
+        hoverTitle.textContent = album.title;
+        hoverArtist.textContent = album.artist;
+      }
+
+      function clampSprite(sprite, width, height) {
+        sprite.x = Math.max(0, Math.min(sprite.x, width - sprite.size));
+        sprite.y = Math.max(0, Math.min(sprite.y, height - sprite.size));
+      }
+
+      function createSprites() {
+        stage.querySelectorAll(".music-sprite").forEach((node) => node.remove());
+        sprites.length = 0;
+
+        const width = stage.clientWidth;
+        const height = stage.clientHeight;
+        const compact = width < 640;
+        const size = compact ? 64 : 78;
+        const gap = compact ? 12 : 16;
+        const usableWidth = Math.max(width - 48, size);
+        const columns = Math.max(3, Math.floor(usableWidth / (size + gap)));
+
+        albums.forEach((album, index) => {
+          const node = document.createElement("button");
+          node.type = "button";
+          node.className = "music-sprite";
+          node.setAttribute("aria-label", `${album.artist} - ${album.title}`);
+          node.innerHTML = `<img src="${album.image}" alt="${album.artist} ${album.title} cover" />`;
+
+          const col = index % columns;
+          const row = Math.floor(index / columns);
+          const rowOffset = row % 2 === 0 ? 0 : Math.floor(size * 0.38);
+          const x = 24 + col * (size + gap) + rowOffset;
+          const y = 24 + row * (size + gap);
+          const vx = (index % 2 === 0 ? 1 : -1) * (70 + index * 6);
+          const vy = (index % 3 === 0 ? -1 : 1) * (62 + index * 5);
+          const sprite = { album, node, x, y, vx, vy, size };
+
+          node.style.width = `${size}px`;
+          node.style.height = `${size}px`;
+          node.style.transform = `translate(${x}px, ${y}px)`;
+
+          node.addEventListener("mouseenter", (event) => {
+            event.stopPropagation();
+            updateHover(album);
+          });
+
+          node.addEventListener("focus", () => updateHover(album));
+
+          node.addEventListener("click", (event) => {
+            event.stopPropagation();
+            updateHover(album);
+            sprite.vx *= -1;
+            sprite.vy *= -1;
+          });
+
+          stage.appendChild(node);
+          sprites.push(sprite);
+        });
+
+        sprites.forEach((sprite) => clampSprite(sprite, width, height));
+      }
+
+      function step(timestamp) {
+        if (lastTime == null) {
+          lastTime = timestamp;
+        }
+
+        const dt = Math.min((timestamp - lastTime) / 1000, 0.033);
+        lastTime = timestamp;
+
+        if (!paused) {
+          const width = stage.clientWidth;
+          const height = stage.clientHeight;
+
+          sprites.forEach((sprite) => {
+            sprite.x += sprite.vx * dt;
+            sprite.y += sprite.vy * dt;
+
+            let hitX = false;
+            let hitY = false;
+
+            if (sprite.x <= 0 || sprite.x + sprite.size >= width) {
+              sprite.vx *= -1;
+              sprite.x = Math.max(0, Math.min(sprite.x, width - sprite.size));
+              hitX = true;
+            }
+
+            if (sprite.y <= 0 || sprite.y + sprite.size >= height) {
+              sprite.vy *= -1;
+              sprite.y = Math.max(0, Math.min(sprite.y, height - sprite.size));
+              hitY = true;
+            }
+
+            if (hitX && hitY) {
+              cornerHits += 1;
+              cornerCounter.textContent = String(cornerHits);
+            }
+
+            sprite.node.style.transform = `translate(${sprite.x}px, ${sprite.y}px)`;
+          });
+        }
+
+        animationFrame = requestAnimationFrame(step);
+      }
+
+      function handleResize() {
+        const width = stage.clientWidth;
+        const height = stage.clientHeight;
+        const size = width < 640 ? 64 : 78;
+
+        sprites.forEach((sprite) => {
+          sprite.size = size;
+          sprite.node.style.width = `${sprite.size}px`;
+          sprite.node.style.height = `${sprite.size}px`;
+          clampSprite(sprite, width, height);
+          sprite.node.style.transform = `translate(${sprite.x}px, ${sprite.y}px)`;
+        });
+      }
+
+      stage.addEventListener("click", () => {
+        paused = !paused;
+        stage.classList.toggle("is-paused", paused);
+      });
+
+      window.addEventListener("resize", handleResize);
+
+      makeShelf();
+      updateHover(albums[0]);
+      createSprites();
+      animationFrame = requestAnimationFrame(step);
+    })();
+  </script>
+{% endblock %}
