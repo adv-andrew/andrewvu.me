@@ -12,6 +12,7 @@ first_name = "Andrew"
 last_name = "Vu"
 nickname = "Andy"
 name = f"{first_name} ({nickname}) {last_name}"
+title_name = f"{nickname} {last_name}"
 domain = "andrewvu.me"
 generic_username = "adv-andrew"
 twitter_username = f"@{generic_username}"
@@ -199,8 +200,8 @@ def img_tag_rule(img_tag: element.Tag):
 
 seo_common = {
     "url": url,
-    "title": name,
-    "description": f"{name}'s personal website",
+    "title": title_name,
+    "description": f"{title_name}'s personal website",
     "image": urljoin(url, "/assets/me.jpg"),
 }
 
@@ -217,7 +218,7 @@ og = og_tags(
 twitter = twitter_tags({**seo_common, "card": "summary"})
 seotags = og + twitter
 
-index_soup = render_template("index.html", lists=lists, name=name, title=name)
+index_soup = render_template("index.html", lists=lists, name=name, title=title_name)
 for item in seotags:
     index_soup.head.append(bs(item))
 
@@ -227,48 +228,48 @@ custom_pages = [
     {
         "template": "random/travel.html",
         "output": ("random", "travel.html"),
-        "title": f"{name} | Travel",
+        "title": f"{title_name} | Travel",
         "seo": {
             **seo_common,
             "url": urljoin(url, "/random/travel"),
-            "title": f"{name} | Travel",
-            "description": f"{name}'s travel map and bucket list",
+            "title": f"{title_name} | Travel",
+            "description": f"{title_name}'s travel map and bucket list",
             "image": urljoin(url, "/assets/me.jpg"),
         },
     },
     {
         "template": "random/music.html",
         "output": ("random", "music.html"),
-        "title": f"{name} | Music",
+        "title": f"{title_name} | Music",
         "seo": {
             **seo_common,
             "url": urljoin(url, "/random/music"),
-            "title": f"{name} | Music",
-            "description": f"{name}'s bouncing album cover wall",
+            "title": f"{title_name} | Music",
+            "description": f"{title_name}'s bouncing album cover wall",
             "image": urljoin(url, "/assets/me.jpg"),
         },
     },
     {
         "template": "random/wins.html",
         "output": ("random", "wins.html"),
-        "title": f"{name} | Wins",
+        "title": f"{title_name} | Wins",
         "seo": {
             **seo_common,
             "url": urljoin(url, "/random/wins"),
-            "title": f"{name} | Wins",
-            "description": f"{name}'s trophy case of wins and milestones",
+            "title": f"{title_name} | Wins",
+            "description": f"{title_name}'s trophy case of wins and milestones",
             "image": urljoin(url, "/assets/me.jpg"),
         },
     },
     {
         "template": "random/lore.html",
         "output": ("random", "lore.html"),
-        "title": f"{name} | Lore",
+        "title": f"{title_name} | Lore",
         "seo": {
             **seo_common,
             "url": urljoin(url, "/random/lore"),
-            "title": f"{name} | Lore",
-            "description": f"{name}'s story notes, side quests, and builder lore",
+            "title": f"{title_name} | Lore",
+            "description": f"{title_name}'s story notes, side quests, and builder lore",
             "image": urljoin(url, "/assets/me.jpg"),
         },
     }

@@ -122,7 +122,7 @@
     {% endcall %}
     {% call fieldset("cat ~/experience.md") %}
       <div class="text-black text-lg">
-        <!-- <p class="m-0">A few places I've worked and built things.</p> -->
+        <p class="m-0">the more professional-looking part of this</p>
         <div class="flex flex-col gap-4 mt-4">
           <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
@@ -296,6 +296,144 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    {% endcall %}
+    {% call fieldset("ls ~/projects.md") %}
+      <div class="text-black text-lg">
+        <p class="m-0">project showcase</p>
+        <div class="flex flex-col gap-4 mt-4">
+          <article class="border border-black/30 p-2">
+            <div class="flex flex-col sm:flex-row gap-3 items-start">
+              <img
+                src="/assets/projects/datamsith.png"
+                alt="DataSmith project thumbnail"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                loading="lazy"
+              />
+              <div class="flex flex-col gap-2 min-w-0 justify-start">
+                <div>
+                <p class="font-semibold text-base m-0">DataSmith</p>
+                <p class="text-sm mt-1 m-0">
+                  Agent-powered data cleaning pipeline for turning raw datasets
+                  into ML-ready data with quality scoring and dashboards.
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a
+                  href="https://devpost.com/software/67-industries"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                >
+                  Devpost
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <article class="border border-black/30 p-2">
+            <div class="flex flex-col sm:flex-row gap-3 items-start">
+              <img
+                src="/assets/projects/fluentform.png"
+                alt="FluentForm project thumbnail"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                loading="lazy"
+              />
+              <div class="flex flex-col gap-2 min-w-0 justify-start">
+                <div>
+                <p class="font-semibold text-base m-0">FluentForm</p>
+                <p class="text-sm mt-1 m-0">
+                  AI pronunciation coach that analyzes phonemes, scores speech,
+                  and generates personalized practice using Azure + OpenAI.
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a
+                  href="https://github.com/blopezleon/goat-idk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                >
+                  GitHub
+                </a>
+                <a
+                  href="https://devpost.com/software/fluentform"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                >
+                  Devpost
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <article class="border border-black/30 p-2">
+            <div class="flex flex-col sm:flex-row gap-3 items-start">
+              <img
+                src="/assets/projects/mcmc.png"
+                alt="MCMC CUDA Model project thumbnail"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                loading="lazy"
+              />
+              <div class="flex flex-col gap-2 min-w-0 justify-start">
+                <div>
+                <p class="font-semibold text-base m-0">MCMC CUDA Model</p>
+                <p class="text-sm mt-1 m-0">
+                  Monte Carlo + Markov-chain options trading system with
+                  backtesting, probabilistic forecasts, and CUDA acceleration.
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a
+                  href="https://github.com/adv-andrew/mcmc-cuda-model"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <article class="border border-black/30 p-2">
+            <div class="flex flex-col sm:flex-row gap-3 items-start">
+              <img
+                src="/assets/projects/rojo.png"
+                alt="Rojo OSS project thumbnail"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                loading="lazy"
+              />
+              <div class="flex flex-col gap-2 min-w-0 justify-start">
+                <div>
+                <p class="font-semibold text-base m-0">Rojo OSS</p>
+                <p class="text-sm mt-1 m-0">
+                  Open-source contributions to Roblox developer tooling built
+                  around professional-grade engineering workflows.
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a
+                  href="https://github.com/rojo-rbx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                >
+                  GitHub
+                </a>
+                <a
+                  href="https://rojo.space"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                >
+                  Site
+                </a>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     {% endcall %}
