@@ -98,6 +98,11 @@
     .lore-title {
       font-size: 1rem;
       line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .lore-body {
+      font-weight: 400;
     }
 
     .lore-toggle {
@@ -119,6 +124,157 @@
     .lore-body p {
       margin: 0.75rem 0 0;
       line-height: 1.55;
+    }
+
+    .guess-game {
+      margin-top: 0.75rem;
+    }
+
+    .guess-input-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .guess-input-row input {
+      width: 160px;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.9rem;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+
+    .guess-result.shake {
+      animation: shake 0.3s ease;
+    }
+
+    .guess-input-row button {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      background: #fff;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .guess-input-row button:hover {
+      background: #f0f0f0;
+    }
+
+    .guess-result {
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600;
+    }
+
+    .guess-result.correct {
+      color: #1ca34b;
+    }
+
+    .typing-game {
+      margin-top: 0.75rem;
+    }
+
+    .typing-display {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      padding: 1rem;
+      background: #2b2b2b;
+      color: #646669;
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.02em;
+      user-select: none;
+    }
+
+    .typing-display .correct {
+      color: #d1d0c5;
+    }
+
+    .typing-display .incorrect {
+      color: #ca4754;
+      text-decoration: underline;
+    }
+
+    .typing-display .current {
+      border-left: 2px solid transparent;
+      margin-left: -1px;
+    }
+
+    .typing-game.focused .typing-display .current {
+      border-left-color: #e2b714;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { border-color: #e2b714; }
+      51%, 100% { border-color: transparent; }
+    }
+
+    .typing-input {
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      background: #fff;
+    }
+
+    .typing-input:focus {
+      outline: 2px solid #e2b714;
+      outline-offset: -2px;
+    }
+
+    .typing-stats {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.6rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.9rem;
+    }
+
+    .typing-stats span {
+      color: #666;
+    }
+
+    .typing-stats #typing-wpm {
+      color: #e2b714;
+      font-weight: 600;
+    }
+
+    .typing-stats button {
+      margin-left: auto;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      background: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .typing-stats button:hover {
+      background: #f0f0f0;
+    }
+
+    .typing-result {
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600;
+    }
+
+    .typing-result.win {
+      color: #1ca34b;
+    }
+
+    .typing-result.lose {
+      color: #ca4754;
     }
   </style>
 {% endblock %}
@@ -149,6 +305,50 @@
                   actually use. currently interning at adtran and heading to
                   nvidia this summer.
                 </p>
+              </div>
+            </details>
+
+            <details class="lore-entry">
+              <summary>
+                <div class="lore-meta">
+                  <span class="lore-title">why computer science?</span>
+                </div>
+                <span class="lore-toggle">+</span>
+              </summary>
+              <div class="lore-body">
+                <p>
+                  honestly i never planned on it. my dad had me watching top gun
+                  since i was five and i wanted to be a fighter pilot for years.
+                  probably watched that movie 30+ times. then i learned you could
+                  die doing that so i pivoted to aerospace engineering - figured
+                  i'd test fighter jets in simulations instead.
+                </p>
+                <p>
+                  but i'd also been on computers since i was like eight. spent a
+                  lot of time in minecraft building redstone contraptions -
+                  hidden piston doors, following tutorials, making my own stuff.
+                  sort of like forking repos before i knew what that meant.
+                </p>
+                <p>
+                  took my first cs class in high school and it clicked. not love
+                  at first sight, but i realized cs lets you build solutions in
+                  almost any discipline. that's still what i believe and it keeps
+                  proving itself. it's not really the coding i enjoy - it's being
+                  able to make things people can actually use and see the impact.
+                </p>
+                <figure class="mt-4">
+                  <img
+                    src="/assets/lore/why_cs.jpeg"
+                    alt="My first PC build from 2019"
+                    class="w-full max-w-sm border border-black/20"
+                    loading="lazy"
+                  />
+                  <figcaption class="text-sm opacity-70 mt-2">
+                    built my first pc in 2019 for christmas<br />
+                    (P.S. the radeon card was a gift from my uncle's old bitcoin rig)<br />
+                    (P.P.S. my new rig is on a rtx 2080 super)
+                  </figcaption>
+                </figure>
               </div>
             </details>
 
@@ -258,6 +458,35 @@
                 </p>
               </div>
             </details>
+
+            <details class="lore-entry">
+              <summary>
+                <div class="lore-meta">
+                  <span class="lore-title">how many failed roblox games have you made?</span>
+                </div>
+                <span class="lore-toggle">+</span>
+              </summary>
+              <div class="lore-body">
+                <p>guess!</p>
+                <div class="guess-game" id="guess-game">
+                  <div class="guess-input-row">
+                    <input
+                      type="number"
+                      id="guess-input"
+                      placeholder="enter a number"
+                      min="1"
+                      max="100"
+                    />
+                    <button type="button" id="guess-submit">submit</button>
+                    <button type="button" id="guess-giveup">give up</button>
+                  </div>
+                  <p id="guess-result" class="guess-result"></p>
+                </div>
+                <p class="text-sm opacity-60 mt-3">
+                  (a "failed" game = something i spent 50+ hours on that never shipped)
+                </p>
+              </div>
+            </details>
           </div>
         </section>
 
@@ -273,9 +502,9 @@
               </summary>
               <div class="lore-body">
                 <p>
-                  gatorai stuff (i lead the applied projects team), my roblox
-                  game make a military army, and whatever side project i've
-                  convinced myself is a good idea this week.
+                  hackathons i go to, roblox games, and a for-funsies trading
+                  algo using some statistical concepts i learned in sta 4821
+                  (stochastic processes).
                 </p>
               </div>
             </details>
@@ -304,9 +533,8 @@
               </summary>
               <div class="lore-body">
                 <p>
-                  depends on what i'm building. python and lua are my most used.
-                  for web stuff i'll use whatever makes sense - react, next,
-                  tailwind, or just plain html if that's all i need.
+                  whatever my team is using :) i'm flexible. but my go-to stack
+                  when i'm solo is js/html, python, or lua for roblox games.
                 </p>
               </div>
             </details>
@@ -319,13 +547,44 @@
             <details class="lore-entry">
               <summary>
                 <div class="lore-meta">
+                  <span class="lore-title">what's your typing speed?</span>
+                </div>
+                <span class="lore-toggle">+</span>
+              </summary>
+              <div class="lore-body">
+                <p>around 140 wpm. but can you beat me?</p>
+                <div class="typing-game" id="typing-game">
+                  <div class="typing-display" id="typing-display"></div>
+                  <input
+                    type="text"
+                    id="typing-input"
+                    class="typing-input"
+                    placeholder="click here and start typing..."
+                    autocomplete="off"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                  />
+                  <div class="typing-stats">
+                    <span id="typing-wpm">0 wpm</span>
+                    <span id="typing-time">0.0s</span>
+                    <button type="button" id="typing-refresh" title="new words">refresh</button>
+                  </div>
+                  <p id="typing-result" class="typing-result"></p>
+                </div>
+              </div>
+            </details>
+
+            <details class="lore-entry">
+              <summary>
+                <div class="lore-meta">
                   <span class="lore-title">what's your favorite food?</span>
                 </div>
                 <span class="lore-toggle">+</span>
               </summary>
               <div class="lore-body">
                 <p>
-                  pho. or really any vietnamese food. i'm biased though.
+                  publix subs (hot honey chicken tender sub, white bread, no cheese, light black pepper, light lemon garlic aioli, light hot honey, light mayonnaise, toasted)
                 </p>
               </div>
             </details>
@@ -333,13 +592,13 @@
             <details class="lore-entry">
               <summary>
                 <div class="lore-meta">
-                  <span class="lore-title">are you a morning person?</span>
+                  <span class="lore-title">if you had to pick 1 fruit to eat for the rest of your life what would you choose?</span>
                 </div>
                 <span class="lore-toggle">+</span>
               </summary>
               <div class="lore-body">
                 <p>
-                  no. i'm trying to be but no.
+                  im between oranges and mangos. but i just have to choose oranges
                 </p>
               </div>
             </details>
@@ -362,4 +621,189 @@
       </div>
     {% endcall %}
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (() => {
+      const sentences = [
+        "bro trust me the code works i tested it once already",
+        "claude make a super viral roblox game make no mistakes",
+        "openclaw claude max plan ralph loop superpowers dangerously skip permissions",
+        "hackathon starts in two hours and we have no idea yet",
+        "my roblox game just hit a million plays lets go dude",
+        "its not a bug its a feature trust the process here",
+        "top gun is the greatest movie ever made no debate needed",
+        "twenty nine failed roblox games and counting but we move forward"
+      ];
+
+      const display = document.getElementById("typing-display");
+      const input = document.getElementById("typing-input");
+      const wpmEl = document.getElementById("typing-wpm");
+      const timeEl = document.getElementById("typing-time");
+      const refreshBtn = document.getElementById("typing-refresh");
+      const resultEl = document.getElementById("typing-result");
+
+      if (!display || !input) return;
+
+      let currentSentence = "";
+      let startTime = null;
+      let timerInterval = null;
+      let finished = false;
+
+      function pickSentence() {
+        return sentences[Math.floor(Math.random() * sentences.length)];
+      }
+
+      function render() {
+        const typed = input.value;
+        let html = "";
+
+        for (let i = 0; i < currentSentence.length; i++) {
+          const char = currentSentence[i];
+          if (i < typed.length) {
+            if (typed[i] === char) {
+              html += `<span class="correct">${char}</span>`;
+            } else {
+              html += `<span class="incorrect">${char}</span>`;
+            }
+          } else if (i === typed.length) {
+            html += `<span class="current">${char}</span>`;
+          } else {
+            html += char;
+          }
+        }
+
+        display.innerHTML = html;
+      }
+
+      function reset() {
+        currentSentence = pickSentence();
+        input.value = "";
+        input.disabled = false;
+        startTime = null;
+        finished = false;
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+        wpmEl.textContent = "0 wpm";
+        timeEl.textContent = "0.0s";
+        resultEl.textContent = "";
+        resultEl.className = "typing-result";
+        render();
+        input.focus();
+      }
+
+      function updateTimer() {
+        if (!startTime || finished) return;
+        const elapsed = (Date.now() - startTime) / 1000;
+        timeEl.textContent = elapsed.toFixed(1) + "s";
+
+        const typed = input.value;
+        const words = typed.trim().split(/\s+/).filter(w => w).length;
+        const wpm = elapsed > 0 ? Math.round((words / elapsed) * 60) : 0;
+        wpmEl.textContent = wpm + " wpm";
+      }
+
+      function checkFinish() {
+        if (input.value === currentSentence) {
+          finished = true;
+          if (timerInterval) clearInterval(timerInterval);
+          input.disabled = true;
+
+          const elapsed = (Date.now() - startTime) / 1000;
+          const words = currentSentence.trim().split(/\s+/).length;
+          const finalWpm = Math.round((words / elapsed) * 60);
+
+          wpmEl.textContent = finalWpm + " wpm";
+          timeEl.textContent = elapsed.toFixed(1) + "s";
+
+          if (finalWpm >= 140) {
+            resultEl.textContent = "you beat me! gg";
+            resultEl.className = "typing-result win";
+          } else {
+            resultEl.textContent = "try again!";
+            resultEl.className = "typing-result lose";
+          }
+        }
+      }
+
+      const game = document.getElementById("typing-game");
+
+      input.addEventListener("focus", () => {
+        game.classList.add("focused");
+      });
+
+      input.addEventListener("blur", () => {
+        game.classList.remove("focused");
+      });
+
+      input.addEventListener("input", () => {
+        if (!startTime && input.value.length === 1) {
+          startTime = Date.now();
+          timerInterval = setInterval(updateTimer, 100);
+        }
+        render();
+        checkFinish();
+      });
+
+      refreshBtn.addEventListener("click", reset);
+
+      reset();
+    })();
+
+    (() => {
+      const answer = 29;
+      const input = document.getElementById("guess-input");
+      const submitBtn = document.getElementById("guess-submit");
+      const giveupBtn = document.getElementById("guess-giveup");
+      const result = document.getElementById("guess-result");
+
+      if (!input || !submitBtn || !giveupBtn || !result) return;
+
+      function checkGuess() {
+        const guess = parseInt(input.value, 10);
+        if (isNaN(guess)) {
+          result.textContent = "enter a number!";
+          result.classList.remove("correct");
+          return;
+        }
+
+        let newText;
+        if (guess < answer) {
+          newText = "higher!";
+        } else if (guess > answer) {
+          newText = "lower!";
+        } else {
+          result.textContent = "YES! 29 failed games. pain.";
+          result.classList.add("correct");
+          input.disabled = true;
+          submitBtn.disabled = true;
+          giveupBtn.disabled = true;
+          return;
+        }
+
+        result.classList.remove("correct");
+        if (result.textContent === newText) {
+          result.classList.remove("shake");
+          void result.offsetWidth;
+          result.classList.add("shake");
+        }
+        result.textContent = newText;
+      }
+
+      function giveUp() {
+        result.textContent = "it's 29. yeah.";
+        result.classList.remove("correct");
+        input.disabled = true;
+        submitBtn.disabled = true;
+        giveupBtn.disabled = true;
+      }
+
+      submitBtn.addEventListener("click", checkGuess);
+      giveupBtn.addEventListener("click", giveUp);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") checkGuess();
+      });
+    })();
+  </script>
 {% endblock %}
