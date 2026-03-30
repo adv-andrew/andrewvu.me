@@ -2,17 +2,79 @@
 {% from "components/fieldset.html" import fieldset %}
 {% from "components/button.html" import button %}
 
+{% block head_extra %}
+  <style>
+    .experience-card {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+
+    .experience-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .profile-photo-wrap {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .profile-photo-wrap img {
+      transition: opacity 0.2s ease;
+    }
+
+    .profile-photo-wrap .photo-alt {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .profile-photo-wrap:hover .photo-main {
+      opacity: 0;
+    }
+
+    .profile-photo-wrap:hover .photo-alt {
+      opacity: 1;
+    }
+
+    .easter-egg-note {
+      position: absolute;
+      bottom: -2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .profile-photo-wrap:hover .easter-egg-note {
+      opacity: 0.7;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
   <div class="flex flex-col gap-4">
     <!-- <WhoAmI /> -->
     {% call fieldset("whoami") %}
       <article class="text-black text-lg prose-p:m-0 flex flex-col-reverse sm:block">
-        <img
-          src="/assets/me.jpg"
-          alt="Portrait of Andrew Vu"
-          class="mt-4 mx-auto w-40 max-w-full object-cover sm:float-right sm:mt-0 sm:ml-4 sm:mb-4 sm:mx-0 sm:w-52 md:w-60 lg:w-64"
-          loading="eager"
-        />
+        <div class="profile-photo-wrap mt-4 mx-auto w-40 max-w-full sm:float-right sm:mt-0 sm:ml-4 sm:mb-4 sm:mx-0 sm:w-52 md:w-60 lg:w-64">
+          <img
+            src="/assets/me.jpg"
+            alt="Portrait of Andrew Vu"
+            class="photo-main w-full object-cover"
+            loading="eager"
+          />
+          <img
+            src="/assets/me_alt.jpg"
+            alt="Goofy portrait of Andrew Vu"
+            class="photo-alt w-full object-cover"
+            loading="eager"
+          />
+          <span class="easter-egg-note">you found my easter egg!</span>
+        </div>
         <div class="flex flex-col gap-4">
           <p>
             Hii!! I'm Andy, a CS student at UF and Roblox game developer
@@ -52,6 +114,9 @@
           {% call button("/random/wins", "w-full h-9 text-base font-bold me-0 !justify-start") %}
             <span>Wins</span>
           {% endcall %}
+          {% call button("/random/lore", "w-full h-9 text-base font-bold me-0 !justify-start") %}
+            <span>Lore</span>
+          {% endcall %}
         </div>
       </div>
     {% endcall %}
@@ -59,7 +124,7 @@
       <div class="text-black text-lg">
         <!-- <p class="m-0">A few places I've worked and built things.</p> -->
         <div class="flex flex-col gap-4 mt-4">
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/nvidia.png"
@@ -79,7 +144,7 @@
               </div>
             </div>
           </div>
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/adtran.png"
@@ -116,7 +181,7 @@
               </div>
             </div>
           </div>
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/gatorai.png"
@@ -139,7 +204,7 @@
               </div>
             </div>
           </div>
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/vuplay.png"
@@ -162,7 +227,7 @@
               </div>
             </div>
           </div>
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/ucf.png"
@@ -185,7 +250,7 @@
               </div>
             </div>
           </div>
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/roblox.svg"
@@ -211,7 +276,7 @@
               </div>
             </div>
           </div>
-          <div class="border border-black/30 p-3">
+          <div class="experience-card border border-black/30 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/gamefam.png"

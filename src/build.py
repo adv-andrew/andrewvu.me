@@ -259,6 +259,18 @@ custom_pages = [
             "description": f"{name}'s trophy case of wins and milestones",
             "image": urljoin(url, "/assets/me.jpg"),
         },
+    },
+    {
+        "template": "random/lore.html",
+        "output": ("random", "lore.html"),
+        "title": f"{name} | Lore",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/random/lore"),
+            "title": f"{name} | Lore",
+            "description": f"{name}'s story notes, side quests, and builder lore",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
     }
 ]
 
