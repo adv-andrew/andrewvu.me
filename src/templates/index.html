@@ -34,6 +34,16 @@
         <div class="clear-right"></div>
       </article>
     {% endcall %}
+    {% call fieldset("cat ~/random.md") %}
+      <div class="flex flex-col gap-3">
+        <p class="text-lg m-0">small side quests and fun pages</p>
+        <div class="flex flex-wrap gap-2">
+          {% call button("/random/travel", "w-32") %}
+            <span>Travel</span>
+          {% endcall %}
+        </div>
+      </div>
+    {% endcall %}
     {% call fieldset("cat ~/experience.md") %}
       <div class="text-black text-lg">
         <p class="m-0">A few places I've worked and built things.</p>
@@ -76,7 +86,7 @@
                       </p>
                       <p class="text-sm mt-1 m-0">Technical Documentation Team</p>
                     </div>
-                    <p class="text-sm m-0">08/2025 - present</p>
+                    <p class="text-sm m-0">08/2025 - 04/2026</p>
                   </div>
                   <p class="text-xs opacity-60 mt-1 m-0">Remote</p>
                 </div>
@@ -213,9 +223,6 @@
         </div>
       </div>
     {% endcall %}
-    {% call fieldset("ls ~/projects") %}
-      {{ lists["projects"]|safe }}
-    {% endcall %}
     {% call fieldset("cat ~/roblox-games.md") %}
       <div class="text-black text-lg">
         <p>my games :D</p>
@@ -324,6 +331,16 @@
         </div>
       </div>
     {% endcall %}
+    {% call fieldset("cat ~/friends.md") %}
+      <article>
+        cool friends
+        <ul>
+          <li><a href="https://matheus.wiki/">Matheus Maldaner</a></li>
+          <li><a href="https://www.awangyisu.com/">Alexander Wang</a></li>
+          <li><a href="https://www.dvidal.dev/">Dylan Vidal</a></li>
+        </ul>
+      </article>
+    {% endcall %}
     {% call fieldset("cat ~/links.md") %}
       <article>
         links!
@@ -332,26 +349,6 @@
           <li><a href="https://www.linkedin.com/in/adv-andrew-d-vu/">LinkedIn</a></li>
           <li><a href="https://x.com/iStaridium">X</a></li>
           <li><a href="https://www.roblox.com/users/96753261/profile">Roblox</a></li>
-        </ul>
-      </article>
-    {% endcall %}
-    {% call fieldset("cat ~/random.md") %}
-      <div class="flex flex-col gap-3">
-        <p class="text-lg m-0">small side quests and fun pages</p>
-        <div class="flex flex-wrap gap-2">
-          {% call button("/random/travel", "w-32") %}
-            <span>Travel</span>
-          {% endcall %}
-        </div>
-      </div>
-    {% endcall %}
-    {% call fieldset("cat ~/friends.md") %}
-      <article>
-        cool friends
-        <ul>
-          <li><a href="https://matheus.wiki/">Matheus Maldaner</a></li>
-          <li><a href="https://www.awangyisu.com/">Alexander Wang</a></li>
-          <li><a href="https://www.dvidal.dev/">Dylan Vidal</a></li>
         </ul>
       </article>
     {% endcall %}
