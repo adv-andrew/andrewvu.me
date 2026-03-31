@@ -5,12 +5,32 @@
 {% block head_extra %}
   <style>
     .experience-card {
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+      position: relative;
     }
 
-    .experience-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    .favorite-star {
+      position: absolute;
+      right: 0.6rem;
+      bottom: 0.55rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 999px;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+    }
+
+    .favorite-star::before {
+      content: "";
+      width: 0.9rem;
+      height: 0.9rem;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23f2c94c' stroke='%23b58900' stroke-width='1.4' d='M12 2.2l2.8 5.68 6.27.91-4.54 4.43 1.07 6.25L12 16.5l-5.6 2.97 1.07-6.25L2.93 8.79l6.27-.91z'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
     }
 
     .profile-photo-wrap {
@@ -51,6 +71,129 @@
 
     .profile-photo-wrap:hover .easter-egg-note {
       opacity: 0.7;
+    }
+
+    .experience-inline-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.35rem;
+      padding: 0 0.45rem;
+      border: 1px solid rgba(0, 0, 0, 0.9);
+      background: #ffffff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    .experience-inline-button:hover {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .experience-gallery {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.58);
+    }
+
+    .experience-gallery.is-open {
+      display: flex;
+    }
+
+    .experience-gallery-panel {
+      width: min(920px, 100%);
+      max-height: min(80vh, 760px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.24);
+      background: #f8f8f5;
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .experience-gallery-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+      background: #efefe9;
+    }
+
+    .experience-gallery-head h3,
+    .experience-gallery-head p {
+      margin: 0;
+    }
+
+    .experience-gallery-head h3 {
+      font-size: 1rem;
+    }
+
+    .experience-gallery-head p {
+      margin-top: 0.15rem;
+      font-size: 0.84rem;
+      opacity: 0.68;
+    }
+
+    .experience-gallery-close {
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid rgba(0, 0, 0, 0.9);
+      background: #ffffff;
+      font-size: 1rem;
+      line-height: 1;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    .experience-gallery-close:hover {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .experience-gallery-grid {
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+      padding: 1rem;
+      background: #f8f8f5;
+    }
+
+    .experience-gallery-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: #ffffff;
+      padding: 0.6rem;
+    }
+
+    .experience-gallery-item img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      margin: 0;
+    }
+
+    .experience-gallery-item p {
+      margin: 0;
+      font-size: 0.84rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 700px) {
+      .experience-gallery-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 {% endblock %}
@@ -125,6 +268,7 @@
         <p class="m-0">the more professional-looking part of this</p>
         <div class="flex flex-col gap-4 mt-4">
           <div class="experience-card border border-black/30 p-3">
+            <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/nvidia.png"
@@ -145,6 +289,7 @@
             </div>
           </div>
           <div class="experience-card border border-black/30 p-3">
+            <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/adtran.png"
@@ -153,7 +298,16 @@
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
-                <p class="font-semibold text-base m-0">Adtran</p>
+                <div class="flex items-center gap-2">
+                  <p class="font-semibold text-base m-0">Adtran</p>
+                  <button
+                    type="button"
+                    class="experience-inline-button"
+                    data-open-gallery="adtran"
+                  >
+                    Pictures
+                  </button>
+                </div>
                 <div class="mt-3 pt-3 border-t border-black/30">
                   <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
                     <div>
@@ -192,7 +346,16 @@
               <div class="min-w-0 flex-1">
                 <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
                   <div>
-                    <p class="font-semibold text-base m-0">GatorAI</p>
+                    <div class="flex items-center gap-2">
+                      <p class="font-semibold text-base m-0">GatorAI</p>
+                      <button
+                        type="button"
+                        class="experience-inline-button"
+                        data-open-gallery="gatorai"
+                      >
+                        Pictures
+                      </button>
+                    </div>
                     <p class="text-sm m-0">Applied Tech Lead</p>
                   </div>
                   <p class="text-sm m-0">04/2025 - present</p>
@@ -205,6 +368,7 @@
             </div>
           </div>
           <div class="experience-card border border-black/30 p-3">
+            <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/vuplay.png"
@@ -577,4 +741,152 @@
       </article>
     {% endcall %}
   </div>
+
+  <div class="experience-gallery" id="experience-gallery-adtran" aria-hidden="true">
+    <div class="experience-gallery-panel" role="dialog" aria-modal="true" aria-labelledby="experience-gallery-adtran-title">
+      <div class="experience-gallery-head">
+        <div>
+          <h3 id="experience-gallery-adtran-title">Adtran Pictures</h3>
+          <p>a few snapshots from the internship arc</p>
+        </div>
+        <button type="button" class="experience-gallery-close" data-close-gallery="adtran">
+          x
+        </button>
+      </div>
+      <div class="experience-gallery-grid">
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/company event pickleball.JPG" alt="Company event pickleball" loading="lazy" />
+          <p>company event pickleball</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/first day of work.jpeg" alt="First day of work" loading="lazy" />
+          <p>first day of work</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/first time in heaven.JPG" alt="First time in heaven" loading="lazy" />
+          <p>first time in heaven</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/intern event baseball game.JPG" alt="Intern event baseball game" loading="lazy" />
+          <p>intern event baseball game</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/my amazing team.JPG" alt="My amazing team" loading="lazy" />
+          <p>my amazing team</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/my cubicle.JPG" alt="My cubicle" loading="lazy" />
+          <p>my cubicle</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/my second home after work.JPG" alt="My second home after work" loading="lazy" />
+          <p>my second home after work</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/weekend trip to south carolina.jpeg" alt="Weekend trip to south carolina" loading="lazy" />
+          <p>weekend trip to south carolina</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_adtran/weekend trip to south carolina 2.jpeg" alt="Weekend trip to south carolina 2" loading="lazy" />
+          <p>weekend trip to south carolina 2</p>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <div class="experience-gallery" id="experience-gallery-gatorai" aria-hidden="true">
+    <div class="experience-gallery-panel" role="dialog" aria-modal="true" aria-labelledby="experience-gallery-gatorai-title">
+      <div class="experience-gallery-head">
+        <div>
+          <h3 id="experience-gallery-gatorai-title">GatorAI Pictures</h3>
+          <p>club moments, events, and leadership arc snapshots</p>
+        </div>
+        <button type="button" class="experience-gallery-close" data-close-gallery="gatorai">
+          x
+        </button>
+      </div>
+      <div class="experience-gallery-grid">
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_gatorai/christmas party.png" alt="Christmas party" loading="lazy" />
+          <p>christmas party</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_gatorai/elected eboard.png" alt="Elected eboard" loading="lazy" />
+          <p>elected eboard</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_gatorai/first gbm hosted 250 attendance.png" alt="First gbm hosted 250 attendance" loading="lazy" />
+          <p>first gbm hosted 250 attendance</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_gatorai/hosted the first gatorai symposium.png" alt="Hosted the first gatorai symposium" loading="lazy" />
+          <p>hosted the first gatorai symposium</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_gatorai/machine learning mondaysss.png" alt="Machine learning mondaysss" loading="lazy" />
+          <p>machine learning mondaysss</p>
+        </figure>
+        <figure class="experience-gallery-item">
+          <img src="/assets/experience/pics_gatorai/tabling before the storm.png" alt="Tabling before the storm" loading="lazy" />
+          <p>tabling before the storm</p>
+        </figure>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (() => {
+      const openButtons = document.querySelectorAll("[data-open-gallery]");
+      const closeButtons = document.querySelectorAll("[data-close-gallery]");
+
+      function getGallery(name) {
+        return document.getElementById(`experience-gallery-${name}`);
+      }
+
+      function setGalleryOpen(name, isOpen) {
+        const gallery = getGallery(name);
+        if (!gallery) {
+          return;
+        }
+
+        gallery.classList.toggle("is-open", isOpen);
+        gallery.setAttribute("aria-hidden", isOpen ? "false" : "true");
+        document.body.style.overflow = isOpen ? "hidden" : "";
+      }
+
+      openButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          setGalleryOpen(button.dataset.openGallery, true);
+        });
+      });
+
+      closeButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          setGalleryOpen(button.dataset.closeGallery, false);
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          document.querySelectorAll(".experience-gallery.is-open").forEach((gallery) => {
+            gallery.classList.remove("is-open");
+            gallery.setAttribute("aria-hidden", "true");
+          });
+          document.body.style.overflow = "";
+        }
+      });
+
+      document.querySelectorAll(".experience-gallery").forEach((gallery) => {
+        gallery.addEventListener("click", (event) => {
+          if (event.target === gallery) {
+            gallery.classList.remove("is-open");
+            gallery.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+          }
+        });
+      });
+    })();
+  </script>
 {% endblock %}
