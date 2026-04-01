@@ -5,9 +5,9 @@
   <style>
     .travel-shell {
       overflow: hidden;
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.24);
-      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+      background: var(--site-panel);
+      border: 1px solid var(--site-border);
+      box-shadow: 6px 6px 0 var(--site-shadow);
     }
 
     .travel-stage {
@@ -20,19 +20,19 @@
       background:
         repeating-linear-gradient(
           0deg,
-          rgba(0, 0, 0, 0.025) 0,
-          rgba(0, 0, 0, 0.025) 1px,
+          color-mix(in srgb, var(--site-text) 7%, transparent) 0,
+          color-mix(in srgb, var(--site-text) 7%, transparent) 1px,
           transparent 1px,
           transparent 18px
         ),
         repeating-linear-gradient(
           90deg,
-          rgba(0, 0, 0, 0.025) 0,
-          rgba(0, 0, 0, 0.025) 1px,
+          color-mix(in srgb, var(--site-text) 7%, transparent) 0,
+          color-mix(in srgb, var(--site-text) 7%, transparent) 1px,
           transparent 1px,
           transparent 18px
         ),
-        #ffffff;
+        var(--site-panel);
       cursor: grab;
       touch-action: none;
     }
@@ -58,9 +58,9 @@
       font-size: 0.75rem;
       line-height: 1.5;
       padding: 0.55rem 0.7rem;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08);
+      background: color-mix(in srgb, var(--site-panel) 94%, transparent);
+      border: 1px solid var(--site-border);
+      box-shadow: 4px 4px 0 var(--site-shadow);
     }
 
     .travel-legend {
@@ -71,9 +71,9 @@
       flex-direction: column;
       gap: 0.45rem;
       padding: 0.7rem 0.8rem;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08);
+      background: color-mix(in srgb, var(--site-panel) 94%, transparent);
+      border: 1px solid var(--site-border);
+      box-shadow: 4px 4px 0 var(--site-shadow);
       font-family: "IBM Plex Mono", monospace;
       font-size: 0.75rem;
     }
@@ -85,9 +85,9 @@
       pointer-events: none;
       transform: translate(-50%, calc(-100% - 14px));
       padding: 0.4rem 0.55rem;
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(0, 0, 0, 0.22);
-      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.08);
+      background: color-mix(in srgb, var(--site-panel) 96%, transparent);
+      border: 1px solid var(--site-border);
+      box-shadow: 3px 3px 0 var(--site-shadow);
       font-family: "IBM Plex Mono", monospace;
       font-size: 0.72rem;
       line-height: 1.2;
@@ -104,6 +104,83 @@
       display: flex;
       align-items: center;
       gap: 0.55rem;
+    }
+
+    .travel-marker-card {
+      position: absolute;
+      right: 1rem;
+      bottom: 1rem;
+      width: min(280px, calc(100% - 2rem));
+      display: none;
+      flex-direction: column;
+      gap: 0.55rem;
+      padding: 0.8rem;
+      background: color-mix(in srgb, var(--site-panel) 96%, transparent);
+      border: 1px solid var(--site-border);
+      box-shadow: 4px 4px 0 var(--site-shadow);
+    }
+
+    .travel-marker-card.is-open {
+      display: flex;
+    }
+
+    .travel-marker-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.8rem;
+      align-items: start;
+    }
+
+    .travel-marker-card-head p,
+    .travel-marker-card-copy p {
+      margin: 0;
+    }
+
+    .travel-marker-card-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--site-muted);
+    }
+
+    .travel-marker-card-title {
+      margin-top: 0.2rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .travel-marker-card-close {
+      width: 1.85rem;
+      height: 1.85rem;
+      border: 1px solid var(--site-border-strong);
+      background: var(--site-panel);
+      box-shadow: 2px 2px 0 var(--site-shadow);
+      font-size: 0.92rem;
+      line-height: 1;
+    }
+
+    .travel-marker-card-close:hover {
+      background: var(--site-text);
+      color: var(--site-panel);
+    }
+
+    .travel-marker-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border: 1px solid var(--site-border);
+      margin: 0;
+    }
+
+    .travel-marker-card-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--site-muted);
     }
 
     .legend-check {
@@ -140,8 +217,8 @@
 
     .travel-marquee {
       overflow: hidden;
-      border-top: 1px solid rgba(0, 0, 0, 0.14);
-      background: #ffffff;
+      border-top: 1px solid var(--site-border);
+      background: var(--site-panel);
     }
 
     .travel-track {
@@ -155,17 +232,17 @@
     .travel-card {
       width: 260px;
       flex: 0 0 auto;
-      border: 1px solid rgba(0, 0, 0, 0.18);
-      background: #ffffff;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
       padding: 0.75rem;
-      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.06);
+      box-shadow: 4px 4px 0 var(--site-shadow);
     }
 
     .travel-card img {
       width: 100%;
       height: 176px;
       object-fit: cover;
-      border: 1px solid rgba(0, 0, 0, 0.14);
+      border: 1px solid var(--site-border);
       margin: 0;
     }
 
@@ -234,6 +311,20 @@
             <div class="travel-legend-row">
               <span class="legend-pin"></span>
               <span>bucket list</span>
+            </div>
+          </div>
+
+          <div class="travel-marker-card" id="travel-marker-card" aria-live="polite">
+            <div class="travel-marker-card-head">
+              <div>
+                <p class="travel-marker-card-label" id="travel-marker-kind">been there</p>
+                <p class="travel-marker-card-title" id="travel-marker-title">New York City</p>
+              </div>
+              <button type="button" class="travel-marker-card-close" id="travel-marker-close">x</button>
+            </div>
+            <img id="travel-marker-image" src="/assets/travel/new york city.jpg" alt="New York City" />
+            <div class="travel-marker-card-copy">
+              <p id="travel-marker-caption">one of the places i keep ending up and still don't mind repeating.</p>
             </div>
           </div>
         </div>
@@ -411,7 +502,59 @@
       const wrap = document.getElementById("travel-globe-wrap");
       const canvas = document.getElementById("travel-globe");
       const tooltip = document.getElementById("travel-tooltip");
+      const markerCard = document.getElementById("travel-marker-card");
+      const markerCardKind = document.getElementById("travel-marker-kind");
+      const markerCardTitle = document.getElementById("travel-marker-title");
+      const markerCardImage = document.getElementById("travel-marker-image");
+      const markerCardCaption = document.getElementById("travel-marker-caption");
+      const markerCardClose = document.getElementById("travel-marker-close");
       const ctx = canvas.getContext("2d");
+      const markerDetails = {
+        "New York City": {
+          image: "/assets/travel/new york city.jpg",
+          caption: "one of the places i keep revisiting and still haven't gotten tired of."
+        },
+        "Kyoto": {
+          image: "/assets/travel/kyoto japan.png",
+          caption: "quiet streets, temples, and one of the easiest cities to romanticize."
+        },
+        "Tokyo": {
+          image: "/assets/travel/tokyo japan.jpg",
+          caption: "still one of my favorite city-energy combinations anywhere."
+        },
+        "Seoul": {
+          image: "/assets/travel/seoul korea.jpg",
+          caption: "one of those cities that makes you want to stay out later than planned."
+        },
+        "Gainesville": {
+          image: "/assets/travel/gainesville fl.jpg",
+          caption: "college town, current home base, and where a lot of this builder arc happens."
+        },
+        "Atlanta": {
+          image: "/assets/travel/atlanta ga.jpg",
+          caption: "intern summer city and one of the more important stops in the recent timeline."
+        },
+        "Salt Lake City": {
+          image: "/assets/travel/SLC utah.jpg",
+          caption: "clean air, mountains, and one of the more unexpectedly nice trips."
+        },
+        "Sapphire": {
+          image: "/assets/travel/sapphire north carolina.jpg",
+          caption: "the kind of place that makes it easy to log off for a second."
+        },
+        "Singapore": {
+          image: "/assets/travel/singapore.png",
+          caption: "one of the cleanest and easiest cities to navigate i've been to."
+        },
+        "Hanoi": {
+          image: "/assets/travel/hanoi vietnam.jpg",
+          caption: "chaotic in a way that somehow still feels alive and structured at the same time."
+        },
+        "Da Nang": {
+          image: "/assets/travel/da nang vietnam.jpg",
+          caption: "one of the places on this page that already feels nostalgic."
+        }
+      };
 
       const visited = [
         { name: "New York City", coords: [-74.006, 40.7128], kind: "visited" },
@@ -480,6 +623,32 @@
       let hoveredPoint = null;
       let pinchStartDistance = null;
       let pinchStartScale = projection.scale();
+      let selectedMarker = null;
+
+      function openMarkerCard(marker) {
+        const details = markerDetails[marker.name];
+        markerCardKind.textContent = marker.kind === "visited" ? "been there" : "bucket list";
+        markerCardTitle.textContent = marker.name;
+        if (details) {
+          markerCardImage.src = details.image;
+          markerCardImage.alt = marker.name;
+          markerCardImage.style.display = "";
+          markerCardCaption.textContent = details.caption;
+        } else {
+          markerCardImage.style.display = "none";
+          markerCardCaption.textContent =
+            marker.kind === "visited"
+              ? "i've been here, but i haven't added a photo to the travel strip yet."
+              : "still on the list. photo comes after the plane ticket.";
+        }
+        markerCard.classList.add("is-open");
+        selectedMarker = marker;
+      }
+
+      function closeMarkerCard() {
+        markerCard.classList.remove("is-open");
+        selectedMarker = null;
+      }
 
       function setTooltip(marker, point) {
         if (!marker || !point) {
@@ -657,6 +826,13 @@
             setTooltip(null, null);
           }
         }
+
+        if (selectedMarker) {
+          const point = projection(selectedMarker.coords);
+          if (!point) {
+            closeMarkerCard();
+          }
+        }
       }
 
       function animate() {
@@ -745,6 +921,19 @@
           setTooltip(null, null);
         }
         stopDragging(event);
+      });
+
+      canvas.addEventListener("click", (event) => {
+        const hit = findMarkerAtPoint(event.offsetX, event.offsetY);
+        if (hit) {
+          openMarkerCard(hit.marker);
+        } else {
+          closeMarkerCard();
+        }
+      });
+
+      markerCardClose.addEventListener("click", () => {
+        closeMarkerCard();
       });
 
       fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")

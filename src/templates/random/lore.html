@@ -5,16 +5,16 @@
   <style>
     .lore-shell {
       overflow: hidden;
-      background: #f7f7f4;
-      border: 1px solid rgba(0, 0, 0, 0.24);
-      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+      background: var(--site-panel-soft);
+      border: 1px solid var(--site-border);
+      box-shadow: 6px 6px 0 var(--site-shadow);
     }
 
     .lore-hero {
       padding: 1.15rem 1rem 1rem;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0)),
-        #f1f1ec;
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0)),
+        var(--site-panel);
     }
 
     .lore-hero h2,
@@ -33,7 +33,7 @@
       max-width: 58ch;
       font-size: 1rem;
       line-height: 1.35;
-      opacity: 0.74;
+      color: var(--site-muted);
     }
 
     .lore-section {
@@ -49,8 +49,8 @@
       font-weight: 700;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      background: #dfe6f8;
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: color-mix(in srgb, var(--site-panel) 70%, #9db7ff);
+      border: 1px solid var(--site-border);
     }
 
     .lore-list {
@@ -60,18 +60,18 @@
       background:
         repeating-linear-gradient(
           0deg,
-          rgba(0, 0, 0, 0.02) 0,
-          rgba(0, 0, 0, 0.02) 1px,
+          color-mix(in srgb, var(--site-text) 6%, transparent) 0,
+          color-mix(in srgb, var(--site-text) 6%, transparent) 1px,
           transparent 1px,
           transparent 22px
         ),
-        #f5f5f2;
+        var(--site-panel-soft);
     }
 
     .lore-entry {
-      border: 1px solid rgba(0, 0, 0, 0.16);
-      background: rgba(255, 255, 255, 0.92);
-      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--site-border);
+      background: color-mix(in srgb, var(--site-panel) 92%, transparent);
+      box-shadow: 4px 4px 0 var(--site-shadow);
       overflow: hidden;
     }
 
@@ -95,10 +95,42 @@
       gap: 0.18rem;
     }
 
+    .lore-summary-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex: 0 0 auto;
+    }
+
     .lore-title {
       font-size: 1rem;
       line-height: 1.2;
       font-weight: 700;
+    }
+
+    .lore-copy-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.35rem;
+      height: 1.35rem;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      box-shadow: 2px 2px 0 var(--site-shadow);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.8rem;
+      line-height: 1;
+    }
+
+    .lore-copy-link:hover {
+      background: var(--site-text);
+      color: var(--site-panel);
+    }
+
+    .lore-copy-link.is-copied {
+      width: auto;
+      padding: 0 0.45rem;
+      font-size: 0.62rem;
     }
 
     .lore-body {
@@ -118,7 +150,7 @@
 
     .lore-body {
       padding: 0 1rem 1rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      border-top: 1px solid var(--site-border);
     }
 
     .lore-body p {
@@ -139,7 +171,9 @@
     .guess-input-row input {
       width: 160px;
       padding: 0.4rem 0.6rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      color: var(--site-text);
       font-family: "IBM Plex Mono", monospace;
       font-size: 0.9rem;
     }
@@ -156,8 +190,9 @@
 
     .guess-input-row button {
       padding: 0.4rem 0.75rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      background: #fff;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      color: var(--site-text);
       font-family: "IBM Plex Mono", monospace;
       font-size: 0.85rem;
       cursor: pointer;
@@ -165,7 +200,7 @@
     }
 
     .guess-input-row button:hover {
-      background: #f0f0f0;
+      background: var(--site-panel-soft);
     }
 
     .guess-result {
@@ -188,7 +223,7 @@
       padding: 1rem;
       background: #2b2b2b;
       color: #646669;
-      border: 1px solid rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--site-border);
       letter-spacing: 0.02em;
       user-select: none;
     }
@@ -223,8 +258,9 @@
       padding: 0.6rem 0.8rem;
       font-family: "IBM Plex Mono", monospace;
       font-size: 1rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      background: #fff;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      color: var(--site-text);
     }
 
     .typing-input:focus {
@@ -242,7 +278,7 @@
     }
 
     .typing-stats span {
-      color: #666;
+      color: var(--site-muted);
     }
 
     .typing-stats #typing-wpm {
@@ -253,15 +289,16 @@
     .typing-stats button {
       margin-left: auto;
       padding: 0.3rem 0.6rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      background: #fff;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      color: var(--site-text);
       font-size: 1rem;
       cursor: pointer;
       transition: background 0.15s ease;
     }
 
     .typing-stats button:hover {
-      background: #f0f0f0;
+      background: var(--site-panel-soft);
     }
 
     .typing-result {
@@ -291,12 +328,14 @@
         <section class="lore-section">
           <p class="lore-section-label">life</p>
           <div class="lore-list">
-            <details class="lore-entry" open>
+            <details id="faq-about" class="lore-entry" open>
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">so tell me about yourself</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -308,12 +347,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-why-cs" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">why computer science?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -340,7 +381,7 @@
                   <img
                     src="/assets/lore/why_cs.jpeg"
                     alt="My first PC build from 2019"
-                    class="w-full max-w-sm border border-black/20"
+                    class="w-full max-w-sm border border-black/20 dark:border-white/20"
                     loading="lazy"
                   />
                   <figcaption class="text-sm opacity-70 mt-2">
@@ -352,12 +393,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-weakness" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what's your biggest weakness?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -367,12 +410,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-five-years" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">where do you see yourself in 5 years?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -382,12 +427,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-fun" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what do you do for fun?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -403,12 +450,14 @@
         <section class="lore-section">
           <p class="lore-section-label">roblox</p>
           <div class="lore-list">
-            <details class="lore-entry">
+            <details id="faq-roblox-games" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">wait you make roblox games?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -419,12 +468,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-roblox-start" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">how'd you get into that?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -443,12 +494,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-roblox-still" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">do you still do that?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -459,12 +512,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-roblox-fails" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">how many failed roblox games have you made?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>guess!</p>
@@ -493,12 +548,14 @@
         <section class="lore-section">
           <p class="lore-section-label">building</p>
           <div class="lore-list">
-            <details class="lore-entry">
+            <details id="faq-building-now" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what are you working on right now?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -509,12 +566,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-learning" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">how do you learn new stuff?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -524,12 +583,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-stack" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what's your tech stack?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -544,12 +605,14 @@
         <section class="lore-section">
           <p class="lore-section-label">random</p>
           <div class="lore-list">
-            <details class="lore-entry">
+            <details id="faq-typing-speed" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what's your typing speed?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>around 140 wpm. but can you beat me?</p>
@@ -575,12 +638,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-favorite-food" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what's your favorite food?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -589,12 +654,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-fruit" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">if you had to pick 1 fruit to eat for the rest of your life what would you choose?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -603,12 +670,14 @@
               </div>
             </details>
 
-            <details class="lore-entry">
+            <details id="faq-terminal-command" class="lore-entry">
               <summary>
                 <div class="lore-meta">
                   <span class="lore-title">what's your favorite terminal command?</span>
                 </div>
-                <span class="lore-toggle">+</span>
+                <span class="lore-summary-right">
+                  <span class="lore-toggle">+</span>
+                </span>
               </summary>
               <div class="lore-body">
                 <p>
@@ -625,6 +694,79 @@
 
 {% block scripts %}
   <script>
+    (() => {
+      const entries = [...document.querySelectorAll(".lore-entry[id]")];
+
+      function buildLink(entryId) {
+        const url = new URL(window.location.href);
+        url.hash = entryId;
+        return url.toString();
+      }
+
+      async function copyLink(entry, button) {
+        const link = buildLink(entry.id);
+        try {
+          await navigator.clipboard.writeText(link);
+        } catch {
+          const temp = document.createElement("input");
+          temp.value = link;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand("copy");
+          temp.remove();
+        }
+
+        const original = button.textContent;
+        button.textContent = "copied";
+        button.classList.add("is-copied");
+        window.setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("is-copied");
+        }, 1200);
+      }
+
+      function openEntryFromHash() {
+        const id = window.location.hash.replace(/^#/, "");
+        if (!id) {
+          return;
+        }
+
+        const target = document.getElementById(id);
+        if (!(target instanceof HTMLDetailsElement)) {
+          return;
+        }
+
+        target.open = true;
+        window.setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      }
+
+      entries.forEach((entry) => {
+        const right = entry.querySelector(".lore-summary-right");
+        if (!right) {
+          return;
+        }
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "lore-copy-link";
+        button.textContent = "#";
+        button.setAttribute("aria-label", `Copy link to ${entry.id}`);
+
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          copyLink(entry, button);
+        });
+
+        right.prepend(button);
+      });
+
+      window.addEventListener("hashchange", openEntryFromHash);
+      openEntryFromHash();
+    })();
+
     (() => {
       const sentences = [
         "bro trust me the code works i tested it once already",

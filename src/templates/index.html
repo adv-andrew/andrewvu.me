@@ -6,6 +6,7 @@
   <style>
     .experience-card {
       position: relative;
+      background: var(--site-panel);
     }
 
     .favorite-star {
@@ -16,10 +17,10 @@
       height: 1.35rem;
       display: grid;
       place-items: center;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: color-mix(in srgb, var(--site-panel) 92%, transparent);
+      border: 1px solid var(--site-border);
       border-radius: 999px;
-      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+      box-shadow: 2px 2px 0 var(--site-shadow);
       pointer-events: none;
     }
 
@@ -79,17 +80,38 @@
       justify-content: center;
       height: 1.35rem;
       padding: 0 0.45rem;
-      border: 1px solid rgba(0, 0, 0, 0.9);
-      background: #ffffff;
+      border: 1px solid var(--site-border-strong);
+      background: var(--site-panel);
       font-size: 0.68rem;
       font-weight: 700;
       line-height: 1;
-      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+      box-shadow: 2px 2px 0 var(--site-shadow);
     }
 
     .experience-inline-button:hover {
-      background: #000000;
-      color: #ffffff;
+      background: var(--site-text);
+      color: var(--site-panel);
+    }
+
+    .proof-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.5rem;
+      padding: 0 0.5rem;
+      border: 1px solid var(--site-border-strong);
+      background: var(--site-panel-soft);
+      color: inherit;
+      text-decoration: none;
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1;
+      box-shadow: 2px 2px 0 var(--site-shadow);
+    }
+
+    .proof-chip:hover {
+      background: var(--site-text);
+      color: var(--site-panel);
     }
 
     .experience-gallery {
@@ -113,9 +135,9 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      border: 1px solid rgba(0, 0, 0, 0.24);
-      background: #f8f8f5;
-      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.16);
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      box-shadow: 6px 6px 0 var(--site-shadow);
     }
 
     .experience-gallery-head {
@@ -124,8 +146,8 @@
       justify-content: space-between;
       gap: 1rem;
       padding: 0.85rem 1rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.14);
-      background: #efefe9;
+      border-bottom: 1px solid var(--site-border);
+      background: var(--site-panel-soft);
     }
 
     .experience-gallery-head h3,
@@ -146,16 +168,16 @@
     .experience-gallery-close {
       width: 2rem;
       height: 2rem;
-      border: 1px solid rgba(0, 0, 0, 0.9);
-      background: #ffffff;
+      border: 1px solid var(--site-border-strong);
+      background: var(--site-panel);
       font-size: 1rem;
       line-height: 1;
-      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+      box-shadow: 2px 2px 0 var(--site-shadow);
     }
 
     .experience-gallery-close:hover {
-      background: #000000;
-      color: #ffffff;
+      background: var(--site-text);
+      color: var(--site-panel);
     }
 
     .experience-gallery-grid {
@@ -164,15 +186,15 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.85rem;
       padding: 1rem;
-      background: #f8f8f5;
+      background: var(--site-panel);
     }
 
     .experience-gallery-item {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      background: #ffffff;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel-soft);
       padding: 0.6rem;
     }
 
@@ -180,7 +202,7 @@
       width: 100%;
       height: 220px;
       object-fit: cover;
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      border: 1px solid var(--site-border);
       margin: 0;
     }
 
@@ -195,6 +217,59 @@
         grid-template-columns: 1fr;
       }
     }
+
+    .home-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .home-mini-card {
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      padding: 0.8rem;
+      box-shadow: 4px 4px 0 var(--site-shadow);
+    }
+
+    .home-mini-card p {
+      margin: 0;
+    }
+
+    .home-mini-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--site-muted);
+    }
+
+    .home-mini-value {
+      margin-top: 0.35rem;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .project-card {
+      position: relative;
+      background: var(--site-panel);
+    }
+
+    .project-card .favorite-star {
+      top: 0.55rem;
+      bottom: auto;
+    }
+
+    @media (max-width: 900px) {
+      .home-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .home-grid-4 {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 {% endblock %}
 
@@ -202,7 +277,7 @@
   <div class="flex flex-col gap-4">
     <!-- <WhoAmI /> -->
     {% call fieldset("whoami") %}
-      <article class="text-black text-lg prose-p:m-0 flex flex-col-reverse sm:block">
+      <article class="text-lg prose-p:m-0 flex flex-col-reverse sm:block">
         <div class="profile-photo-wrap mt-4 mx-auto w-56 max-w-full sm:float-right sm:mt-0 sm:ml-4 sm:mb-4 sm:mx-0 sm:w-52 md:w-60 lg:w-64">
           <img
             src="/assets/me.jpg"
@@ -247,7 +322,7 @@
             "Let the weather be the weather" - redditor in r/stoicism
           </p>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-1">
           {% call button("/random/travel", "w-full h-9 text-base font-bold me-0 !justify-start") %}
             <span>Travel</span>
           {% endcall %}
@@ -260,20 +335,23 @@
           {% call button("/random/lore", "w-full h-9 text-base font-bold me-0 !justify-start") %}
             <span>Lore</span>
           {% endcall %}
+          {% call button("/random/uses", "w-full h-9 text-base font-bold me-0 !justify-start") %}
+            <span>Uses</span>
+          {% endcall %}
         </div>
       </div>
     {% endcall %}
     {% call fieldset("cat ~/experience.md") %}
-      <div class="text-black text-lg">
+      <div id="experience-section" class="text-lg">
         <p class="m-0">the more professional-looking part of this</p>
         <div class="flex flex-col gap-4 mt-4">
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/nvidia.png"
                 alt="NVIDIA logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-1 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -288,13 +366,13 @@
               </div>
             </div>
           </div>
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/adtran.png"
                 alt="Adtran logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-1 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -308,7 +386,7 @@
                     Pictures
                   </button>
                 </div>
-                <div class="mt-3 pt-3 border-t border-black/30">
+                <div class="mt-3 pt-3 border-t border-black/30 dark:border-white/25">
                   <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
                     <div>
                       <p class="text-sm font-semibold m-0">
@@ -320,7 +398,7 @@
                   </div>
                   <p class="text-xs opacity-60 mt-1 m-0">Remote</p>
                 </div>
-                <div class="mt-3 pt-3 border-t border-black/30">
+                <div class="mt-3 pt-3 border-t border-black/30 dark:border-white/25">
                   <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
                     <div>
                       <p class="text-sm font-semibold m-0">
@@ -332,15 +410,24 @@
                   </div>
                   <p class="text-xs opacity-60 mt-1 m-0">Atlanta, Georgia, On-site</p>
                 </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <button
+                    type="button"
+                    class="proof-chip"
+                    data-open-gallery="adtran"
+                  >
+                    pictures!
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/gatorai.png"
                 alt="GatorAI logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-1 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -364,16 +451,33 @@
                 <p class="text-sm mt-1 m-0">
                   Managing 13 AI/ML projects end-to-end
                 </p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <button
+                    type="button"
+                    class="proof-chip"
+                    data-open-gallery="gatorai"
+                  >
+                    pictures!
+                  </button>
+                  <a
+                    href="https://www.instagram.com/gator_ai/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="proof-chip"
+                  >
+                    club
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/vuplay.png"
                 alt="VuPlay logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-1 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -388,15 +492,31 @@
                 <p class="text-sm mt-1 m-0">
                   Launched 5 Roblox games, 145+ million plays
                 </p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <a
+                    href="#games-section"
+                    class="proof-chip"
+                  >
+                    games
+                  </a>
+                  <a
+                    href="https://www.roblox.com/users/96753261/profile"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="proof-chip"
+                  >
+                    roblox profile
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/ucf.png"
                 alt="UCF logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-1 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -414,12 +534,12 @@
               </div>
             </div>
           </div>
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/roblox.svg"
                 alt="Roblox logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-2 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-2 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -437,15 +557,33 @@
                   Invite-only conference for top Roblox developers and creators.
                   82 million plays at the time
                 </p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <a
+                    href="https://www.roblox.com/games/10767940743"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="proof-chip"
+                  >
+                    event hub
+                  </a>
+                  <a
+                    href="https://corp.roblox.com/newsroom/2022/09/roblox-innovation-awards-2022-complete-winners-list"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="proof-chip"
+                  >
+                    article
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          <div class="experience-card border border-black/30 p-3">
+          <div class="experience-card border border-black/30 dark:border-white/25 p-3">
             <div class="flex items-start gap-3">
               <img
                 src="/assets/experience/gamefam.png"
                 alt="Gamefam logo"
-                class="w-12 h-12 shrink-0 object-contain border border-black/30 p-1 bg-white"
+                class="w-12 h-12 shrink-0 object-contain border border-black/30 dark:border-white/25 p-1 bg-white"
                 loading="lazy"
               />
               <div class="min-w-0 flex-1">
@@ -464,15 +602,16 @@
       </div>
     {% endcall %}
     {% call fieldset("ls ~/projects.md") %}
-      <div class="text-black text-lg">
-        <p class="m-0">project showcase</p>
+      <div id="projects-section" class="text-lg">
+        <p class="m-0">a few things i want people to actually click on</p>
         <div class="flex flex-col gap-4 mt-4">
-          <article class="border border-black/30 p-2">
+          <article class="project-card border border-black/30 dark:border-white/25 p-2">
+            <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex flex-col sm:flex-row gap-3 items-start">
               <img
                 src="/assets/projects/datamsith.png"
                 alt="DataSmith project thumbnail"
-                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 dark:border-white/25 shrink-0 self-start"
                 loading="lazy"
               />
               <div class="flex flex-col gap-2 min-w-0 justify-start">
@@ -488,7 +627,7 @@
                   href="https://devpost.com/software/67-industries"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black dark:outline-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.28)]"
                 >
                   Devpost
                 </a>
@@ -496,12 +635,12 @@
             </div>
           </article>
 
-          <article class="border border-black/30 p-2">
+          <article class="project-card border border-black/30 dark:border-white/25 p-2">
             <div class="flex flex-col sm:flex-row gap-3 items-start">
               <img
                 src="/assets/projects/fluentform.png"
                 alt="FluentForm project thumbnail"
-                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 dark:border-white/25 shrink-0 self-start"
                 loading="lazy"
               />
               <div class="flex flex-col gap-2 min-w-0 justify-start">
@@ -517,7 +656,7 @@
                   href="https://github.com/blopezleon/goat-idk"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black dark:outline-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.28)]"
                 >
                   GitHub
                 </a>
@@ -525,7 +664,7 @@
                   href="https://devpost.com/software/fluentform"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black dark:outline-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.28)]"
                 >
                   Devpost
                 </a>
@@ -533,12 +672,13 @@
             </div>
           </article>
 
-          <article class="border border-black/30 p-2">
+          <article class="project-card border border-black/30 dark:border-white/25 p-2">
+            <span class="favorite-star" aria-hidden="true"></span>
             <div class="flex flex-col sm:flex-row gap-3 items-start">
               <img
                 src="/assets/projects/mcmc.png"
                 alt="MCMC CUDA Model project thumbnail"
-                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 dark:border-white/25 shrink-0 self-start"
                 loading="lazy"
               />
               <div class="flex flex-col gap-2 min-w-0 justify-start">
@@ -554,7 +694,7 @@
                   href="https://github.com/adv-andrew/mcmc-cuda-model"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black dark:outline-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.28)]"
                 >
                   GitHub
                 </a>
@@ -562,12 +702,12 @@
             </div>
           </article>
 
-          <article class="border border-black/30 p-2">
+          <article class="project-card border border-black/30 dark:border-white/25 p-2">
             <div class="flex flex-col sm:flex-row gap-3 items-start">
               <img
                 src="/assets/projects/rojo.png"
                 alt="Rojo OSS project thumbnail"
-                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 shrink-0 self-start"
+                class="w-full sm:w-auto h-24 sm:h-12 object-cover border border-black/30 dark:border-white/25 shrink-0 self-start"
                 loading="lazy"
               />
               <div class="flex flex-col gap-2 min-w-0 justify-start">
@@ -583,7 +723,7 @@
                   href="https://github.com/rojo-rbx"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black dark:outline-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.28)]"
                 >
                   GitHub
                 </a>
@@ -591,7 +731,7 @@
                   href="https://rojo.space"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black hover:bg-black hover:text-white px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)]"
+                  class="inline-flex items-center justify-center rounded-none outline outline-1 outline-black dark:outline-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-3 h-8 text-sm font-bold shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.28)]"
                 >
                   Site
                 </a>
@@ -602,7 +742,7 @@
       </div>
     {% endcall %}
     {% call fieldset("cat ~/roblox-games.md") %}
-      <div class="text-black text-lg">
+      <div id="games-section" class="text-lg">
         <p>my games :D</p>
         <p class="text-sm mt-1">Current visits as of 03/29/2026.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -610,9 +750,9 @@
             href="https://www.roblox.com/games/8549047195/Anime-Warriors-Simulator"
             target="_blank"
             rel="noopener noreferrer"
-            class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
+            class="block no-underline border border-black/30 dark:border-white/25 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
-            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
+            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30 dark:border-white/25">
               <img
                 src="/assets/games/anime-warriors-simulator.jpg"
                 alt="Anime Warriors Simulator thumbnail"
@@ -632,9 +772,9 @@
             href="https://www.roblox.com/games/9264596435/Idle-Heroes-Simulator"
             target="_blank"
             rel="noopener noreferrer"
-            class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
+            class="block no-underline border border-black/30 dark:border-white/25 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
-            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
+            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30 dark:border-white/25">
               <img
                 src="/assets/games/idle-heroes-simulator.jpg"
                 alt="Idle Heroes Simulator thumbnail"
@@ -654,9 +794,9 @@
             href="https://www.roblox.com/games/5991118999/Mowing-Masters-Simulator"
             target="_blank"
             rel="noopener noreferrer"
-            class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
+            class="block no-underline border border-black/30 dark:border-white/25 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
-            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
+            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30 dark:border-white/25">
               <img
                 src="/assets/games/mowing-masters-simulator.jpg"
                 alt="Mowing Masters Simulator thumbnail"
@@ -676,9 +816,9 @@
             href="https://www.roblox.com/games/7147680787/Anime-Destruction-Simulator"
             target="_blank"
             rel="noopener noreferrer"
-            class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
+            class="block no-underline border border-black/30 dark:border-white/25 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
-            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
+            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30 dark:border-white/25">
               <img
                 src="/assets/games/anime-destruction-simulator.jpg"
                 alt="Anime Destruction Simulator thumbnail"
@@ -698,9 +838,9 @@
             href="https://www.roblox.com/games/102004471989393/Make-a-Military-Army"
             target="_blank"
             rel="noopener noreferrer"
-            class="block no-underline border border-black/30 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
+            class="block no-underline border border-black/30 dark:border-white/25 hover:bg-black hover:text-white hover:opacity-90 transition-opacity duration-150"
           >
-            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30">
+            <div class="w-full aspect-[500/280] overflow-hidden border-b border-black/30 dark:border-white/25">
               <img
                 src="/assets/games/make-a-military-army.jpg"
                 alt="Make a Military Army thumbnail"
@@ -735,8 +875,10 @@
       <article>
         links!
         <ul>
+          <li><a href="mailto:andrew.vu@ufl.edu">Email</a></li>
           <li><a href="https://github.com/adv-andrew" target="_blank" rel="noopener noreferrer">GitHub</a></li>
           <li><a href="https://www.linkedin.com/in/adv-andrew-d-vu/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+          <li><a href="https://devpost.com/adv-andrew" target="_blank" rel="noopener noreferrer">Devpost</a></li>
           <li><a href="https://x.com/iStaridium" target="_blank" rel="noopener noreferrer">X</a></li>
           <li><a href="https://www.roblox.com/users/96753261/profile" target="_blank" rel="noopener noreferrer">Roblox</a></li>
         </ul>
@@ -892,3 +1034,5 @@
     })();
   </script>
 {% endblock %}
+
+

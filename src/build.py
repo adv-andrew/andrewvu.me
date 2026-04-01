@@ -272,6 +272,18 @@ custom_pages = [
             "description": f"{title_name}'s story notes, side quests, and builder lore",
             "image": urljoin(url, "/assets/me.jpg"),
         },
+    },
+    {
+        "template": "random/uses.html",
+        "output": ("random", "uses.html"),
+        "title": f"{title_name} | Uses",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/random/uses"),
+            "title": f"{title_name} | Uses",
+            "description": f"{title_name}'s current toolbox, workflow, and favorite build stack",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
     }
 ]
 
