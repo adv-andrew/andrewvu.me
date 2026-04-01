@@ -73,6 +73,13 @@
       background: color-mix(in srgb, var(--site-panel) 92%, transparent);
       box-shadow: 4px 4px 0 var(--site-shadow);
       overflow: hidden;
+      transition: box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .lore-entry.is-targeted {
+      border-color: #e2b714;
+      background: color-mix(in srgb, var(--site-panel) 78%, #fff4bf);
+      box-shadow: 0 0 0 3px rgba(226, 183, 20, 0.18), 4px 4px 0 var(--site-shadow);
     }
 
     .lore-entry summary {
@@ -726,6 +733,8 @@
       }
 
       function openEntryFromHash() {
+        entries.forEach((entry) => entry.classList.remove("is-targeted"));
+
         const id = window.location.hash.replace(/^#/, "");
         if (!id) {
           return;
@@ -737,6 +746,7 @@
         }
 
         target.open = true;
+        target.classList.add("is-targeted");
         window.setTimeout(() => {
           target.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 80);
