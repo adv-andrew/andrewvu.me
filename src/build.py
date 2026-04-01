@@ -274,14 +274,14 @@ custom_pages = [
         },
     },
     {
-        "template": "random/uses.html",
-        "output": ("random", "uses.html"),
-        "title": f"{title_name} | Uses",
+        "template": "random/toolbox.html",
+        "output": ("random", "toolbox.html"),
+        "title": f"{title_name} | Toolbox",
         "seo": {
             **seo_common,
-            "url": urljoin(url, "/random/uses"),
-            "title": f"{title_name} | Uses",
-            "description": f"{title_name}'s current toolbox, workflow, and favorite build stack",
+            "url": urljoin(url, "/random/toolbox"),
+            "title": f"{title_name} | Toolbox",
+            "description": f"{title_name}'s stack turned into a tiny tetris-style toolbox game",
             "image": urljoin(url, "/assets/me.jpg"),
         },
     }

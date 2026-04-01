@@ -1,0 +1,797 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+
+{% block head_extra %}
+  <style>
+    .toolbox-shell {
+      overflow: hidden;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      box-shadow: 6px 6px 0 var(--site-shadow);
+    }
+
+    .toolbox-hero {
+      padding: 1rem;
+      border-bottom: 1px solid var(--site-border);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0)),
+        var(--site-panel-soft);
+    }
+
+    .toolbox-hero h2,
+    .toolbox-hero p {
+      margin: 0;
+    }
+
+    .toolbox-hero h2 {
+      font-size: 1.45rem;
+      line-height: 1;
+      text-transform: lowercase;
+    }
+
+    .toolbox-hero p {
+      margin-top: 0.45rem;
+      max-width: 60ch;
+      color: var(--site-muted);
+      line-height: 1.5;
+    }
+
+    .toolbox-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 0.8rem;
+      padding: 0.8rem;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          color-mix(in srgb, var(--site-text) 5%, transparent) 0,
+          color-mix(in srgb, var(--site-text) 5%, transparent) 1px,
+          transparent 1px,
+          transparent 22px
+        ),
+        var(--site-panel);
+    }
+
+    .toolbox-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 500px;
+      border: 1px solid var(--site-border);
+      background:
+        radial-gradient(circle at top center, rgba(0, 0, 0, 0.04), transparent 25%),
+        #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+      padding: 1rem;
+    }
+
+    .toolbox-canvas-wrap {
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .toolbox-canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      background: #ffffff;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .toolbox-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .toolbox-card {
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      box-shadow: 4px 4px 0 var(--site-shadow);
+      padding: 0.75rem;
+    }
+
+    .toolbox-card h3,
+    .toolbox-card p,
+    .toolbox-card li {
+      margin: 0;
+    }
+
+    .toolbox-card h3 {
+      font-size: 0.95rem;
+      text-transform: lowercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .toolbox-card p,
+    .toolbox-card li {
+      color: var(--site-muted);
+      line-height: 1.35;
+      font-size: 0.84rem;
+    }
+
+    .toolbox-card ul {
+      margin: 0;
+      padding-left: 1rem;
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .toolbox-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .toolbox-stat {
+      border: 1px solid var(--site-border);
+      background: var(--site-panel-soft);
+      padding: 0.6rem;
+    }
+
+    .toolbox-stat-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--site-muted);
+    }
+
+    .toolbox-stat-value {
+      margin-top: 0.2rem;
+      font-size: 0.98rem;
+      color: inherit;
+    }
+
+    .toolbox-next-chip {
+      margin-top: 0.35rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel-soft);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.76rem;
+    }
+
+    .toolbox-next-swatch {
+      width: 0.8rem;
+      height: 0.8rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .toolbox-legend {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .toolbox-legend-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: start;
+    }
+
+    .toolbox-legend-swatch {
+      width: 0.95rem;
+      height: 0.95rem;
+      margin-top: 0.15rem;
+      border: 1px solid rgba(0, 0, 0, 0.24);
+      flex: 0 0 auto;
+    }
+
+    .toolbox-legend-copy strong {
+      display: block;
+      font-size: 0.85rem;
+      line-height: 1.2;
+    }
+
+    .toolbox-legend-copy span {
+      display: block;
+      margin-top: 0.15rem;
+      color: var(--site-muted);
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 960px) {
+      .toolbox-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbox-stage {
+        min-height: 0;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    {% call fieldset("cat ~/random/toolbox.md") %}
+      <div class="toolbox-shell">
+        <section class="toolbox-hero">
+          <h2>toolbox</h2>
+          <p>
+            same idea as a stack page, except slightly less boring. the pieces are
+            things i actually use, grouped by what they are. arrow keys move, up
+            rotates, space drops.
+          </p>
+        </section>
+
+        <div class="toolbox-grid">
+          <section class="toolbox-stage">
+            <div class="toolbox-canvas-wrap">
+              <canvas id="toolbox-canvas" class="toolbox-canvas" width="320" height="640"></canvas>
+            </div>
+          </section>
+
+          <aside class="toolbox-panel">
+            <section class="toolbox-card">
+              <h3>run stats</h3>
+              <div class="toolbox-stats">
+                <div class="toolbox-stat">
+                  <p class="toolbox-stat-label">lines</p>
+                  <p class="toolbox-stat-value" id="toolbox-lines">0</p>
+                </div>
+                <div class="toolbox-stat">
+                  <p class="toolbox-stat-label">score</p>
+                  <p class="toolbox-stat-value" id="toolbox-score">0</p>
+                </div>
+                <div class="toolbox-stat">
+                  <p class="toolbox-stat-label">level</p>
+                  <p class="toolbox-stat-value" id="toolbox-level">1</p>
+                </div>
+                <div class="toolbox-stat">
+                  <p class="toolbox-stat-label">status</p>
+                  <p class="toolbox-stat-value" id="toolbox-status">playing</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="toolbox-card">
+              <h3>incoming</h3>
+              <p>the next stack item in the queue.</p>
+              <div class="toolbox-next-chip">
+                <span id="toolbox-next-swatch" class="toolbox-next-swatch"></span>
+                <span id="toolbox-next-name">Python</span>
+              </div>
+            </section>
+
+            <section class="toolbox-card">
+              <h3>legend</h3>
+              <div class="toolbox-legend">
+                <div class="toolbox-legend-row">
+                  <span class="toolbox-legend-swatch" style="background:#9b5cff;"></span>
+                  <div class="toolbox-legend-copy">
+                    <strong>programming languages</strong>
+                    <span>python, c++, typescript, javascript, lua, sql, html, css</span>
+                  </div>
+                </div>
+                <div class="toolbox-legend-row">
+                  <span class="toolbox-legend-swatch" style="background:#3db8ff;"></span>
+                  <div class="toolbox-legend-copy">
+                    <strong>frameworks / libraries</strong>
+                    <span>django, flask, rest, celery</span>
+                  </div>
+                </div>
+                <div class="toolbox-legend-row">
+                  <span class="toolbox-legend-swatch" style="background:#39d98a;"></span>
+                  <div class="toolbox-legend-copy">
+                    <strong>infra / platform</strong>
+                    <span>docker, kubernetes, linux, openai, azure, node, tailwind</span>
+                  </div>
+                </div>
+                <div class="toolbox-legend-row">
+                  <span class="toolbox-legend-swatch" style="background:#ff5d73;"></span>
+                  <div class="toolbox-legend-copy">
+                    <strong>tools / workflow</strong>
+                    <span>rojo, git, vim, postman, vs code, cursor, sql management studio, agile, codex, figma</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="toolbox-card">
+              <h3>controls</h3>
+              <ul>
+                <li>left / right: move</li>
+                <li>down: soft drop</li>
+                <li>up: rotate</li>
+                <li>space: hard drop</li>
+                <li>p: pause</li>
+                <li>r: restart</li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+      </div>
+    {% endcall %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (() => {
+      const canvas = document.getElementById("toolbox-canvas");
+      const ctx = canvas.getContext("2d");
+      const linesEl = document.getElementById("toolbox-lines");
+      const scoreEl = document.getElementById("toolbox-score");
+      const levelEl = document.getElementById("toolbox-level");
+      const statusEl = document.getElementById("toolbox-status");
+      const nextNameEl = document.getElementById("toolbox-next-name");
+      const nextSwatchEl = document.getElementById("toolbox-next-swatch");
+
+      const COLS = 10;
+      const ROWS = 20;
+      const CELL = 32;
+      const board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+
+      const categories = {
+        language: { color: "#9b5cff", label: "programming languages" },
+        framework: { color: "#3db8ff", label: "frameworks / libraries" },
+        platform: { color: "#39d98a", label: "infra / platform" },
+        tool: { color: "#ff5d73", label: "tools / workflow" }
+      };
+
+      const pieceShapes = {
+        I: [[1, 1, 1, 1]],
+        O: [[1, 1], [1, 1]],
+        T: [[0, 1, 0], [1, 1, 1]],
+        L: [[1, 0, 0], [1, 1, 1]],
+        J: [[0, 0, 1], [1, 1, 1]],
+        S: [[0, 1, 1], [1, 1, 0]],
+        Z: [[1, 1, 0], [0, 1, 1]]
+      };
+
+      const items = [
+        { name: "Python", shape: "T", category: "language", logo: "/assets/toolbox/python.svg" },
+        { name: "C++", shape: "L", category: "language", logo: "/assets/toolbox/cplusplus.svg" },
+        { name: "TypeScript", shape: "J", category: "language", logo: "/assets/toolbox/typescript.svg" },
+        { name: "JavaScript", shape: "S", category: "language", logo: "/assets/toolbox/javascript.svg" },
+        { name: "Lua", shape: "Z", category: "language", logo: "/assets/toolbox/lua.svg" },
+        { name: "SQL", shape: "O", category: "language", logo: "/assets/toolbox/database.svg" },
+        { name: "HTML", shape: "I", category: "language", logo: "/assets/toolbox/html5.svg" },
+        { name: "CSS", shape: "T", category: "language", logo: "/assets/toolbox/css.svg" },
+        { name: "Django", shape: "S", category: "framework", logo: "/assets/toolbox/django.svg" },
+        { name: "Flask", shape: "Z", category: "framework", logo: "/assets/toolbox/flask.svg" },
+        { name: "REST", shape: "L", category: "framework", logo: "/assets/toolbox/rest.svg" },
+        { name: "Celery", shape: "J", category: "framework", logo: "/assets/toolbox/celery.svg" },
+        { name: "Docker", shape: "I", category: "platform", logo: "/assets/toolbox/docker.svg" },
+        { name: "Kubernetes", shape: "T", category: "platform", logo: "/assets/toolbox/kubernetes.svg" },
+        { name: "Linux", shape: "O", category: "platform", logo: "/assets/toolbox/linux.svg" },
+        { name: "OpenAI", shape: "L", category: "platform", logo: "/assets/toolbox/openai.svg" },
+        { name: "Azure", shape: "J", category: "platform", logo: "/assets/toolbox/azure.svg" },
+        { name: "Node", shape: "S", category: "platform", logo: "/assets/toolbox/node.svg" },
+        { name: "Tailwind", shape: "Z", category: "platform", logo: "/assets/toolbox/tailwindcss.svg" },
+        { name: "Rojo", shape: "I", category: "tool", logo: "/assets/toolbox/rojo.png" },
+        { name: "Git", shape: "O", category: "tool", logo: "/assets/toolbox/git.svg" },
+        { name: "Vim", shape: "T", category: "tool", logo: "/assets/toolbox/vim.svg" },
+        { name: "Postman", shape: "L", category: "tool", logo: "/assets/toolbox/postman.svg" },
+        { name: "VS Code", shape: "J", category: "tool", logo: "/assets/toolbox/vscode.svg" },
+        { name: "Cursor", shape: "S", category: "tool", logo: "/assets/toolbox/cursor.svg" },
+        { name: "SQL Mgmt", shape: "Z", category: "tool", logo: "/assets/toolbox/database.svg" },
+        { name: "Agile", shape: "T", category: "tool", logo: "/assets/toolbox/agile.svg" },
+        { name: "Codex", shape: "L", category: "tool", logo: "/assets/toolbox/codex.svg" },
+        { name: "Figma", shape: "J", category: "tool", logo: "/assets/toolbox/figma.svg" }
+      ];
+
+      function drawTextMark(text, x, y, size, fontSize = 9) {
+        ctx.save();
+        ctx.fillStyle = "#111111";
+        ctx.font = `bold ${fontSize}px IBM Plex Mono`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x, y + 0.5);
+        ctx.restore();
+      }
+
+      const logoCache = new Map();
+
+      function loadLogo(src) {
+        if (!src) {
+          return null;
+        }
+        if (logoCache.has(src)) {
+          return logoCache.get(src);
+        }
+        const img = new Image();
+        img.decoding = "async";
+        img.src = src;
+        logoCache.set(src, img);
+        return img;
+      }
+
+      let queue = [];
+      let current = null;
+      let dropAccumulator = 0;
+      let lastTime = 0;
+      let lines = 0;
+      let score = 0;
+      let level = 1;
+      let status = "playing";
+      let pieceIdCounter = 1;
+
+      function cloneMatrix(matrix) {
+        return matrix.map((row) => [...row]);
+      }
+
+      function rotate(matrix) {
+        return matrix[0].map((_, x) => matrix.map((row) => row[x]).reverse());
+      }
+
+      function makePiece(item) {
+        const matrix = cloneMatrix(pieceShapes[item.shape]);
+        return {
+          id: pieceIdCounter += 1,
+          item,
+          matrix,
+          x: Math.floor((COLS - matrix[0].length) / 2),
+          y: 0
+        };
+      }
+
+      function refillQueue() {
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        queue.push(...shuffled);
+      }
+
+      function spawnPiece() {
+        if (queue.length < 6) {
+          refillQueue();
+        }
+
+        current = makePiece(queue.shift());
+        nextNameEl.textContent = queue[0].name;
+        nextSwatchEl.style.background = categories[queue[0].category].color;
+
+        if (collides(current.matrix, current.x, current.y)) {
+          status = "game over";
+          statusEl.textContent = status;
+        }
+      }
+
+      function collides(matrix, offsetX, offsetY) {
+        for (let y = 0; y < matrix.length; y += 1) {
+          for (let x = 0; x < matrix[y].length; x += 1) {
+            if (!matrix[y][x]) {
+              continue;
+            }
+
+            const boardX = offsetX + x;
+            const boardY = offsetY + y;
+
+            if (boardX < 0 || boardX >= COLS || boardY >= ROWS) {
+              return true;
+            }
+
+            if (boardY >= 0 && board[boardY][boardX]) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function mergePiece() {
+        current.matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (!value) {
+              return;
+            }
+
+            const boardY = current.y + y;
+            if (boardY >= 0) {
+              board[boardY][current.x + x] = {
+                id: current.id,
+                name: current.item.name,
+                category: current.item.category,
+                color: categories[current.item.category].color,
+                logo: current.item.logo || null
+              };
+            }
+          });
+        });
+      }
+
+      function clearLines() {
+        let cleared = 0;
+        for (let y = ROWS - 1; y >= 0; y -= 1) {
+          if (board[y].every(Boolean)) {
+            board.splice(y, 1);
+            board.unshift(Array(COLS).fill(null));
+            cleared += 1;
+            y += 1;
+          }
+        }
+
+        if (cleared > 0) {
+          lines += cleared;
+          score += cleared * 100;
+          level = 1 + Math.floor(lines / 5);
+          linesEl.textContent = String(lines);
+          scoreEl.textContent = String(score);
+          levelEl.textContent = String(level);
+        }
+      }
+
+      function lockPiece() {
+        mergePiece();
+        clearLines();
+        spawnPiece();
+      }
+
+      function move(dx, dy) {
+        if (!current || status !== "playing") {
+          return false;
+        }
+
+        const nextX = current.x + dx;
+        const nextY = current.y + dy;
+        if (collides(current.matrix, nextX, nextY)) {
+          if (dy === 1) {
+            lockPiece();
+          }
+          return false;
+        }
+
+        current.x = nextX;
+        current.y = nextY;
+        return true;
+      }
+
+      function hardDrop() {
+        while (move(0, 1)) {
+          score += 2;
+        }
+        scoreEl.textContent = String(score);
+      }
+
+      function rotateCurrent() {
+        if (!current || status !== "playing") {
+          return;
+        }
+
+        const rotated = rotate(current.matrix);
+        const kicks = [0, -1, 1, -2, 2];
+        for (const kick of kicks) {
+          if (!collides(rotated, current.x + kick, current.y)) {
+            current.matrix = rotated;
+            current.x += kick;
+            return;
+          }
+        }
+      }
+
+      function drawCell(x, y, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.28)";
+        ctx.strokeRect(x * CELL + 0.5, y * CELL + 0.5, CELL - 1, CELL - 1);
+      }
+
+      function drawPieceBadge(bounds, item) {
+        const centerX = bounds.x + bounds.w / 2;
+        const centerY = bounds.y + bounds.h / 2;
+        const logo = item.logo ? loadLogo(item.logo) : null;
+        const hasLogo = Boolean(logo && logo.complete && logo.naturalWidth > 0);
+
+        if (hasLogo) {
+          const size = Math.max(18, Math.min(30, Math.min(bounds.w, bounds.h) * 0.34));
+          ctx.drawImage(logo, centerX - size / 2, centerY - 22, size, size);
+        }
+
+        ctx.save();
+        ctx.fillStyle = "#111111";
+        ctx.font = "bold 9px IBM Plex Mono";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(item.name, centerX, centerY + (hasLogo ? 12 : 0));
+        ctx.restore();
+      }
+
+      function drawBoard() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const groups = new Map();
+
+        for (let y = 0; y < ROWS; y += 1) {
+          for (let x = 0; x < COLS; x += 1) {
+            const cell = board[y][x];
+            if (cell) {
+              drawCell(x, y, cell.color);
+              if (!groups.has(cell.id)) {
+                groups.set(cell.id, {
+                  minX: x,
+                  maxX: x,
+                  minY: y,
+                  maxY: y,
+                  item: cell
+                });
+              } else {
+                const group = groups.get(cell.id);
+                group.minX = Math.min(group.minX, x);
+                group.maxX = Math.max(group.maxX, x);
+                group.minY = Math.min(group.minY, y);
+                group.maxY = Math.max(group.maxY, y);
+              }
+            } else {
+              ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+              ctx.strokeRect(x * CELL + 0.5, y * CELL + 0.5, CELL - 1, CELL - 1);
+            }
+          }
+        }
+
+        groups.forEach((group) => {
+          drawPieceBadge(
+            {
+              x: group.minX * CELL,
+              y: group.minY * CELL,
+              w: (group.maxX - group.minX + 1) * CELL,
+              h: (group.maxY - group.minY + 1) * CELL
+            },
+            group.item
+          );
+        });
+      }
+
+      function drawPiece(piece) {
+        if (!piece) {
+          return;
+        }
+
+        const color = categories[piece.item.category].color;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        piece.matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (value) {
+              drawCell(piece.x + x, piece.y + y, color);
+              minX = Math.min(minX, piece.x + x);
+              maxX = Math.max(maxX, piece.x + x);
+              minY = Math.min(minY, piece.y + y);
+              maxY = Math.max(maxY, piece.y + y);
+            }
+          });
+        });
+
+        drawPieceBadge(
+          {
+            x: minX * CELL,
+            y: minY * CELL,
+            w: (maxX - minX + 1) * CELL,
+            h: (maxY - minY + 1) * CELL
+          },
+          piece.item
+        );
+      }
+
+      function drawStatusOverlay() {
+        if (status !== "game over" && status !== "paused") {
+          return;
+        }
+
+        ctx.fillStyle = "rgba(11, 12, 16, 0.84)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 24px IBM Plex Mono";
+        ctx.textAlign = "center";
+        ctx.fillText(status, canvas.width / 2, canvas.height / 2 - 18);
+        ctx.font = "14px IBM Plex Mono";
+        ctx.fillText(
+          status === "paused" ? "press P to resume" : "press R to run it back",
+          canvas.width / 2,
+          canvas.height / 2 + 16
+        );
+      }
+
+      function draw() {
+        drawBoard();
+        drawPiece(current);
+        drawStatusOverlay();
+      }
+
+      function tick(time) {
+        if (!lastTime) {
+          lastTime = time;
+        }
+
+        const delta = time - lastTime;
+        lastTime = time;
+
+        if (status === "playing") {
+          dropAccumulator += delta;
+          const interval = Math.max(130, 620 - (level - 1) * 45);
+          if (dropAccumulator >= interval) {
+            move(0, 1);
+            dropAccumulator = 0;
+          }
+        }
+
+        draw();
+        requestAnimationFrame(tick);
+      }
+
+      function reset() {
+        for (let y = 0; y < ROWS; y += 1) {
+          board[y].fill(null);
+        }
+        queue = [];
+        pieceIdCounter = 1;
+        lines = 0;
+        score = 0;
+        level = 1;
+        status = "playing";
+        dropAccumulator = 0;
+        lastTime = 0;
+        linesEl.textContent = "0";
+        scoreEl.textContent = "0";
+        levelEl.textContent = "1";
+        statusEl.textContent = "playing";
+        refillQueue();
+        spawnPiece();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+          return;
+        }
+
+        if (event.key.toLowerCase() === "r") {
+          reset();
+          return;
+        }
+
+        if (event.key.toLowerCase() === "p") {
+          if (status === "playing") {
+            status = "paused";
+          } else if (status === "paused") {
+            status = "playing";
+          }
+          statusEl.textContent = status;
+          return;
+        }
+
+        if (status !== "playing") {
+          return;
+        }
+
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          move(-1, 0);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          move(1, 0);
+        } else if (event.key === "ArrowDown") {
+          event.preventDefault();
+          if (move(0, 1)) {
+            score += 1;
+            scoreEl.textContent = String(score);
+          }
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          rotateCurrent();
+        } else if (event.key === " ") {
+          event.preventDefault();
+          hardDrop();
+        }
+      });
+
+      items.forEach((item) => {
+        if (item.logo) {
+          loadLogo(item.logo);
+        }
+      });
+
+      reset();
+      requestAnimationFrame(tick);
+    })();
+  </script>
+{% endblock %}
