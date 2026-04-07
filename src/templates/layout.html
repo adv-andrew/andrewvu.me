@@ -124,33 +124,33 @@
   <main
     class="flex min-h-screen flex-col max-w-5xl mx-auto px-4 py-4 sm:py-8 leading-5 font-sans"
   >
-    <div class="flex justify-between flex-wrap mb-2">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
       <a href="/">
         <h1 class="font-mono text-2xl font-bold">{{ name }}</h1>
       </a>
       <div
-        class="flex flex-col sm:flex-row justify-between gap-2 align-middle items-center my-1"
+        class="grid grid-cols-2 sm:flex gap-2 items-stretch sm:items-center w-full sm:w-auto my-1"
       >
-        {% call button("https://www.linkedin.com/in/adv-andrew-d-vu/", "w-32 bg-[#0077b5] text-white", 'target="_blank" rel="noopener noreferrer"') %}
+        {% call button("https://www.linkedin.com/in/adv-andrew-d-vu/", "w-full sm:w-32 h-9 sm:h-6 me-0 bg-[#0077b5] text-white", 'target="_blank" rel="noopener noreferrer"') %}
           <div style="mask-image: url('/assets/linkedin.svg');" class="icon"></div>
           <span class="ms-1">LinkedIn</span>
         {% endcall %}
-        {% call button("https://github.com/adv-andrew", "w-32", 'target="_blank" rel="noopener noreferrer"') %}
+        {% call button("https://github.com/adv-andrew", "w-full sm:w-32 h-9 sm:h-6 me-0", 'target="_blank" rel="noopener noreferrer"') %}
           <div style="mask-image: url('/assets/github.svg');" class="icon"></div>
           <span class="ms-1">GitHub</span>
         {% endcall %}
-        {% call button("https://x.com/iStaridium", "w-32", 'target="_blank" rel="noopener noreferrer"') %}
+        {% call button("https://x.com/iStaridium", "w-full sm:w-32 h-9 sm:h-6 me-0", 'target="_blank" rel="noopener noreferrer"') %}
           <div style="mask-image: url('/assets/x.svg');" class="icon"></div>
           <span class="ms-1">X</span>
         {% endcall %}
-        {% call button("https://www.roblox.com/users/96753261/profile", "w-32", 'target="_blank" rel="noopener noreferrer"') %}
+        {% call button("https://www.roblox.com/users/96753261/profile", "w-full sm:w-32 h-9 sm:h-6 me-0", 'target="_blank" rel="noopener noreferrer"') %}
           <div style="mask-image: url('/assets/roblox.svg');" class="icon"></div>
           <span class="ms-1">Roblox</span>
         {% endcall %}
         <button
           type="button"
           id="theme-toggle"
-          class="theme-toggle"
+          class="theme-toggle col-span-2 justify-self-end sm:justify-self-auto"
           aria-label="Toggle dark mode"
           title="Toggle dark mode"
         >
