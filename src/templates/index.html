@@ -277,10 +277,26 @@
   <div class="flex flex-col gap-4">
     {% call fieldset("cat ~/for-visitors.md") %}
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p class="text-base m-0">
-          visiting from one of my videos or posts? i put a little collection of
-          things together for you.
-        </p>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 shrink-0" aria-label="TikTok and Instagram">
+            <span
+              class="icon"
+              style="mask-image: url('/assets/tiktok.svg'); -webkit-mask-image: url('/assets/tiktok.svg'); width: 20px; height: 20px;"
+              aria-label="TikTok"
+              title="TikTok"
+            ></span>
+            <span
+              class="icon"
+              style="mask-image: url('/assets/instagram.svg'); -webkit-mask-image: url('/assets/instagram.svg'); width: 20px; height: 20px;"
+              aria-label="Instagram"
+              title="Instagram"
+            ></span>
+          </div>
+          <p class="text-base m-0">
+            visiting from one of my videos or posts? i put a little collection of
+            things together for you.
+          </p>
+        </div>
         {% call button("/resources", "w-full sm:w-auto h-9 text-base font-bold me-0 sm:px-5") %}
           <span>resources</span>
         {% endcall %}

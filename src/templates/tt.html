@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+{% from "components/button.html" import button %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    {% call fieldset("cat ~/tt.md") %}
+      <div class="flex flex-col gap-4 text-lg">
+        <p class="m-0">
+          hey, thanks for coming over from tiktok :)
+        </p>
+        <p class="m-0">
+          head to the main site for projects, experience, and the stuff i was
+          probably talking about.
+        </p>
+        <div class="flex flex-row gap-2 pt-1">
+          {% call button("/", "w-full sm:w-auto h-9 text-base font-bold me-0 sm:px-5") %}
+            <span>main site</span>
+          {% endcall %}
+          {% call button("/resources", "w-full sm:w-auto h-9 text-base font-bold me-0 sm:px-5") %}
+            <span>resources</span>
+          {% endcall %}
+        </div>
+      </div>
+    {% endcall %}
+  </div>
+{% endblock %}
