@@ -284,6 +284,18 @@ custom_pages = [
             "description": f"{title_name}'s stack turned into a tiny tetris-style toolbox game",
             "image": urljoin(url, "/assets/me.jpg"),
         },
+    },
+    {
+        "template": "resources.html",
+        "output": ("resources.html",),
+        "title": f"{title_name} | Resources",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/resources"),
+            "title": f"{title_name} | Resources",
+            "description": f"{title_name}'s shelf of resources for visitors from videos and posts",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
     }
 ]
 

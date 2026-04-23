@@ -275,6 +275,17 @@
 
 {% block content %}
   <div class="flex flex-col gap-4">
+    {% call fieldset("cat ~/for-visitors.md") %}
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p class="text-base m-0">
+          visiting from one of my videos or posts? i put a little collection of
+          things together for you.
+        </p>
+        {% call button("/resources", "w-full sm:w-auto h-9 text-base font-bold me-0 sm:px-5") %}
+          <span>resources</span>
+        {% endcall %}
+      </div>
+    {% endcall %}
     <!-- <WhoAmI /> -->
     {% call fieldset("whoami") %}
       <article class="text-lg prose-p:m-0 flex flex-col-reverse sm:block">

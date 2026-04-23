@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+{% from "components/fieldset.html" import fieldset %}
+
+{% block head_extra %}
+  <style>
+    .resource-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding: 0.9rem;
+      border: 1px solid var(--site-border);
+      background: var(--site-panel);
+      box-shadow: 4px 4px 0 var(--site-shadow);
+    }
+
+    .resource-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .resource-card p {
+      margin: 0;
+      color: var(--site-muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .resource-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.15rem;
+    }
+
+    .resource-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.6rem;
+      padding: 0 0.65rem;
+      border: 1px solid var(--site-border-strong);
+      background: var(--site-panel-soft);
+      color: inherit;
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1;
+      box-shadow: 2px 2px 0 var(--site-shadow);
+    }
+
+    .resource-chip:hover {
+      background: var(--site-text);
+      color: var(--site-panel);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-4">
+    {% call fieldset("ls ~/resources") %}
+      <div class="flex flex-col gap-3 text-lg">
+        <p class="m-0">
+          a little shelf of things i've made or recommend. if you came here from
+          a video or post of mine, this is the stuff i was probably pointing at.
+        </p>
+        <p class="text-sm m-0" style="color: var(--site-muted);">
+          more coming as i make it. bookmark if you want.
+        </p>
+      </div>
+    {% endcall %}
+
+    {% call fieldset("cat ~/resources/resume-template.md") %}
+      <article class="resource-card">
+        <h3>my resume template</h3>
+        <p>
+          clean one-page latex resume template. accent color is one line to
+          change, sections are easy to cut, readme walks you through overleaf,
+          vs code, and local install.
+        </p>
+        <div class="resource-links">
+          <a
+            href="https://github.com/adv-andrew/andrew-resume-template"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="resource-chip"
+          >
+            GitHub
+          </a>
+        </div>
+      </article>
+    {% endcall %}
+
+    {% call fieldset("cat ~/resources/agentic-coding-for-beginners.md") %}
+      <article class="resource-card">
+        <h3>agentic coding for beginners</h3>
+        <p>
+          beginner-friendly guide to claude code, codex cli, and gemini cli.
+          aimed at cs students who are still copy-pasting from chatgpt and don't
+          know these tools exist.
+        </p>
+        <div class="resource-links">
+          <a
+            href="https://github.com/adv-andrew/agentic-coding-for-beginners"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="resource-chip"
+          >
+            GitHub
+          </a>
+        </div>
+      </article>
+    {% endcall %}
+  </div>
+{% endblock %}
