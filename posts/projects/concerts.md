@@ -2,7 +2,7 @@
 title: "Virtual Concert Tech"
 summary: "Building virtual concert experiences on Roblox reaching tens of millions"
 coverImage: "/assets/concerts.png"
-order: 3
+order: 4
 ---
 
 Through VuPlay Creative LLC, I was contracted by Gamefam Inc. to work on their virtual concert technology within Roblox. These events brought live music performances into the Roblox platform, reaching tens of millions of players.

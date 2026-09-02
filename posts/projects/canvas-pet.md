@@ -2,7 +2,7 @@
 title: "Canvas Pet"
 summary: "A Chrome extension that gamifies Canvas assignment completion with a virtual pet"
 coverImage: "/assets/canvas-pet.png"
-order: 0
+order: 1
 ---
 
 Canvas Pet is a Chrome extension built as a group project for CEN3031 (Software Engineering) at UF. The idea is simple - complete your Canvas assignments on time and your virtual pet thrives. Fall behind, and it suffers.

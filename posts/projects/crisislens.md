@@ -2,7 +2,7 @@
 title: "CrisisLens"
 summary: "Mapping mismatches between humanitarian needs and funding"
 coverImage: "/assets/crisislens.png"
-order: 1
+order: 2
 ---
 
 CrisisLens was built at Hacklytics 2026 for the Databricks x UN Geo-Insight Challenge. It's an interactive tool that visualizes where humanitarian funding doesn't match the actual severity of crises around the world.

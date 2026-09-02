@@ -2,7 +2,7 @@
 title: "UF Roblox Lab"
 summary: "Exploring LLM-assisted game development education"
 coverImage: "/assets/roblox-lab.png"
-order: 2
+order: 3
 ---
 
 The UF Roblox Lab is a semester-long initiative I lead through GatorAI. The goal is to explore how large language models can assist in teaching game development - specifically on the Roblox platform using Lua/Luau.
