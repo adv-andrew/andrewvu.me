@@ -1,0 +1,18 @@
+Drop the 12 NVIDIA photos here, named exactly as listed.
+Order matches the captions in index.html.
+
+ 1. rock climbing with nvidia interns.jpg
+ 2. picture with jensen huang.jpg
+ 3. intern orientation.jpg
+ 4. taipei.jpg
+ 5. july 4th in sf.jpg
+ 6. volunteer event to make skateboards for underserved children.jpg
+ 7. mt tam.jpg
+ 8. picture with chris malachowsky nvidia cofounder.jpg
+ 9. lake tahoe.jpg
+10. hong kong.jpg
+11. big sur.jpg
+12. sky diving.jpg
+
+Any of .jpg/.jpeg/.png works - if you use a different extension,
+update the matching <img src> in src/templates/index.html.
