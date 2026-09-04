@@ -1,0 +1,13 @@
+Travel photos still needed for the four new markers.
+Drop them in this folder with these exact names:
+
+  1. hong kong.jpg      - infinity pool, harbour + skyline
+  2. san francisco.jpg  - rooftop, two of you, city behind
+  3. taipei.jpg         - taipei 101 at dusk from the trail
+  4. los angeles.jpg    - night, city lights below
+
+These are referenced by markerDetails in
+src/templates/random/travel.html - clicking the pin shows the photo.
+
+.jpg/.jpeg/.png all work; if you use a different extension,
+update the matching image: line in that file.
