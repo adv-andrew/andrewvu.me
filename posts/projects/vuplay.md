@@ -2,7 +2,7 @@
 title: "VuPlay Creative"
 summary: "My Roblox development studio - 80+ clients and counting"
 coverImage: "/assets/vuplay.png"
-order: 5
+order: 6
 ---
 
 VuPlay Creative LLC is my Roblox development studio that I've been running since 2020. Over the years, I've freelanced for over 80 clients, building everything from small UI tweaks to full game systems.

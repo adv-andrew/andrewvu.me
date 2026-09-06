@@ -8,7 +8,9 @@
       <h3 class="italic text-xl m-0 font-normal">{{ post.summary }}</h3>
       <div class="h-4" />
     </article>
-    <img src="{{ post.coverImage }}" class="mb-4" />
+    {% if post.coverImage %}
+      <img src="{{ post.coverImage }}" class="mb-4" />
+    {% endif %}
     <article>
       {{ post.content|safe }}
     </article>

@@ -2,7 +2,7 @@
 title: "DataSmith"
 summary: "AI-powered data tooling for streamlining data science workflows"
 coverImage: "/assets/datasmith.png"
-order: 4
+order: 5
 ---
 
 DataSmith was a pitch developed for NexHack 2026. The concept is an AI-powered tool that streamlines common data science workflows - cleaning, transformation, feature engineering, and exploratory analysis - by letting users describe what they want in natural language.

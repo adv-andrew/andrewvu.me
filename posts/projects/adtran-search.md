@@ -2,7 +2,7 @@
 title: "Elasticsearch DSL Migration"
 summary: "Refactoring a documentation portal's search at Adtran"
 coverImage: "/assets/adtran-search.png"
-order: 6
+order: 7
 ---
 
 During my Summer 2025 internship at Adtran, I refactored the search functionality of an internal documentation portal from native Elasticsearch queries to Elasticsearch DSL.
