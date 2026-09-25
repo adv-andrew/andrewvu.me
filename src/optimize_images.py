@@ -52,7 +52,9 @@ def replace_in_html(html: str, img_basenames: list):
     with open(html, "r") as f:
         content = f.read()
 
-    for img in img_basenames:
+    # Dedupe: the same basename can exist in two folders (e.g. rojo.png),
+    # and replacing it twice would produce "rojo.png.webp.webp".
+    for img in set(img_basenames):
         content = content.replace(img, optimized_name(img))
 
     with open(html, "w") as f:
