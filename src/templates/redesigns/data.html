@@ -1,0 +1,228 @@
+{#-
+  Shared homepage content for the redesign prototypes
+  (/andyvusimulator, /routeguide, /studio).
+  Import with: {% import "redesigns/data.html" as d %}
+-#}
+
+{% set about = [
+  "Hii!! I'm Andy, a CS student at UF and Roblox game developer (you've probably played one of my games before)",
+  "Most of my time goes into software, game development, trying out the trendiest ai tools (cough...openclaw...), and building whatever idea I've convinced myself \"will only take a weekend\"",
+  "When I'm not working on something, I'm probably rock climbing, hiking, playing video games, or a late night walk (and snack)",
+  "Feel free to reach out to me on LinkedIn!",
+] %}
+
+{% set photo = "/assets/me.jpg" %}
+{% set photo_alt = "/assets/me_alt.jpg" %}
+{% set easter_egg = "you found my easter egg!" %}
+
+{% set motto = {
+  "text": "Let the weather be the weather",
+  "source": "redditor in r/stoicism",
+} %}
+
+{% set visitors = {
+  "text": "visiting from one of my videos or posts? i put a little collection of things together for you.",
+  "href": "/resources",
+  "label": "resources",
+} %}
+
+{% set random_pages = [
+  {"id": "travel", "label": "Travel", "href": "/random/travel", "blurb": "a globe of places i've been and want to go"},
+  {"id": "music", "label": "Music", "href": "/random/music", "blurb": "bouncing album cover wall"},
+  {"id": "wins", "label": "Wins", "href": "/random/wins", "blurb": "trophy case of milestones"},
+  {"id": "lore", "label": "Lore", "href": "/random/lore", "blurb": "my life's faqs"},
+  {"id": "toolbox", "label": "Toolbox", "href": "/random/toolbox", "blurb": "my stack as a tiny tetris game"},
+] %}
+
+{% set socials = [
+  {"id": "linkedin", "label": "LinkedIn", "href": "https://www.linkedin.com/in/adv-andrew-d-vu/", "icon": "/assets/linkedin.svg"},
+  {"id": "github", "label": "GitHub", "href": "https://github.com/adv-andrew", "icon": "/assets/github.svg"},
+  {"id": "x", "label": "X", "href": "https://x.com/iStaridium", "icon": "/assets/x.svg"},
+  {"id": "roblox", "label": "Roblox", "href": "https://www.roblox.com/users/96753261/profile", "icon": "/assets/roblox.svg"},
+] %}
+
+{% set links = [
+  {"id": "email", "label": "Email", "href": "mailto:andrew.vu@ufl.edu"},
+  {"id": "github", "label": "GitHub", "href": "https://github.com/adv-andrew"},
+  {"id": "linkedin", "label": "LinkedIn", "href": "https://www.linkedin.com/in/adv-andrew-d-vu/"},
+  {"id": "devpost", "label": "Devpost", "href": "https://devpost.com/adv-andrew"},
+  {"id": "x", "label": "X", "href": "https://x.com/iStaridium"},
+  {"id": "roblox", "label": "Roblox", "href": "https://www.roblox.com/users/96753261/profile"},
+] %}
+
+{% set email = "andrew.vu@ufl.edu" %}
+
+{#- Newest first. `favorite` = starred on the current homepage. -#}
+{% set experience = [
+  {
+    "id": "cloudflare", "company": "Cloudflare", "logo": "/assets/experience/cloudflare.png",
+    "favorite": true, "current": true, "start_year": 2026,
+    "roles": [{"title": "Software Engineer Intern", "team": none, "dates": "08/2026 - present", "location": "Austin, Texas"}],
+    "note": none, "gallery": none, "links": [],
+  },
+  {
+    "id": "nvidia", "company": "NVIDIA", "logo": "/assets/experience/nvidia.png",
+    "favorite": true, "current": false, "start_year": 2026,
+    "roles": [{"title": "Solutions Architect Intern", "team": none, "dates": "05/2026 - 08/2026", "location": "Santa Clara, California"}],
+    "note": none, "gallery": "nvidia", "links": [],
+  },
+  {
+    "id": "adtran", "company": "Adtran", "logo": "/assets/experience/adtran.png",
+    "favorite": true, "current": false, "start_year": 2025,
+    "roles": [
+      {"title": "Software Engineer Intern, Part-time", "team": "Technical Documentation Team", "dates": "08/2025 - 04/2026", "location": "Remote"},
+      {"title": "Software Engineer Intern", "team": "Technical Documentation Team", "dates": "05/2025 - 08/2025", "location": "Atlanta, Georgia, On-site"},
+    ],
+    "note": none, "gallery": "adtran", "links": [],
+  },
+  {
+    "id": "gatorai", "company": "GatorAI", "logo": "/assets/experience/gatorai.png",
+    "favorite": false, "current": true, "start_year": 2025,
+    "roles": [{"title": "Applied Tech Lead", "team": none, "dates": "04/2025 - present", "location": "Gainesville, Florida"}],
+    "note": "Managing 13 AI/ML projects end-to-end", "gallery": "gatorai",
+    "links": [{"label": "club", "href": "https://www.instagram.com/uf_gatorai/"}],
+  },
+  {
+    "id": "vuplay", "company": "VuPlay Creative LLC", "logo": "/assets/experience/vuplay.png",
+    "favorite": true, "current": true, "start_year": 2021,
+    "roles": [{"title": "Founder", "team": none, "dates": "12/2021 - present", "location": "Orlando, Florida, Hybrid"}],
+    "note": "Launched 5 Roblox games, 145+ million plays", "gallery": none,
+    "links": [
+      {"label": "games", "href": "#games"},
+      {"label": "roblox profile", "href": "https://www.roblox.com/users/96753261/profile"},
+    ],
+  },
+  {
+    "id": "ucf", "company": "University of Central Florida", "logo": "/assets/experience/ucf.png",
+    "favorite": false, "current": false, "start_year": 2023,
+    "roles": [{"title": "Machine Learning Research Assistant", "team": none, "dates": "09/2023 - 05/2024", "location": "Orlando, Florida, Hybrid"}],
+    "note": "Photovoltaic anomaly detection", "gallery": none, "links": [],
+  },
+  {
+    "id": "roblox", "company": "Roblox", "logo": "/assets/experience/roblox.svg",
+    "favorite": false, "current": false, "start_year": 2022,
+    "roles": [{"title": "Game Developer, Roblox Developer Conference 2022", "team": none, "dates": "09/2022", "location": "San Francisco, California, On-site"}],
+    "note": "Invite-only conference for top Roblox developers and creators. 82 million plays at the time", "gallery": none,
+    "links": [
+      {"label": "event hub", "href": "https://www.roblox.com/games/10767940743"},
+      {"label": "article", "href": "https://corp.roblox.com/newsroom/2022/09/roblox-innovation-awards-2022-complete-winners-list"},
+    ],
+  },
+  {
+    "id": "gamefam", "company": "Gamefam", "logo": "/assets/experience/gamefam.png",
+    "favorite": false, "current": false, "start_year": 2021,
+    "roles": [{"title": "Project Manager and Developer", "team": none, "dates": "02/2021 - 05/2021", "location": "Los Angeles, California, Remote"}],
+    "note": none, "gallery": none, "links": [],
+  },
+] %}
+
+{% set galleries = {
+  "nvidia": {
+    "title": "NVIDIA Pictures",
+    "subtitle": "a summer of gpus and questionable altitude choices",
+    "photos": [
+      {"src": "/assets/experience/pics_nvidia/rock climbing with nvidia interns.jpg", "caption": "rock climbing with nvidia interns"},
+      {"src": "/assets/experience/pics_nvidia/picture with jensen huang.jpg", "caption": "picture with jensen huang"},
+      {"src": "/assets/experience/pics_nvidia/intern social.jpg", "caption": "intern social"},
+      {"src": "/assets/experience/pics_nvidia/hong kong.jpg", "caption": "hong kong"},
+      {"src": "/assets/experience/pics_nvidia/volunteer event to make skateboards for underserved children.jpg", "caption": "volunteer event to make skateboards for underserved children"},
+      {"src": "/assets/experience/pics_nvidia/sky diving.jpg", "caption": "sky diving"},
+    ],
+  },
+  "adtran": {
+    "title": "Adtran Pictures",
+    "subtitle": "a few snapshots from the internship arc",
+    "photos": [
+      {"src": "/assets/experience/pics_adtran/company event pickleball.JPG", "caption": "company event pickleball"},
+      {"src": "/assets/experience/pics_adtran/first day of work.jpeg", "caption": "first day of work"},
+      {"src": "/assets/experience/pics_adtran/first time in heaven.JPG", "caption": "first time in heaven"},
+      {"src": "/assets/experience/pics_adtran/intern event baseball game.JPG", "caption": "intern event baseball game"},
+      {"src": "/assets/experience/pics_adtran/my amazing team.JPG", "caption": "my amazing team"},
+      {"src": "/assets/experience/pics_adtran/my cubicle.JPG", "caption": "my cubicle"},
+      {"src": "/assets/experience/pics_adtran/my second home after work.JPG", "caption": "my second home after work"},
+      {"src": "/assets/experience/pics_adtran/weekend trip to south carolina.jpeg", "caption": "weekend trip to south carolina"},
+      {"src": "/assets/experience/pics_adtran/weekend trip to south carolina 2.jpeg", "caption": "weekend trip to south carolina 2"},
+    ],
+  },
+  "gatorai": {
+    "title": "GatorAI Pictures",
+    "subtitle": "club moments, events, and leadership arc snapshots",
+    "photos": [
+      {"src": "/assets/experience/pics_gatorai/christmas party.png", "caption": "christmas party"},
+      {"src": "/assets/experience/pics_gatorai/elected eboard.png", "caption": "elected eboard"},
+      {"src": "/assets/experience/pics_gatorai/first gbm hosted 250 attendance.png", "caption": "first gbm hosted 250 attendance"},
+      {"src": "/assets/experience/pics_gatorai/hosted the first gatorai symposium.png", "caption": "hosted the first gatorai symposium"},
+      {"src": "/assets/experience/pics_gatorai/machine learning mondaysss.png", "caption": "machine learning mondaysss"},
+      {"src": "/assets/experience/pics_gatorai/tabling before the storm.png", "caption": "tabling before the storm"},
+    ],
+  },
+} %}
+
+{#- `favorite` = starred on the current homepage. `thumb_contain` = logo-style thumb, show with object-fit: contain on white. -#}
+{% set projects = [
+  {
+    "id": "datasmith", "name": "DataSmith", "thumb": "/assets/projects/datamsith.png", "favorite": true, "thumb_contain": false,
+    "desc": "Agent-powered data cleaning pipeline for turning raw datasets into ML-ready data with quality scoring and dashboards.",
+    "links": [{"label": "Devpost", "href": "https://devpost.com/software/67-industries"}],
+  },
+  {
+    "id": "fluentform", "name": "FluentForm", "thumb": "/assets/projects/fluentform.png", "favorite": false, "thumb_contain": false,
+    "desc": "AI pronunciation coach that analyzes phonemes, scores speech, and generates personalized practice using Azure + OpenAI.",
+    "links": [
+      {"label": "GitHub", "href": "https://github.com/blopezleon/goat-idk"},
+      {"label": "Devpost", "href": "https://devpost.com/software/fluentform"},
+    ],
+  },
+  {
+    "id": "mcmc", "name": "MCMC CUDA Model", "thumb": "/assets/projects/mcmc.png", "favorite": true, "thumb_contain": false,
+    "desc": "Monte Carlo + Markov-chain options trading system with backtesting, probabilistic forecasts, and CUDA acceleration.",
+    "links": [{"label": "GitHub", "href": "https://github.com/adv-andrew/mcmc-cuda-model"}],
+  },
+  {
+    "id": "rojo", "name": "Rojo OSS", "thumb": "/assets/projects/rojo.png", "favorite": false, "thumb_contain": true,
+    "desc": "Open-source contributions to Roblox developer tooling built around professional-grade engineering workflows.",
+    "links": [
+      {"label": "GitHub", "href": "https://github.com/rojo-rbx"},
+      {"label": "Site", "href": "https://rojo.space"},
+    ],
+  },
+] %}
+
+{% set games_as_of = "03/29/2026" %}
+{% set games = [
+  {"id": "anime-warriors", "name": "Anime Warriors Simulator", "href": "https://www.roblox.com/games/8549047195/Anime-Warriors-Simulator", "img": "/assets/games/anime-warriors-simulator.jpg", "created": "01/15/2022", "visits": 57170413},
+  {"id": "idle-heroes", "name": "Idle Heroes Simulator!", "href": "https://www.roblox.com/games/9264596435/Idle-Heroes-Simulator", "img": "/assets/games/idle-heroes-simulator.jpg", "created": "04/02/2022", "visits": 40382777},
+  {"id": "mowing-masters", "name": "Mowing Masters! Simulator", "href": "https://www.roblox.com/games/5991118999/Mowing-Masters-Simulator", "img": "/assets/games/mowing-masters-simulator.jpg", "created": "11/23/2020", "visits": 27920282},
+  {"id": "anime-destruction", "name": "Anime Destruction Simulator", "href": "https://www.roblox.com/games/7147680787/Anime-Destruction-Simulator", "img": "/assets/games/anime-destruction-simulator.jpg", "created": "07/24/2021", "visits": 18903971},
+  {"id": "military-army", "name": "Make a Military Army!", "href": "https://www.roblox.com/games/102004471989393/Make-a-Military-Army", "img": "/assets/games/make-a-military-army.jpg", "created": "09/18/2025", "visits": 4364561},
+] %}
+{#- Sum of the visit counts above. -#}
+{% set games_total_visits = 148742004 %}
+
+{% set friends = [
+  {"name": "Matheus Maldaner", "href": "https://matheus.wiki/", "note": "the research goat"},
+  {"name": "Alexander Wang", "href": "https://www.awangyisu.com/", "note": "my quantative"},
+  {"name": "Dylan Vidal", "href": "https://www.dvidal.dev/", "note": "fellow intern ambassador nvidia arc"},
+  {"name": "Thuy Le", "href": "https://tl-portfolio-ebon.vercel.app/", "note": "my sase mentor"},
+  {"name": "Henry Mack", "href": "http://hcmack.github.io/", "note": "VR + robotics tinkerer"},
+  {"name": "Christine Kim", "href": "https://www.christineyewonkim.com/", "note": "future f1 driver"},
+  {"name": "Aamogh Sawant", "href": "https://aamogh.vercel.app/", "note": "my favorite gt hackathon organizer"},
+  {"name": "Stanley Ke", "href": "https://www.stanleyke.us/", "note": "minecraft fanatic"},
+  {"name": "Layla Le", "href": "https://laylale.dev/", "note": "big apple"},
+  {"name": "Sophia Xing", "href": "https://www.sophiaxing.com/", "note": "top pickleballer"},
+  {"name": "Nate Martes", "href": "https://nathanielmartes.com/", "note": "linux master"},
+  {"name": "Nik Tanner", "href": "https://www.nikolastanner.com/", "note": "the great tanner"},
+] %}
+
+{% set credit = {
+  "text": "Source code on GitHub thanks to Sagar Patil",
+  "source_href": "https://github.com/sagarreddypatil/portfolio-website",
+  "author_href": "https://sagarpatil.me/",
+} %}
+
+{#- The three prototype versions, for the little version switcher on each page. -#}
+{% set versions = [
+  {"id": "simulator", "label": "Simulator", "href": "/andyvusimulator"},
+  {"id": "routeguide", "label": "Route guide", "href": "/routeguide"},
+  {"id": "studio", "label": "Studio", "href": "/studio"},
+] %}

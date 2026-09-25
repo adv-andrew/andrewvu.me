@@ -308,7 +308,43 @@ custom_pages = [
             "description": f"landing page for visitors coming from tiktok",
             "image": urljoin(url, "/assets/me.jpg"),
         },
-    }
+    },
+    {
+        "template": "redesigns/andyvusimulator.html",
+        "output": ("andyvusimulator.html",),
+        "title": f"{title_name} Simulator",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/andyvusimulator"),
+            "title": f"{title_name} Simulator",
+            "description": f"{title_name}'s homepage as a roblox simulator (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
+        "template": "redesigns/routeguide.html",
+        "output": ("routeguide.html",),
+        "title": f"{title_name} | Route Guide",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/routeguide"),
+            "title": f"{title_name} | Route Guide",
+            "description": f"{title_name}'s homepage as a climbing route guide (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
+        "template": "redesigns/studio.html",
+        "output": ("studio.html",),
+        "title": f"{title_name} | Studio",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/studio"),
+            "title": f"{title_name} | Studio",
+            "description": f"{title_name}'s homepage as the roblox studio editor (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
 ]
 
 for page in custom_pages:
