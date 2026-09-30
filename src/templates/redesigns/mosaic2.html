@@ -1,0 +1,1930 @@
+{% import "redesigns/data.html" as d %}
+{#-
+  /mosaic2 ("rearranged"): the whole homepage is one photomosaic that rebuilds itself into
+  every section as you scroll. Same tiles all the way down (the atlas + tile table made by
+  src/redesign_tools/mosaic_assets.py for /mosaic). Content is data.html.
+-#}
+{%- set exp_by = {} -%}
+{%- for e in d.experience -%}{%- set _ = exp_by.update({e.id: e}) -%}{%- endfor -%}
+{%- set now_job = d.experience|selectattr("current")|first -%}
+
+{#- canonical photo order (must match mosaic_assets.py): photo, photo_alt, origin, travel, gatorai, adtran, nvidia -#}
+{%- set g_off = {} -%}
+{%- set ns = namespace(o=3 + d.travel|length) -%}
+{%- for gid in ["gatorai", "adtran", "nvidia"] -%}
+  {%- set _ = g_off.update({gid: ns.o}) -%}
+  {%- set ns.o = ns.o + d.galleries[gid].photos|length -%}
+{%- endfor -%}
+
+{#- chapters (names/phrases are copy, years come from data) -#}
+{%- set chapters = [
+  {"id": "origin", "name": "origin", "year": d.origin.year},
+  {"id": "gatorai", "name": "gatorai", "year": exp_by.gatorai.start_year},
+  {"id": "adtran", "name": "adtran", "year": exp_by.adtran.start_year},
+  {"id": "nvidia", "name": "nvidia", "year": exp_by.nvidia.start_year},
+  {"id": "asia", "name": "travel · asia", "year": none},
+  {"id": "us", "name": "travel · us", "year": none},
+  {"id": "me", "name": "me", "year": none},
+] -%}
+
+{#- every photo in chapter order; i = canonical index (frame numbers follow this order) -#}
+{%- set sheet = [] -%}
+{%- set _ = sheet.append({"i": 2, "ch": "origin"}) -%}
+{%- for gid in ["gatorai", "adtran", "nvidia"] -%}
+  {%- for p in d.galleries[gid].photos -%}{%- set _ = sheet.append({"i": g_off[gid] + loop.index0, "ch": gid}) -%}{%- endfor -%}
+{%- endfor -%}
+{%- for reg in ["asia", "us"] -%}
+  {%- for t in d.travel -%}{%- if t.region == reg -%}{%- set _ = sheet.append({"i": 3 + loop.index0, "ch": reg}) -%}{%- endif -%}{%- endfor -%}
+{%- endfor -%}
+{%- set _ = sheet.append({"i": 0, "ch": "me"}) -%}
+{%- set _ = sheet.append({"i": 1, "ch": "me"}) -%}
+{%- set credit_parts = d.credit.text.split(" thanks to ") -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script>
+    (function () {
+      var h = document.documentElement;
+      try { if (localStorage.getItem("theme") === "dark") h.classList.add("dark"); } catch (e) {}
+      h.classList.add("js");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ title }}</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="/assets/redesigns/mosaic/mosaic-atlas.v1.jpg">
+  <style>
+    /* =====================================================================
+       1. tokens (same visual language as /mosaic)
+       ===================================================================== */
+    :root {
+      color-scheme: light;
+      --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+      --mono: "Fragment Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      --bg: #f3f1ec;
+      --bg-2: #ebe8e1;
+      --card: #faf9f6;
+      --ink: #141412;
+      --ink-2: #57544d;
+      --ink-3: #8b877e;
+      --rule: #dcd8ce;
+      --rule-2: #c3bdb0;
+      --accent: #cc3811;
+      --on-accent: #fff;
+      --gut: clamp(16px, 3.4vw, 48px);
+    }
+    html.dark {
+      color-scheme: dark;
+      --bg: #0f0f0e;
+      --bg-2: #171715;
+      --card: #141413;
+      --ink: #ecebe5;
+      --ink-2: #a9a69d;
+      --ink-3: #6f6c65;
+      --rule: #272623;
+      --rule-2: #3b3935;
+      --accent: #ff6a3d;
+      --on-accent: #120a06;
+    }
+
+    /* =====================================================================
+       2. base
+       ===================================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: var(--sans); font-size: 16px; line-height: 1.5;
+      overflow-x: clip; -webkit-font-smoothing: antialiased;
+      transition: background-color .3s ease, color .3s ease;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--accent); }
+    button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+    h1, h2, h3, p, ul, ol, figure, blockquote { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    ::selection { background: var(--accent); color: var(--on-accent); }
+    .mono { font-family: var(--mono); font-size: 12px; letter-spacing: .01em; }
+    .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    .skip { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 8px 12px; background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 600; }
+    .skip:focus { top: 12px; }
+
+    /* =====================================================================
+       3. layout: sticky mosaic + scrolling panels
+       ===================================================================== */
+    .wrap { display: grid; grid-template-columns: minmax(0, 53fr) minmax(0, 47fr); }
+    .stage-col { position: relative; }
+    .stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+    .stage canvas.gl { position: absolute; left: 0; top: 0; display: block; touch-action: pan-y; cursor: crosshair; visibility: hidden; }
+    .stage.is-ready canvas.gl { visibility: visible; }
+    .panels { position: relative; min-width: 0; border-left: 1px solid var(--rule); padding: 0 clamp(28px, 4.2vw, 80px) 0 clamp(24px, 3vw, 52px); }
+    .panel { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 48px 0 40px; }
+    .panel#me { min-height: calc(100svh - 70px); padding-top: 28px; }
+    .panel > * { max-width: 620px; }
+
+    .bar {
+      display: flex; align-items: baseline; gap: 6px 18px; flex-wrap: wrap;
+      padding: 16px 0 12px; border-bottom: 1px solid var(--rule);
+      font-family: var(--mono); font-size: 12px;
+    }
+    .brand { font-family: var(--sans); font-weight: 700; font-size: 14px; text-decoration: none; letter-spacing: -.01em; }
+    .brand span { color: var(--ink-3); font-weight: 400; }
+    .versions { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+    .versions .v-l { color: var(--ink-3); margin-right: 6px; }
+    .versions a { padding: 3px 7px; text-decoration: none; border-radius: 2px; color: var(--ink-2); }
+    .versions a:hover { color: var(--ink); background: var(--bg-2); }
+    .versions a[aria-current="page"] { color: var(--on-accent); background: var(--accent); }
+    .cur-site { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+    .bar .cur-site { margin-left: 6px; }
+    .theme {
+      position: absolute; top: 12px; right: 14px; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent);
+      display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 11px 0 9px;
+      border: 1px solid var(--rule-2); border-radius: 16px; font-family: var(--mono); font-size: 12px;
+    }
+    .theme:hover { border-color: var(--ink); }
+    .theme-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid currentColor; background: linear-gradient(90deg, currentColor 50%, transparent 50%); transition: transform .5s var(--ease); }
+    html.dark .theme-dot { transform: rotate(180deg); }
+
+    /* stage furniture */
+    .dots { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 2px; }
+    .dot { display: flex; align-items: center; gap: 10px; padding: 5px 4px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+    .dot i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; flex: none; transition: background-color .2s, border-color .2s, transform .3s var(--ease); }
+    .dot span { opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .3s var(--ease); background: var(--bg); padding: 1px 4px; }
+    .dot:hover span, .dot:focus-visible span, .dot[aria-current="step"] span, .stage:hover .dot span { opacity: 1; transform: none; }
+    .dot:hover { color: var(--ink); }
+    .dot[aria-current="step"] { color: var(--ink); }
+    .dot[aria-current="step"] i { background: var(--accent); border-color: var(--accent); transform: scale(1.2); }
+    .fig { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; color: var(--ink-3); font-family: var(--mono); font-size: 11.5px; pointer-events: none; padding: 0 60px; }
+    .fig b { color: var(--ink); font-weight: 400; }
+    .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-family: var(--mono); font-size: 12px; pointer-events: none; transition: opacity .4s ease; }
+    .loading.is-done { opacity: 0; }
+    html:not(.js) .loading { display: none; }
+    .fallback-img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: 80%; width: auto; }
+
+    /* work stop labels (html over the canvas) */
+    .wlabels { position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 2; }
+    .wl { position: absolute; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; line-height: 1.2; white-space: nowrap; color: var(--ink-2); background: var(--bg); padding: 1px 6px 1px 0; transition: color .2s; }
+    .wl b { font-weight: 400; color: var(--ink); }
+    .wl.is-hot b, .wl.is-hot { color: var(--accent); }
+    .wbox { position: absolute; display: grid; place-items: center; border: 1.5px dashed var(--ink-3); background: var(--bg); color: var(--ink-3); font-family: var(--mono); font-size: 11px; transition: border-color .2s, color .2s; }
+    .wbox.is-hot { border-color: var(--accent); color: var(--accent); }
+    .gring { position: absolute; border-radius: 50%; box-shadow: 0 0 0 1px var(--ink-2), 0 0 0 5px color-mix(in srgb, var(--bg) 60%, transparent); }
+    .gpin { position: absolute; box-shadow: 0 0 0 1.5px var(--bg), 0 2px 6px rgba(0, 0, 0, .35); }
+    .glab { position: absolute; transform: translateX(-100%); text-align: right; font-family: var(--mono); font-size: 11px; line-height: 1.25; color: var(--ink-2); background: var(--bg); padding: 1px 0 1px 6px; white-space: nowrap; }
+    .glab::after { content: ""; display: inline-block; width: 14px; height: 1px; margin-left: 6px; vertical-align: middle; background: var(--ink-3); }
+    .glab b { font-weight: 400; color: var(--ink); }
+    .glab.is-small { font-size: 10px; padding-left: 4px; }
+    .glab.is-small::after { display: none; }
+
+    /* loupe */
+    .loupe { position: absolute; left: 0; top: 0; z-index: 6; width: 180px; pointer-events: none; opacity: 0; transition: opacity .14s ease; }
+    .loupe.is-on { opacity: 1; }
+    .loupe canvas { display: block; width: 180px; height: 180px; border-radius: 50%; background: var(--bg); box-shadow: 0 0 0 1px var(--ink), 0 0 0 4px color-mix(in srgb, var(--bg) 70%, transparent), 0 22px 44px -16px rgba(0, 0, 0, .55); }
+    .loupe-cap { margin: 10px auto 0; width: max-content; max-width: 240px; padding: 6px 9px 7px; background: var(--card); border: 1px solid var(--rule-2); text-align: center; }
+    .loupe-cap:empty { display: none; }
+    .loupe-k { color: var(--accent); font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
+    .loupe-t { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .loupe-h { margin-top: 2px; font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+
+    /* =====================================================================
+       4. panels
+       ===================================================================== */
+    .kicker { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-family: var(--mono); font-size: 12px; margin-bottom: 14px; }
+    .kicker .no { color: var(--accent); }
+    .kicker::after { content: ""; width: 28px; height: 1px; background: var(--rule-2); }
+    .ph { font-size: clamp(26px, 2.5vw, 34px); font-weight: 750; font-stretch: 110%; letter-spacing: -.02em; line-height: 1.05; }
+    .psub { margin-top: 8px; color: var(--ink-2); font-size: 15px; max-width: 46ch; }
+
+    /* 01 me */
+    .name { font-weight: 800; font-stretch: 118%; font-size: clamp(40px, 4.2vw, 64px); line-height: .9; letter-spacing: -.035em; }
+    .name .nick { font-weight: 250; font-style: italic; font-stretch: 96%; letter-spacing: -.02em; color: var(--ink-2); }
+    .role { margin-top: 12px; font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+    .about { margin-top: 14px; }
+    .about p { font-size: clamp(15px, 1.1vw, 16.5px); line-height: 1.45; max-width: 50ch; }
+    .about p + p { margin-top: 6px; }
+    .row { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .soc { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--rule-2); border-radius: 50%; color: var(--ink-2); }
+    .soc:hover { border-color: var(--ink); color: var(--ink); }
+    .soc-i { width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+    .visit { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .visit p { flex: 1 1 260px; font-size: 14px; }
+    .go { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 14px; }
+    .go:hover { background: var(--accent); color: var(--on-accent); }
+    .motto { margin-top: 14px; }
+    .motto blockquote { font-size: clamp(19px, 1.6vw, 23px); font-style: italic; font-weight: 300; font-stretch: 94%; line-height: 1.15; letter-spacing: -.015em; }
+    .motto figcaption { margin-top: 4px; color: var(--ink-3); font-family: var(--mono); font-size: 12px; }
+    .hint { margin-top: 14px; color: var(--ink-3); font-family: var(--mono); font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+    .link-btn { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; font-family: var(--mono); font-size: 12px; }
+    .link-btn:hover { color: var(--accent); }
+
+    /* chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border: 1px solid var(--rule-2); font-family: var(--mono); font-size: 11.5px; text-decoration: none; transition: border-color .2s, background-color .2s, color .2s; }
+    .chip:hover { border-color: var(--ink); color: var(--ink); background: var(--card); }
+    .chip.hot { border-color: var(--accent); color: var(--accent); }
+    .chip.hot:hover { background: var(--accent); color: var(--on-accent); }
+
+    /* 02 work */
+    .jobs { margin-top: 14px; border-top: 1px solid var(--ink); }
+    .job { padding: 6px 0 7px; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 0 10px; transition: background-color .2s; }
+    .job.is-hot { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+    .job[data-hl]:not([data-hl="cloudflare"]) { cursor: pointer; }
+    .job-logo { width: 24px; height: 24px; background: #fff; border: 1px solid var(--rule); padding: 2px; margin-top: 1px; }
+    .job-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .job-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .job-co { font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; line-height: 1.3; }
+    .star { color: var(--accent); font-size: 11px; }
+    .tag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 5px; border: 1px solid currentColor; color: var(--accent); }
+    .role-l { font-size: 13px; line-height: 1.3; }
+    .role-l span { color: var(--ink-3); font-family: var(--mono); font-size: 11px; }
+    .job-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 3px; }
+    .job-note { font-size: 12.5px; color: var(--ink-2); }
+    .job .chip { height: 22px; padding: 0 7px; font-size: 11px; }
+    .origin-line { margin-top: 12px; font-size: 13.5px; color: var(--ink-2); }
+    .origin-line button { text-decoration: underline; text-underline-offset: 3px; }
+    .origin-line button:hover { color: var(--accent); }
+
+    /* 03 projects */
+    .projects { margin-top: 18px; display: grid; gap: 10px; }
+    .proj { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; padding: 10px; border: 1px solid var(--rule); cursor: default; transition: border-color .2s, background-color .2s; }
+    .proj.is-on { border-color: var(--ink); background: var(--card); }
+    .proj-img { width: 104px; height: 65px; overflow: hidden; background: var(--bg-2); border: 1px solid var(--rule); }
+    .proj-img img { width: 100%; height: 100%; object-fit: cover; }
+    .proj-img.contain { background: #fff; }
+    .proj-img.contain img { object-fit: contain; padding: 10%; }
+    .proj-h { font-size: 16px; font-weight: 700; display: flex; gap: 6px; align-items: baseline; }
+    .proj-p { margin-top: 2px; font-size: 13.5px; color: var(--ink-2); line-height: 1.4; }
+    .proj .chips { margin-top: 7px; }
+
+    /* 04 games */
+    .games-meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+    .games-meta b { font-weight: 400; color: var(--ink); }
+    .games { margin-top: 16px; border-top: 1px solid var(--ink); }
+    .game { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--rule); text-decoration: none; }
+    .game-img { width: 96px; aspect-ratio: 500 / 280; overflow: hidden; background: var(--bg-2); }
+    .game-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
+    .game:hover .game-img img { transform: scale(1.06); }
+    .game-h { font-size: 15px; font-weight: 700; line-height: 1.25; }
+    .game:hover .game-h { color: var(--accent); }
+    .game-m { margin-top: 2px; display: flex; flex-wrap: wrap; gap: 2px 14px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+    /* 05 places */
+    .places { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; border-top: 1px solid var(--ink); }
+    .place { display: block; width: 100%; min-width: 0; padding: 5px 0 6px; border-bottom: 1px solid var(--rule); }
+    .place b { display: block; font-size: 13.5px; font-weight: 650; line-height: 1.3; }
+    .place .cap { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: var(--ink-2); line-height: 1.35; }
+    .place:hover b { color: var(--accent); }
+    .place-r { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); font-weight: 400; margin-left: 4px; }
+    .more-link { margin-top: 14px; font-family: var(--mono); font-size: 12px; }
+
+    /* 06 bye */
+    .egg { font-size: clamp(24px, 2.4vw, 32px); font-weight: 750; font-stretch: 110%; letter-spacing: -.02em; line-height: 1.1; color: var(--accent); }
+    .bye-sub { margin-top: 6px; font-size: 15px; color: var(--ink-2); }
+    .bye-h { margin-top: 20px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+    .links { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 20px; font-weight: 700; letter-spacing: -.015em; }
+    .links a { text-decoration: none; background: linear-gradient(var(--accent), var(--accent)) 0 100% / 0 2px no-repeat; transition: background-size .35s var(--ease); }
+    .links a:hover { background-size: 100% 2px; }
+    .friends { margin-top: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
+    .friends li { padding: 5px 0; border-bottom: 1px solid var(--rule); min-width: 0; }
+    .friends a { font-size: 13.5px; font-weight: 600; text-decoration: none; }
+    .friends .fn { display: block; font-family: var(--mono); font-size: 11px; color: var(--ink-2); line-height: 1.3; }
+    .rnd { margin-top: 6px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+    .rnd a { display: block; padding: 8px 9px; border: 1px solid var(--rule-2); text-decoration: none; transition: border-color .2s, background-color .2s; }
+    .rnd a:hover { border-color: var(--ink); background: var(--card); color: var(--ink); }
+    .rnd b { display: block; font-size: 14px; }
+    .rnd span { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--ink-2); line-height: 1.3; margin-top: 2px; }
+    .foot { margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: space-between; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+
+    @media (min-width: 900px) and (max-height: 820px) {
+      .panel { padding: 36px 0 28px; }
+      .psub { display: none; }
+      .ph { font-size: 26px; }
+      .job { padding: 4px 0 5px; }
+      .role-l { font-size: 12.5px; }
+      .job-note { font-size: 12px; }
+      .projects { gap: 8px; }
+      .proj { padding: 8px; }
+      .proj-p { font-size: 13px; }
+      .game { padding: 6px 0; }
+      .place { padding: 4px 0 5px; }
+      .about p { font-size: 14.5px; }
+      .motto { display: none; }
+      .friends li { padding: 3px 0; }
+    }
+
+    /* =====================================================================
+       5. lightbox
+       ===================================================================== */
+    .lb { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: clamp(12px, 3vw, 36px); border: 0; background: transparent; color: var(--ink); overflow: hidden; }
+    .lb[open] { display: grid; place-items: center; }
+    .lb::backdrop { background: rgba(10, 10, 9, .72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+    .lb-in { position: relative; width: min(1180px, 100%); max-height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 320px; background: var(--bg); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .7); overflow: hidden; }
+    .lb-fig { position: relative; background: #0c0c0b; min-height: 240px; height: min(82vh, 820px); }
+    .lb-fig img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: contain; transition: filter .4s ease; }
+    .lb-fig img.is-low { filter: blur(6px); }
+    .lb-load { position: absolute; left: 12px; bottom: 10px; color: rgba(255, 255, 255, .7); font-family: var(--mono); font-size: 11px; opacity: 0; transition: opacity .2s; }
+    .lb-load.is-on { opacity: 1; }
+    .lb-side { display: flex; flex-direction: column; padding: 22px 22px 18px; overflow-y: auto; }
+    .lb-k { color: var(--accent); text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); font-size: 11px; padding-right: 36px; }
+    .lb-t { margin-top: 10px; font-size: 24px; font-weight: 750; line-height: 1.12; letter-spacing: -.02em; }
+    .lb-s { margin-top: 8px; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+    .lb-job { margin-top: 18px; padding: 12px; border: 1px solid var(--rule); background: var(--card); }
+    .lb-job[hidden] { display: none; }
+    .lb-job-h { display: flex; align-items: center; gap: 10px; }
+    .lb-job-h img { width: 34px; height: 34px; object-fit: contain; background: #fff; border: 1px solid var(--rule); padding: 4px; }
+    .lb-job-r { margin-top: 8px; font-size: 13.5px; line-height: 1.35; }
+    .lb-job-r span { display: block; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-top: 1px; }
+    .lb-job-g { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--rule); font-size: 13px; color: var(--ink-2); }
+    .lb-nav { margin-top: auto; padding-top: 18px; display: flex; align-items: center; gap: 10px; }
+    .fbtn { width: 40px; height: 40px; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--rule-2); font-family: var(--mono); font-size: 16px; line-height: 1; }
+    .fbtn:hover { border-color: var(--ink); }
+    .fbtn:disabled { opacity: .4; cursor: default; }
+    .lb-pos { color: var(--ink-3); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .lb-x { position: absolute; top: 12px; right: 12px; z-index: 2; width: 36px; height: 36px; font-size: 18px; }
+    html.lb-open { overflow: hidden; }
+
+    /* =====================================================================
+       6. mobile: sticky mosaic on top, panels underneath
+       ===================================================================== */
+    @media (max-width: 899px) {
+      .wrap { display: block; }
+      .stage-col { position: sticky; top: 0; z-index: 20; }
+      .stage { position: relative; height: 46vh; height: 46svh; background: var(--bg); border-bottom: 1px solid var(--rule); }
+      .panels { border-left: 0; padding: 0 var(--gut); }
+      .bar { position: static; margin: 0 calc(var(--gut) * -1); padding: 10px var(--gut); }
+      .bar .versions { display: none; }
+      .panel { min-height: 54vh; min-height: 54svh; justify-content: flex-start; padding: 30px 0 36px; }
+      .panel > * { max-width: none; }
+      .dots { left: 50%; top: auto; bottom: 6px; transform: translateX(-50%); flex-direction: row; gap: 0; background: color-mix(in srgb, var(--bg) 85%, transparent); border-radius: 12px; padding: 0 4px; }
+      .dot { padding: 6px 5px; gap: 5px; }
+      .dot span, .stage:hover .dot span { display: none; }
+      .dot[aria-current="step"] span { display: inline; opacity: 1; transform: none; padding: 0; background: none; }
+      .fig { display: none; }
+      .places, .friends { grid-template-columns: 1fr; }
+      .rnd { grid-template-columns: 1fr 1fr; }
+      .proj { grid-template-columns: 84px minmax(0, 1fr); }
+      .proj-img { width: 84px; height: 53px; }
+      .game { grid-template-columns: 84px minmax(0, 1fr); }
+      .game-img { width: 84px; }
+      .lb { padding: 0; }
+      .lb-in { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; height: 100%; width: 100%; }
+      .lb-fig { height: auto; min-height: 0; }
+      .lb-side { max-height: 46vh; padding: 16px 16px 14px; }
+      .lb-t { font-size: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#me">skip to content</a>
+
+  <div class="wrap">
+    <div class="stage-col">
+      <div class="stage" id="stage">
+        <canvas class="gl" id="gl" role="img" aria-label="a portrait of andy made of {{ sheet|length }} of andy's photos, cut into small tiles"></canvas>
+        <noscript><img class="fallback-img" src="{{ d.photo_thumb }}" alt="Portrait of Andrew Vu: {{ d.photo_dims.scene }}"></noscript>
+        <div class="wlabels" id="wlabels" aria-hidden="true"></div>
+        <div class="wlabels" id="glabels" aria-hidden="true"></div>
+        <div class="loupe" id="loupe" aria-hidden="true">
+          <canvas id="loupe-c" width="180" height="180"></canvas>
+          <div class="loupe-cap" id="loupe-cap"></div>
+        </div>
+        <button class="theme" id="theme" type="button" aria-label="switch to dark mode"><span class="theme-dot" aria-hidden="true"></span><span id="theme-l">dark</span></button>
+        <p class="loading" id="loading" aria-hidden="true">cutting {{ sheet|length }} photos into tiles…</p>
+        <p class="fig" id="fig" aria-hidden="true"></p>
+        <nav class="dots" id="dots" aria-label="sections">
+          {%- for s in ["me", "work", "projects", "games", "places", "bye"] %}
+          <button class="dot" type="button" data-go="{{ loop.index0 }}"{% if loop.first %} aria-current="step"{% endif %}><i aria-hidden="true"></i><span>{{ s }}</span></button>
+          {%- endfor %}
+        </nav>
+      </div>
+    </div>
+
+    <main class="panels" id="main">
+      <header class="bar">
+        <a class="brand" href="/">andrewvu.me <span>/ mosaic 2</span></a>
+        <nav class="versions" aria-label="prototype versions">
+          <span class="v-l">versions</span>
+          {%- for v in d.versions %}
+          <a href="{{ v.href }}"{% if v.id == "mosaic2" %} aria-current="page"{% endif %}>{{ v.label }}</a>
+          {%- endfor %}
+          <a class="cur-site" href="/">← current site</a>
+        </nav>
+      </header>
+
+      <!-- 01 · me ======================================================== -->
+      <section class="panel" id="me" data-stop="0" aria-labelledby="me-h">
+        <p class="kicker"><span class="no">01</span>me</p>
+        <h1 class="name" id="me-h">
+          {%- for w in name.split(" ") %}{% if not loop.first %} {% endif %}<span{% if w.startswith('(') %} class="nick"{% endif %}>{{ w }}</span>{% endfor -%}
+        </h1>
+        <p class="role">cs student at uf · roblox game developer · {{ now_job.roles[0].title|lower }} at {{ now_job.company|lower }}</p>
+        <div class="about">
+          {%- for p in d.about %}
+          <p>{{ p }}</p>
+          {%- endfor %}
+        </div>
+        <div class="row">
+          {%- for s in d.socials %}
+          <a class="soc" href="{{ s.href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ s.label }}" title="{{ s.label }}"><span class="soc-i" style="--icon: url('{{ s.icon }}')"></span></a>
+          {%- endfor %}
+        </div>
+        <div class="visit">
+          <p>{{ d.visitors.text }}</p>
+          <a class="go" href="{{ d.visitors.href }}">{{ d.visitors.label }} <span aria-hidden="true">→</span></a>
+        </div>
+        <figure class="motto">
+          <blockquote>“{{ d.motto.text }}”</blockquote>
+          <figcaption>my life motto, via a {{ d.motto.source }}</figcaption>
+        </figure>
+        <p class="hint"><span>keep scrolling: the same tiles rebuild into everything else ↓</span><button class="link-btn" type="button" data-open="0">the photo behind this portrait</button></p>
+      </section>
+
+      <!-- 02 · work ====================================================== -->
+      <section class="panel" id="work" data-stop="1" aria-labelledby="work-h">
+        <p class="kicker"><span class="no">02</span>work</p>
+        <h2 class="ph" id="work-h">same tiles, sorted by chapter</h2>
+        <p class="psub">each block is one part of my timeline, untinted so you can see the real photos. hover a job to find its block.</p>
+        <ol class="jobs">
+          {%- for e in d.experience %}
+          {%- set hl = e.gallery if e.gallery else ("cloudflare" if loop.first else "") %}
+          <li class="job"{% if hl %} data-hl="{{ hl }}"{% endif %}>
+            <div class="job-logo"><img src="{{ e.logo }}" alt="{{ e.company }} logo" loading="lazy" width="24" height="24"></div>
+            <div>
+              <div class="job-top">
+                <h3 class="job-co">{{ e.company }}</h3>
+                {%- if e.favorite %}<span class="star" title="favorite" aria-label="favorite">★</span>{% endif %}
+                {%- if e.current %}<span class="tag">now</span>{% endif %}
+              </div>
+              {%- for r in e.roles %}
+              <p class="role-l">{{ r.title }}{% if r.team %} · {{ r.team }}{% endif %} <span>{{ r.dates }} · {{ r.location }}</span></p>
+              {%- endfor %}
+              {%- if e.note or e.gallery or e.links %}
+              <div class="job-foot">
+              {%- if e.note %}<p class="job-note">{{ e.note }}</p>{% endif %}
+              {%- if e.gallery or e.links %}
+              <div class="chips">
+                {%- if e.gallery %}<button class="chip hot" type="button" data-open="{{ g_off[e.gallery] }}">photos ({{ d.galleries[e.gallery].photos|length }})</button>{% endif %}
+                {%- for l in e.links %}
+                <a class="chip" href="{{ l.href }}"{% if not l.href.startswith("#") %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ l.label }}{% if not l.href.startswith("#") %} ↗{% endif %}</a>
+                {%- endfor %}
+              </div>
+              {%- endif %}
+              </div>
+              {%- endif %}
+            </div>
+          </li>
+          {%- endfor %}
+        </ol>
+        <p class="origin-line" data-hl="origin">and before all of it, {{ d.origin.year }}: <button type="button" data-open="2">{{ d.origin.caption }}</button></p>
+      </section>
+
+      <!-- 03 · projects ================================================== -->
+      <section class="panel" id="projects" data-stop="2" aria-labelledby="proj-h">
+        <p class="kicker"><span class="no">03</span>projects</p>
+        <h2 class="ph" id="proj-h">things i built that aren't games</h2>
+        <p class="psub">hover (or tap) one and the tiles spell it out.</p>
+        <div class="projects">
+          {%- for p in d.projects %}
+          <article class="proj{% if loop.first %} is-on{% endif %}" data-proj="{{ loop.index0 }}" tabindex="0" aria-label="{{ p.name }}">
+            <div class="proj-img{% if p.thumb_contain %} contain{% endif %}"><img src="{{ p.thumb }}" alt="{{ p.name }} project thumbnail" loading="lazy"></div>
+            <div>
+              <h3 class="proj-h">{{ p.name }}{% if p.favorite %}<span class="star" title="favorite" aria-label="favorite">★</span>{% endif %}</h3>
+              <p class="proj-p">{{ p.desc }}</p>
+              <p class="chips">
+                {%- for l in p.links %}
+                <a class="chip" href="{{ l.href }}" target="_blank" rel="noopener noreferrer">{{ l.label }} ↗</a>
+                {%- endfor %}
+              </p>
+            </div>
+          </article>
+          {%- endfor %}
+        </div>
+      </section>
+
+      <!-- 04 · games ===================================================== -->
+      <section class="panel" id="games" data-stop="3" aria-labelledby="games-h">
+        <p class="kicker"><span class="no">04</span>games</p>
+        <h2 class="ph" id="games-h">my games :D</h2>
+        <p class="games-meta"><span><b>{{ "{:,}".format(d.games_total_visits) }}</b> visits across {{ d.games|length }} roblox games</span><span>visits as of {{ d.games_as_of }}</span></p>
+        <div class="games">
+          {%- for g in d.games %}
+          <a class="game" href="{{ g.href }}" target="_blank" rel="noopener noreferrer">
+            <div class="game-img"><img src="{{ g.img }}" alt="{{ g.name }} thumbnail" loading="lazy"></div>
+            <div>
+              <h3 class="game-h">{{ g.name }} <span aria-hidden="true">↗</span></h3>
+              <p class="game-m"><span>{{ "{:,}".format(g.visits) }} visits</span><span>created {{ g.created }}</span></p>
+            </div>
+          </a>
+          {%- endfor %}
+        </div>
+      </section>
+
+      <!-- 05 · places ==================================================== -->
+      <section class="panel" id="places" data-stop="4" aria-labelledby="places-h">
+        <p class="kicker"><span class="no">05</span>places</p>
+        <h2 class="ph" id="places-h">where the travel photos are from</h2>
+        <p class="psub">every travel tile flies home to its spot on the globe. open one to see the whole photo.</p>
+        <div class="places">
+          {%- for t in d.travel %}
+          <button class="place" type="button" data-open="{{ 3 + loop.index0 }}"><b>{{ t.place }}<span class="place-r">{{ t.region }}</span></b>{% if t.caption %}<span class="cap">{{ t.caption }}</span>{% endif %}</button>
+          {%- endfor %}
+        </div>
+        <p class="more-link"><a href="/random/travel">the full globe, with everywhere i want to go →</a></p>
+      </section>
+
+      <!-- 06 · bye ======================================================= -->
+      <section class="panel" id="bye" data-stop="5" aria-labelledby="bye-h">
+        <p class="kicker"><span class="no">06</span>bye</p>
+        <h2 class="egg" id="bye-h">{{ d.easter_egg }}</h2>
+        <p class="bye-sub">the goofy one was hiding at the end. <button class="link-btn" type="button" data-open="1">see the photo</button></p>
+        <p class="bye-h">say hi</p>
+        <p class="links">
+          {%- for l in d.links %}
+          <a href="{{ l.href }}"{% if l.href.startswith("http") %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ l.label }}</a>
+          {%- endfor %}
+        </p>
+        <p class="bye-h">cool friends</p>
+        <ul class="friends">
+          {%- for f in d.friends %}
+          <li><a href="{{ f.href }}" target="_blank" rel="noopener noreferrer">{{ f.name }}</a><span class="fn">{{ f.note }}</span></li>
+          {%- endfor %}
+        </ul>
+        <p class="bye-h">random pages</p>
+        <div class="rnd">
+          {%- for r in d.random_pages %}
+          <a href="{{ r.href }}"><b>{{ r.label }}</b><span>{{ r.blurb }}</span></a>
+          {%- endfor %}
+        </div>
+        <div class="foot">
+          <p><a href="{{ d.credit.source_href }}" target="_blank" rel="noopener noreferrer">{{ credit_parts[0] }}</a> thanks to <a href="{{ d.credit.author_href }}" target="_blank" rel="noopener noreferrer">{{ credit_parts[1] }}</a></p>
+          <nav class="versions" aria-label="prototype versions (footer)">
+            <span class="v-l">versions</span>
+            {%- for v in d.versions %}
+            <a href="{{ v.href }}"{% if v.id == "mosaic2" %} aria-current="page"{% endif %}>{{ v.label }}</a>
+            {%- endfor %}
+            <a class="cur-site" href="/">← current site</a>
+          </nav>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="lb" id="lb" aria-labelledby="lb-t">
+    <div class="lb-in">
+      <button class="fbtn lb-x" id="lb-x" type="button" aria-label="close">×</button>
+      <div class="lb-fig" id="lb-fig">
+        <img id="lb-img" alt="">
+        <span class="lb-load" id="lb-load">loading full size…</span>
+      </div>
+      <div class="lb-side">
+        <p class="lb-k" id="lb-k"></p>
+        <h2 class="lb-t" id="lb-t"></h2>
+        <p class="lb-s" id="lb-s"></p>
+        <div class="lb-job" id="lb-job" hidden></div>
+        <div class="lb-nav">
+          <button class="fbtn" id="lb-prev" type="button" aria-label="previous photo in this chapter">←</button>
+          <button class="fbtn" id="lb-next" type="button" aria-label="next photo in this chapter">→</button>
+          <span class="lb-pos" id="lb-pos"></span>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+  (function () {
+    "use strict";
+
+    /* =====================================================================
+       0. data (all from data.html)
+       ===================================================================== */
+    var DATA = {
+      photo: {{ d.photo|tojson }},
+      photoAlt: {{ d.photo_alt|tojson }},
+      photoThumb: {{ d.photo_thumb|tojson }},
+      photoAltThumb: {{ d.photo_alt_thumb|tojson }},
+      photoDims: {{ d.photo_dims|tojson }},
+      photoAltDims: {{ d.photo_alt_dims|tojson }},
+      egg: {{ d.easter_egg|tojson }},
+      origin: {{ d.origin|tojson }},
+      travel: {{ d.travel|tojson }},
+      galleries: {{ d.galleries|tojson }},
+      experience: {{ d.experience|tojson }},
+      projects: {{ d.projects|tojson }},
+      totalVisits: {{ d.games_total_visits|tojson }},
+      chapters: {{ chapters|tojson }},
+      frames: {{ sheet|map(attribute="i")|list|tojson }}
+    };
+    var ATLAS_SRC = "/assets/redesigns/mosaic/mosaic-atlas.v1.jpg";
+    var TABLE_SRC = "/assets/redesigns/mosaic/mosaic-tiles.v1.json";
+    var CROP_A = { cx: 0.499, cy: 0.421, w: 0.55 };     /* face-centred crops of the two portraits */
+    var CROP_B = { cx: 0.529, cy: 0.592, w: 0.827 };
+    /* [lng, lat] for each travel place (from /random/travel; new smyrna beach added) */
+    var PLACES = {
+      "Salt Lake City, Utah": [-111.891, 40.7608], "Atlanta, Georgia": [-84.388, 33.749],
+      "Da Nang, Vietnam": [108.2022, 16.0544], "Gainesville, Florida": [-82.3248, 29.6516],
+      "Hanoi, Vietnam": [105.8342, 21.0278], "Kyoto, Japan": [135.7681, 35.0116],
+      "Mankato, Minnesota": [-93.9994, 44.1636], "New Smyrna Beach, Florida": [-80.927, 29.0258],
+      "New York City": [-74.006, 40.7128], "Sapphire, North Carolina": [-83.004, 35.1112],
+      "Seoul, South Korea": [126.978, 37.5665], "Singapore": [103.8198, 1.3521],
+      "Tokyo, Japan": [139.6917, 35.6895]
+    };
+    var STOP_NAMES = ["me", "work", "projects", "games", "places", "bye"];
+
+    var root = document.documentElement;
+    var $ = function (id) { return document.getElementById(id); };
+    var reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var reduced = reduceMQ.matches;
+    if (reduceMQ.addEventListener) reduceMQ.addEventListener("change", function (e) { reduced = e.matches; requestFrame(); });
+    var mobileMQ = window.matchMedia("(max-width: 899px)");
+    var hoverMQ = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+    function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+    function easeIO(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function fmt(n) { return n.toLocaleString("en-US"); }
+    function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+    function mulberry32(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        var t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    function hexToRgb(h) {
+      h = (h || "").trim().replace("#", "");
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      var n = parseInt(h, 16) || 0;
+      return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+    }
+
+    /* =====================================================================
+       1. photos + chapters (canonical order = mosaic_assets.py)
+       ===================================================================== */
+    var CH = DATA.chapters, chIndex = {};
+    CH.forEach(function (c, i) { chIndex[c.id] = i; c.photos = []; c.tiles = 0; });
+    var expByGallery = {}, expById = {};
+    DATA.experience.forEach(function (e) { expById[e.id] = e; if (e.gallery) expByGallery[e.gallery] = e; });
+    var P = [];
+    function keyOf(path) { return path.split("/").pop().split(".thumb")[0]; }
+    function addPhoto(o) { o.i = P.length; o.key = keyOf(o.thumb); o.chi = chIndex[o.ch]; o.tiles = 0; P.push(o); }
+    addPhoto({ src: DATA.photo, thumb: DATA.photoThumb, ch: "me", title: "me", sub: null, alt: DATA.photoDims.scene });
+    addPhoto({ src: DATA.photoAlt, thumb: DATA.photoAltThumb, ch: "me", title: "me, the goofy one", sub: DATA.egg, alt: DATA.photoAltDims.scene });
+    addPhoto({ src: DATA.origin.src, thumb: DATA.origin.thumb, ch: "origin", title: DATA.origin.caption, sub: DATA.origin.note, alt: DATA.origin.scene });
+    DATA.travel.forEach(function (t) { addPhoto({ src: t.src, thumb: t.thumb, ch: t.region === "asia" ? "asia" : "us", title: t.place, sub: t.caption, alt: t.scene, place: t.place }); });
+    ["gatorai", "adtran", "nvidia"].forEach(function (g) {
+      DATA.galleries[g].photos.forEach(function (p) { addPhoto({ src: p.src, thumb: p.thumb, ch: g, title: p.caption, sub: null, alt: p.caption, gallery: g }); });
+    });
+    DATA.frames.forEach(function (pi, f) { P[pi].frame = f + 1; CH[P[pi].chi].photos.push(pi); });
+    var NP = P.length;
+    function chapterLabel(p) { var ch = CH[p.chi]; return ch.name + (ch.year ? " · " + ch.year : ""); }
+
+    /* =====================================================================
+       2. dom + theme
+       ===================================================================== */
+    var stage = $("stage"), canvas = $("gl"), loadingEl = $("loading"), figEl = $("fig"), wlabels = $("wlabels"), glabels = $("glabels");
+    var loupe = $("loupe"), loupeC = $("loupe-c"), lctx = loupeC.getContext("2d"), loupeCap = $("loupe-cap");
+    var dots = Array.prototype.slice.call(document.querySelectorAll(".dot"));
+    var panels = Array.prototype.slice.call(document.querySelectorAll(".panel"));
+    var colors = { bg: [0.953, 0.945, 0.925], bgCss: "#f3f1ec", ink: [0.08, 0.08, 0.07], accent: "#cc3811" };
+    function readColors() {
+      var cs = getComputedStyle(root);
+      colors.bgCss = cs.getPropertyValue("--bg").trim() || "#f3f1ec";
+      colors.bg = hexToRgb(colors.bgCss);
+      colors.ink = hexToRgb(cs.getPropertyValue("--ink"));
+      colors.accent = cs.getPropertyValue("--accent").trim() || "#cc3811";
+    }
+    var themeBtn = $("theme");
+    function syncThemeBtn() {
+      var dark = root.classList.contains("dark");
+      $("theme-l").textContent = dark ? "light" : "dark";
+      themeBtn.setAttribute("aria-label", dark ? "switch to light mode" : "switch to dark mode");
+    }
+    themeBtn.addEventListener("click", function () {
+      var dark = !root.classList.contains("dark");
+      root.classList.toggle("dark", dark);
+      try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (e) {}
+      syncThemeBtn(); readColors();
+      if (ready) { buildTextStops(); L[4] = buildGlobe(L[3]); segKey = -1; requestFrame(); }
+    });
+    syncThemeBtn(); readColors();
+
+    /* =====================================================================
+       3. colour science + target sampling
+       ===================================================================== */
+    var LIN = new Float32Array(256);
+    for (var li = 0; li < 256; li++) { var cc = li / 255; LIN[li] = cc <= 0.04045 ? cc / 12.92 : Math.pow((cc + 0.055) / 1.055, 2.4); }
+    function labInto(r, g, b, out, o) {
+      var R = LIN[r], G = LIN[g], B = LIN[b];
+      var x = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047, y = R * 0.2126 + G * 0.7152 + B * 0.0722, zz = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883;
+      x = x > 0.008856 ? Math.cbrt(x) : 7.787 * x + 16 / 116;
+      y = y > 0.008856 ? Math.cbrt(y) : 7.787 * y + 16 / 116;
+      zz = zz > 0.008856 ? Math.cbrt(zz) : 7.787 * zz + 16 / 116;
+      out[o] = 116 * y - 16; out[o + 1] = 500 * (x - y); out[o + 2] = 200 * (y - zz);
+    }
+    function cropRect(img, crop) {
+      var iw = img.naturalWidth, ih = img.naturalHeight, w = crop.w * iw, h = w * rows / cols;
+      if (h > ih) { h = ih; w = h * cols / rows; }
+      return [clamp(crop.cx * iw - w / 2, 0, iw - w), clamp(crop.cy * ih - h / 2, 0, ih - h), w, h];
+    }
+    function sampleTarget(img, crop) {
+      var sw = cols * 3, sh = rows * 3, r = cropRect(img, crop);
+      var mid = document.createElement("canvas"); mid.width = sw * 2; mid.height = sh * 2;
+      var mx = mid.getContext("2d"); mx.imageSmoothingQuality = "high";
+      mx.drawImage(img, r[0], r[1], r[2], r[3], 0, 0, mid.width, mid.height);
+      var c = document.createElement("canvas"); c.width = sw; c.height = sh;
+      var x = c.getContext("2d", { willReadFrequently: true }); x.imageSmoothingQuality = "high";
+      x.drawImage(mid, 0, 0, sw, sh);
+      var px = x.getImageData(0, 0, sw, sh).data;
+      var sig = new Float32Array(N * 27), mean = new Float32Array(N), rgb = new Float32Array(N * 3);
+      for (var cy = 0; cy < rows; cy++) for (var cx = 0; cx < cols; cx++) {
+        var cell = cy * cols + cx, so = cell * 27, rr = 0, gg = 0, bb = 0, lsum = 0;
+        for (var k = 0; k < 9; k++) {
+          var p = ((cy * 3 + ((k / 3) | 0)) * sw + cx * 3 + (k % 3)) * 4;
+          rr += px[p]; gg += px[p + 1]; bb += px[p + 2];
+          labInto(px[p], px[p + 1], px[p + 2], sig, so + k * 3);
+          lsum += sig[so + k * 3];
+        }
+        mean[cell] = lsum / 9;
+        rgb[cell * 3] = rr / 2295; rgb[cell * 3 + 1] = gg / 2295; rgb[cell * 3 + 2] = bb / 2295;
+      }
+      return { sig: sig, mean: mean, rgb: rgb };
+    }
+
+    /* =====================================================================
+       4. the solver (same as /mosaic): self-contained so it can run in a worker.
+          pairs each cell of the portrait with a cell of the goofy portrait, then picks one
+          tile variant per pair (3x3 Lab signature match, repetition + over-use penalties,
+          every photo topped up to a minimum)
+       ===================================================================== */
+    function makeSolver() {
+      var S = null;
+      function rng(a) {
+        return function () {
+          a |= 0; a = a + 0x6D2B79F5 | 0;
+          var t = Math.imul(a ^ a >>> 15, 1 | a);
+          t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+      function shuffled(arr, rnd) {
+        for (var i = arr.length - 1; i > 0; i--) { var j = (rnd() * (i + 1)) | 0, t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+        return arr;
+      }
+      function sortedBy(vals, n) {
+        var idx = [];
+        for (var i = 0; i < n; i++) idx.push(i);
+        return idx.sort(function (a, b) { return vals[a] - vals[b]; });
+      }
+      function setup(d) {
+        S = d;
+        var T = d.T, i, k, nb = [], wts = [0, 1, 0.5, 0.25];
+        for (var dy = -3; dy <= 3; dy++) for (var dx = -3; dx <= 3; dx++) {
+          var dd = Math.max(Math.abs(dx), Math.abs(dy));
+          if (dd) nb.push(dx, dy, wts[dd]);
+        }
+        S.NB = new Float32Array(nb);
+        S.vL = new Float32Array(T); S.vA = new Float32Array(T); S.vB = new Float32Array(T);
+        for (i = 0; i < T; i++) {
+          var sl = 0, sa = 0, sb = 0;
+          for (k = 0; k < 27; k += 3) { sl += d.tSig[i * 27 + k]; sa += d.tSig[i * 27 + k + 1]; sb += d.tSig[i * 27 + k + 2]; }
+          S.vL[i] = sl / 9; S.vA[i] = sa / 9; S.vB[i] = sb / 9;
+        }
+        S.sortV = new Int16Array(sortedBy(S.vL, T));
+        S.sortL = new Float32Array(T);
+        for (i = 0; i < T; i++) S.sortL[i] = S.vL[S.sortV[i]];
+        S.photoVars = [];
+        for (i = 0; i < d.NP; i++) S.photoVars.push([]);
+        for (i = 0; i < T; i++) S.photoVars[d.tPhoto[i]].push(i);
+        var N = d.cols * d.rows;
+        S.ia = sortedBy(d.meanA, N); S.ib = sortedBy(d.meanB, N);
+      }
+      function solve(seed) {
+        var cols = S.cols, rows = S.rows, N = cols * rows, T = S.T, NP = S.NP;
+        var tPhoto = S.tPhoto, tSig = S.tSig, sigA = S.sigA, sigB = S.sigB, NB = S.NB;
+        var vL = S.vL, vA = S.vA, vB = S.vB, sortV = S.sortV, sortL = S.sortL;
+        var rnd = rng(seed), i, k, q;
+        var cellVar = new Int16Array(N), permB = new Int32Array(N), invB = new Int32Array(N);
+        var use = new Int32Array(NP), scratch = new Float32Array(N);
+        var K = 12, per = Math.ceil(N / K);
+        for (k = 0; k < K; k++) {
+          var lo = k * per, hi = Math.min(N, lo + per), n = hi - lo;
+          if (n <= 0) break;
+          var As = shuffled(S.ia.slice(lo, hi), rnd), Bs = S.ib.slice(lo, hi);
+          var bx = new Int16Array(n), by = new Int16Array(n), used = new Uint8Array(n);
+          for (i = 0; i < n; i++) { bx[i] = Bs[i] % cols; by[i] = (Bs[i] / cols) | 0; }
+          for (q = 0; q < n; q++) {
+            var a = As[q], ax = a % cols, ay = (a / cols) | 0, best = -1, bd = 1e9;
+            for (var j = 0; j < n; j++) {
+              if (used[j]) continue;
+              var ddx = bx[j] - ax, ddy = by[j] - ay, dd = ddx * ddx + ddy * ddy;
+              if (dd < bd) { bd = dd; best = j; }
+            }
+            used[best] = 1; permB[a] = Bs[best]; invB[Bs[best]] = a;
+          }
+        }
+        var order = [];
+        for (i = 0; i < N; i++) order.push(i);
+        shuffled(order, rnd);
+        var M = new Float32Array(27), pen = new Float32Array(NP), useCost = new Float32Array(NP);
+        var WA = 0.62, WB = 0.38, AB = 0.55, REP = 2400, USE = 700, expected = N / NP;
+        cellVar.fill(-1);
+        for (q = 0; q < N; q++) {
+          var ca = order[q], cb = permB[ca], oa = ca * 27, ob = cb * 27;
+          for (k = 0; k < 27; k++) M[k] = WA * sigA[oa + k] + WB * sigB[ob + k];
+          pen.fill(0);
+          var cax = ca % cols, cay = (ca / cols) | 0, cbx = cb % cols, cby = (cb / cols) | 0;
+          for (var o = 0; o < NB.length; o += 3) {
+            var ndx = NB[o], ndy = NB[o + 1], w = NB[o + 2], x = cax + ndx, y = cay + ndy, v;
+            if (x >= 0 && x < cols && y >= 0 && y < rows) { v = cellVar[y * cols + x]; if (v >= 0) pen[tPhoto[v]] += w; }
+            x = cbx + ndx; y = cby + ndy;
+            if (x >= 0 && x < cols && y >= 0 && y < rows) { v = cellVar[invB[y * cols + x]]; if (v >= 0) pen[tPhoto[v]] += w * 0.8; }
+          }
+          var mL = (M[0] + M[3] + M[6] + M[9] + M[12] + M[15] + M[18] + M[21] + M[24]) / 9;
+          var mA = (M[1] + M[4] + M[7] + M[10] + M[13] + M[16] + M[19] + M[22] + M[25]) / 9;
+          var mB = (M[2] + M[5] + M[8] + M[11] + M[14] + M[17] + M[20] + M[23] + M[26]) / 9;
+          var minPen = Infinity;
+          for (var pp = 0; pp < NP; pp++) { var pc = pen[pp] * REP + useCost[pp]; if (pc < minPen) minPen = pc; }
+          var l0 = 0, h0 = T;
+          while (l0 < h0) { var mid = (l0 + h0) >> 1; if (sortL[mid] < mL) l0 = mid + 1; else h0 = mid; }
+          var dn = l0 - 1, upi = l0, bestV = sortV[Math.min(l0, T - 1)], bestC = Infinity;
+          while (dn >= 0 || upi < T) {
+            var gd = dn >= 0 ? mL - sortL[dn] : 1e9, gu = upi < T ? sortL[upi] - mL : 1e9, tv;
+            if (gd <= gu) { if (minPen + 9 * gd * gd >= bestC) { dn = -1; continue; } tv = sortV[dn--]; }
+            else { if (minPen + 9 * gu * gu >= bestC) { upi = T; continue; } tv = sortV[upi++]; }
+            var tp = tPhoto[tv], cst = pen[tp] * REP + useCost[tp];
+            if (cst >= bestC) continue;
+            var el = vL[tv] - mL, ea = vA[tv] - mA, eb = vB[tv] - mB;
+            if (cst + 9 * (el * el + AB * (ea * ea + eb * eb)) >= bestC) continue;
+            var to = tv * 27;
+            for (k = 0; k < 27; k += 3) {
+              var dL = tSig[to + k] - M[k], da = tSig[to + k + 1] - M[k + 1], db = tSig[to + k + 2] - M[k + 2];
+              cst += dL * dL + AB * (da * da + db * db);
+              if (cst >= bestC) break;
+            }
+            if (cst < bestC) { bestC = cst; bestV = tv; }
+          }
+          cellVar[ca] = bestV;
+          var up = tPhoto[bestV]; use[up]++;
+          var ratio = use[up] / expected; useCost[up] = USE * ratio * ratio;
+        }
+        function sigCost(v, oA, oB) {
+          var s = 0, t0 = v * 27;
+          for (var kk = 0; kk < 27; kk += 3) {
+            var l1 = tSig[t0 + kk] - (WA * sigA[oA + kk] + WB * sigB[oB + kk]);
+            var a1 = tSig[t0 + kk + 1] - (WA * sigA[oA + kk + 1] + WB * sigB[oB + kk + 1]);
+            var b1 = tSig[t0 + kk + 2] - (WA * sigA[oA + kk + 2] + WB * sigB[oB + kk + 2]);
+            s += l1 * l1 + AB * (a1 * a1 + b1 * b1);
+          }
+          return s;
+        }
+        function nearSame(cell, p) {
+          var cx = cell % cols, cy = (cell / cols) | 0;
+          for (var o2 = 0; o2 < NB.length; o2 += 3) {
+            if (NB[o2 + 2] < 0.5) continue;
+            var x2 = cx + NB[o2], y2 = cy + NB[o2 + 1];
+            if (x2 >= 0 && x2 < cols && y2 >= 0 && y2 < rows && tPhoto[cellVar[y2 * cols + x2]] === p) return true;
+          }
+          return false;
+        }
+        var minUse = Math.max(3, Math.round(expected * 0.22));
+        for (var p = 0; p < NP; p++) {
+          if (use[p] >= minUse) continue;
+          var vars = S.photoVars[p], cand = [], alt = new Int16Array(N);
+          for (var c = 0; c < N; c++) {
+            var cur = cellVar[c], curP = tPhoto[cur];
+            if (curP === p || use[curP] <= minUse + 1) continue;
+            var moA = c * 27, moB = permB[c] * 27, bestAlt = Infinity;
+            for (var vi = 0; vi < vars.length; vi++) {
+              var c2 = sigCost(vars[vi], moA, moB);
+              if (c2 < bestAlt) { bestAlt = c2; alt[c] = vars[vi]; }
+            }
+            cand.push(c); scratch[c] = bestAlt - sigCost(cur, moA, moB);
+          }
+          cand.sort(function (m1, m2) { return scratch[m1] - scratch[m2]; });
+          for (var ci = 0; ci < cand.length && use[p] < minUse; ci++) {
+            var c3 = cand[ci], old = tPhoto[cellVar[c3]];
+            if (use[old] <= minUse || nearSame(c3, p)) continue;
+            use[old]--; use[p]++; cellVar[c3] = alt[c3];
+          }
+        }
+        var fCurve = new Float32Array(N), fLift = new Float32Array(N), fRot = new Float32Array(N), fJit = new Float32Array(N);
+        for (i = 0; i < N; i++) {
+          fCurve[i] = (rnd() * 2 - 1) * (0.18 + rnd() * 0.32);
+          fLift[i] = 0.35 + rnd() * 1.05;
+          fRot[i] = (rnd() * 2 - 1) * 0.9;
+          fJit[i] = rnd();
+        }
+        return { cellVar: cellVar, permB: permB, invB: invB, fCurve: fCurve, fLift: fLift, fRot: fRot, fJit: fJit };
+      }
+      return { setup: setup, solve: solve };
+    }
+    var worker = null;
+    function runSolver(data, seed, cb) {
+      var done = false;
+      function inline() { if (done) return; done = true; var s = makeSolver(); s.setup(data); setTimeout(function () { cb(s.solve(seed)); }, 0); }
+      try {
+        if (worker) worker.terminate();
+        var src = "var api=(" + makeSolver.toString() + ")();onmessage=function(e){var m=e.data;api.setup(m.setup);var r=api.solve(m.seed);" +
+          "postMessage(r,[r.cellVar.buffer,r.permB.buffer,r.invB.buffer,r.fCurve.buffer,r.fLift.buffer,r.fRot.buffer,r.fJit.buffer]);};";
+        worker = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+        worker.onmessage = function (e) { if (done) return; done = true; cb(e.data); };
+        worker.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); inline(); };
+        worker.postMessage({ setup: data, seed: seed });
+      } catch (err) { inline(); }
+    }
+
+    /* =====================================================================
+       5. state
+       ===================================================================== */
+    var ready = false, ATL = null, T = 0, tPhoto, tRect, tSig, atlasImg, imgA, imgB;
+    var cols = 60, rows = 77, N = cols * rows, isMobile = false;
+    var rgbA, rgbB, targets = null;
+    var cellVar, permB, tileCh, tilePhoto, tCurve, tLift, tJit, rankOrder;
+    var W = 0, H = 0, dpr = 1, s0 = 10, gx = 0, gy = 0;
+    var L = [], workBlocks = [], projIdx = 0;
+    var segKey = -1, curU = 0, curStop = -1, raf = 0;
+    var override = { active: false, A: null, B: null, stop: 0, t0: 0, dur: 1, byX: false, key: 100 };
+    var hl = { ch: -1, amt: 0, target: 0, lastCh: -1 };
+    var countries = null;
+    var thumbs = [], thumbState = new Uint8Array(64);
+
+    /* =====================================================================
+       6. layouts: one target per stop. per tile: x, y, size, alpha / tint rgb + amount /
+          "on top" flag. positions are css px inside the stage.
+       ===================================================================== */
+    function newLayout() { return { pos: new Float32Array(N * 4), tin: new Float32Array(N * 4), top: new Uint8Array(N), css: new Array(N) }; }
+    function put(Lk, i, x, y, s, a, r, g, b, amt, top) {
+      var o = i * 4;
+      Lk.pos[o] = x; Lk.pos[o + 1] = y; Lk.pos[o + 2] = s; Lk.pos[o + 3] = a;
+      Lk.tin[o] = r; Lk.tin[o + 1] = g; Lk.tin[o + 2] = b; Lk.tin[o + 3] = amt;
+      Lk.top[i] = top ? 1 : 0;
+      Lk.css[i] = "rgb(" + ((r * 255) | 0) + "," + ((g * 255) | 0) + "," + ((b * 255) | 0) + ")";
+    }
+    function cellX(c) { return gx + (c % cols) * s0; }
+    function cellY(c) { return gy + ((c / cols) | 0) * s0; }
+    var TINT = 0.45;
+
+    /* tiles sorted by where they were in the previous stop, cells sorted left to right:
+       zipping the two keeps the flight coherent (tiles mostly travel up/down, not across) */
+    function byPrevX(tiles, prev) {
+      return tiles.sort(function (a, b) {
+        var ax = prev.pos[a * 4] + prev.pos[a * 4 + 2] / 2, bx = prev.pos[b * 4] + prev.pos[b * 4 + 2] / 2;
+        return ax - bx || prev.pos[a * 4 + 1] - prev.pos[b * 4 + 1];
+      });
+    }
+    function cellsByX(cells) { return cells.sort(function (a, b) { return (a % cols) - (b % cols) || a - b; }); }
+
+    function buildPortrait(goofy) {
+      var Lk = newLayout(), src = goofy ? rgbB : rgbA;
+      for (var i = 0; i < N; i++) {
+        var c = goofy ? permB[i] : i;
+        put(Lk, i, cellX(c), cellY(c), s0, 1, src[c * 3], src[c * 3 + 1], src[c * 3 + 2], TINT, 0);
+      }
+      return Lk;
+    }
+
+    /* 02 work: chapters sorted into blocks, oldest first; travel + me tiles become a faint field */
+    function buildWork(prev) {
+      var Lk = newLayout(), order = ["origin", "gatorai", "adtran", "nvidia"], groups = [], i, k;
+      order.forEach(function (id) {
+        var ci = chIndex[id], g = [];
+        for (i = 0; i < N; i++) if (tileCh[i] === ci) g.push(i);
+        /* g is already in portrait order (row-major), so each block fills in reading order */
+        groups.push(g);
+      });
+      var Wc = cols, cf = 2, G = 3;
+      function total(gap) { var t = cf + gap * (order.length + 1); groups.forEach(function (g) { t += Math.ceil(g.length / Wc); }); return t; }
+      while (G > 1 && total(G) > rows) G--;
+      var r = Math.max(0, Math.floor((rows - total(G)) / 2)), used = new Uint8Array(N);
+      workBlocks = [];
+      groups.forEach(function (g, gi) {
+        var labelRow = r; r += G;
+        for (var j = 0; j < g.length; j++) {
+          var c = (r + Math.floor(j / Wc)) * cols + (j % Wc);
+          if (c >= N) c = N - 1;
+          used[c] = 1;
+          put(Lk, g[j], cellX(c), cellY(c), s0, 1, 0, 0, 0, 0, 0);
+        }
+        var br = Math.ceil(g.length / Wc), ch = CH[chIndex[order[gi]]];
+        workBlocks.push({ ch: order[gi], chi: chIndex[order[gi]], x: gx, y: gy + r * s0, w: Math.min(g.length, Wc) * s0, h: br * s0, ly: gy + (labelRow + G / 2) * s0,
+          label: ch.name, year: ch.year, photos: ch.photos.length });
+        r += br;
+      });
+      var cfLabel = r; r += G;
+      var cfExp = DATA.experience[0];
+      workBlocks.push({ ch: "cloudflare", chi: -2, empty: true, x: gx, y: gy + r * s0, w: Math.round(Wc * 0.62) * s0, h: cf * s0, ly: gy + (cfLabel + G / 2) * s0,
+        label: cfExp.company.toLowerCase(), year: cfExp.start_year, photos: 0 });
+      var rest = [], cells = [];
+      for (i = 0; i < N; i++) { var cn = CH[tileCh[i]].id; if (order.indexOf(cn) === -1) rest.push(i); }
+      for (i = 0; i < N; i++) if (!used[i]) cells.push(i);
+      byPrevX(rest, prev); cellsByX(cells);
+      for (k = 0; k < rest.length; k++) { var c2 = cells[Math.min(k, cells.length - 1)]; put(Lk, rest[k], cellX(c2), cellY(c2), s0, 0.1, 0, 0, 0, 0, 0); }
+      return Lk;
+    }
+
+    /* 03/04 text: letters rendered into an offscreen canvas at 4 samples per cell */
+    var textCanvas = document.createElement("canvas");
+    function textCells(lines) {
+      var SS = 4, w = cols * SS, h = rows * SS;
+      textCanvas.width = w; textCanvas.height = h;
+      var x = textCanvas.getContext("2d", { willReadFrequently: true });
+      x.clearRect(0, 0, w, h); x.fillStyle = "#000"; x.textAlign = "center"; x.textBaseline = "alphabetic";
+      var fam = '"Archivo", "Arial Black", "Helvetica Neue", Arial, sans-serif';
+      var ms = lines.map(function (l) { x.font = "900 100px " + fam; var m = x.measureText(l.t); return { w: m.width, a: m.actualBoundingBoxAscent || 72, d: m.actualBoundingBoxDescent || 0 }; });
+      var fs = Infinity, hsum = 0, gap = 0.16;
+      lines.forEach(function (l, i) { fs = Math.min(fs, (w * 0.9) / (ms[i].w / 100 * l.s)); hsum += (ms[i].a + ms[i].d) / 100 * l.s; });
+      hsum += gap * (lines.length - 1);
+      fs = Math.min(fs, (h * (isMobile ? 0.78 : 0.62)) / hsum);
+      var y = (h - hsum * fs) / 2;
+      lines.forEach(function (l, i) {
+        var size = fs * l.s;
+        x.font = "900 " + size.toFixed(1) + "px " + fam;
+        y += ms[i].a / 100 * size;
+        x.fillText(l.t, w / 2, y);
+        y += ms[i].d / 100 * size + gap * fs;
+      });
+      var d = x.getImageData(0, 0, w, h).data, cov = new Float32Array(N);
+      for (var cy = 0; cy < rows; cy++) for (var cx = 0; cx < cols; cx++) {
+        var s = 0;
+        for (var yy = 0; yy < SS; yy++) for (var xx = 0; xx < SS; xx++) s += d[((cy * SS + yy) * w + cx * SS + xx) * 4 + 3];
+        cov[cy * cols + cx] = s / (SS * SS * 255);
+      }
+      return cov;
+    }
+    function buildText(lines, prev) {
+      var Lk = newLayout(), cov = textCells(lines), letters = [], bgc = [], i;
+      for (i = 0; i < N; i++) (cov[i] >= 0.42 ? letters : bgc).push(i);
+      var lt = rankOrder.slice(0, letters.length), rest = rankOrder.slice(letters.length);
+      byPrevX(lt, prev); cellsByX(letters); byPrevX(rest, prev); cellsByX(bgc);
+      var ink = colors.ink;
+      for (i = 0; i < lt.length; i++) put(Lk, lt[i], cellX(letters[i]), cellY(letters[i]), s0, 1, ink[0], ink[1], ink[2], 0.42, 0);
+      var faint = root.classList.contains("dark") ? 0.06 : 0.09;
+      for (i = 0; i < rest.length; i++) put(Lk, rest[i], cellX(bgc[i]), cellY(bgc[i]), s0, faint, 0, 0, 0, 0, 0);
+      return Lk;
+    }
+    function projectLines(p) {
+      var words = p.name.split(/\s+/);
+      if (words.length === 1) {
+        var parts = p.name.split(/(?=[A-Z][a-z])/).filter(Boolean);
+        words = parts.length > 1 && p.name.length > 6 ? parts : words;
+      }
+      words = words.slice(0, 2);
+      return words.map(function (w) { return { t: w.toUpperCase(), s: 1 }; });
+    }
+    function gamesLines() {
+      var m = DATA.totalVisits / 1e6;
+      return [{ t: (m >= 100 ? m.toFixed(1) : m.toFixed(2)).replace(/\.0+$/, "") + "M", s: 1 }, { t: "PLAYS", s: 0.64 }];
+    }
+
+    /* 05 places: two orthographic globes stacked in the portrait frame, the us on top and east
+       asia below. land from world-atlas via d3 once it loads (until then, or if it fails, two
+       plain discs). each travel photo sends one tile, untinted, to a free land cell next to
+       where it was taken. */
+    var GLOBES = [{ id: "us", lng: -88, lat: 33 }, { id: "asia", lng: 118, lat: 25 }];
+    var GZOOM = 1.22, globeGeo = [], globePins = [];
+    function orthoAt(lng, lat, lng0, lat0) {
+      var l = (lng - lng0) * Math.PI / 180, p = lat * Math.PI / 180, p0 = lat0 * Math.PI / 180;
+      return [Math.cos(p) * Math.sin(l), -(Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(l))];
+    }
+    function globePalette() {
+      var dark = root.classList.contains("dark");
+      return { land: colors.ink.slice(), ocean: dark ? [0.19, 0.23, 0.25] : [0.87, 0.91, 0.92], grat: dark ? "rgba(160, 180, 190, .32)" : "rgba(60, 86, 98, .32)" };
+    }
+    function rgbCss(c) { return "rgb(" + Math.round(c[0] * 255) + "," + Math.round(c[1] * 255) + "," + Math.round(c[2] * 255) + ")"; }
+    function globeLayers() {
+      var SS = 3, w = cols * SS, h = rows * SS, pal = globePalette(), withLand = !!(countries && window.d3);
+      var cc = document.createElement("canvas"); cc.width = w; cc.height = h;
+      var mc = document.createElement("canvas"); mc.width = w; mc.height = h;
+      var x = cc.getContext("2d", { willReadFrequently: true }), m = mc.getContext("2d", { willReadFrequently: true });
+      globeGeo.forEach(function (g, gi) {
+        var G = GLOBES[gi], X = g.cx * SS, Y = g.cy * SS, RR = g.R * SS;
+        x.save(); x.beginPath(); x.arc(X, Y, RR, 0, Math.PI * 2); x.clip();
+        if (withLand) {
+          var proj = window.d3.geoOrthographic().translate([X, Y]).scale(RR * GZOOM).rotate([-G.lng, -G.lat]).clipAngle(90).precision(0.3);
+          var path = window.d3.geoPath(proj, x);
+          x.fillStyle = rgbCss(pal.ocean); x.fillRect(X - RR, Y - RR, 2 * RR, 2 * RR);
+          x.beginPath(); path(window.d3.geoGraticule10()); x.strokeStyle = pal.grat; x.lineWidth = SS * 0.45; x.stroke();
+          x.beginPath(); path(countries); x.fillStyle = rgbCss(pal.land); x.fill();
+          m.save(); m.beginPath(); m.arc(X, Y, RR, 0, Math.PI * 2); m.clip();
+          var mp = window.d3.geoPath(proj, m);
+          m.beginPath(); mp(countries); m.fillStyle = "#fff"; m.fill();
+          m.restore();
+        } else {
+          x.fillStyle = rgbCss(pal.land); x.fillRect(X - RR, Y - RR, 2 * RR, 2 * RR);
+          x.beginPath(); x.arc(X, Y, RR - 1.2 * SS, 0, Math.PI * 2); x.fillStyle = rgbCss(pal.ocean); x.fill();
+        }
+        x.restore();
+      });
+      return { c: x.getImageData(0, 0, w, h).data, m: withLand ? m.getImageData(0, 0, w, h).data : null, SS: SS, w: w };
+    }
+    function buildGlobe(prev) {
+      var Lk = newLayout(), i, c;
+      var D = Math.min(cols - 4, rows * 0.46), gap = (rows - 2 * D) / 3, R = D / 2 - 0.25;
+      globeGeo = [{ cx: cols / 2, cy: gap + D / 2, R: R }, { cx: cols / 2, cy: 2 * gap + 1.5 * D, R: R }];
+      var lay = globeLayers(), d = lay.c, mk = lay.m, SS = lay.SS, W3 = lay.w, n9 = SS * SS * 255;
+      var disk = [], out = [], col = new Float32Array(N * 3), land = new Float32Array(N), which = new Int8Array(N).fill(-1);
+      for (c = 0; c < N; c++) {
+        var ccx = c % cols, ccy = (c / cols) | 0, r = 0, g = 0, b = 0, a = 0, lm = 0;
+        for (var yy = 0; yy < SS; yy++) for (var xx = 0; xx < SS; xx++) {
+          var p = ((ccy * SS + yy) * W3 + ccx * SS + xx) * 4;
+          r += d[p]; g += d[p + 1]; b += d[p + 2]; a += d[p + 3];
+          if (mk) lm += mk[p + 3];
+        }
+        if (a / n9 >= 0.5) {
+          disk.push(c); col[c * 3] = r / a; col[c * 3 + 1] = g / a; col[c * 3 + 2] = b / a; land[c] = mk ? lm / n9 : 1;
+          var d0 = Math.pow(ccx + 0.5 - globeGeo[0].cx, 2) + Math.pow(ccy + 0.5 - globeGeo[0].cy, 2), d1 = Math.pow(ccx + 0.5 - globeGeo[1].cx, 2) + Math.pow(ccy + 0.5 - globeGeo[1].cy, 2);
+          which[c] = d0 < d1 ? 0 : 1;
+        } else out.push(c);
+      }
+      /* pins: one tile per travel photo (the widest crop), on the nearest free land cell */
+      var ps = s0 * (isMobile ? 2.4 : 2.2), isPin = new Uint8Array(N), placed = [];
+      globePins = [];
+      P.forEach(function (ph) {
+        if (!ph.place || !PLACES[ph.place]) return;
+        var best = -1, bestA = -1;
+        for (i = 0; i < N; i++) {
+          if (tilePhoto[i] !== ph.i || isPin[i]) continue;
+          var ar = tRect[cellVar[i] * 4 + 2] * tRect[cellVar[i] * 4 + 3];
+          if (ar > bestA) { bestA = ar; best = i; }
+        }
+        if (best < 0) return;
+        var gi = ph.ch === "asia" ? 1 : 0, G = GLOBES[gi], geo = globeGeo[gi];
+        var q = orthoAt(PLACES[ph.place][0], PLACES[ph.place][1], G.lng, G.lat);
+        var tx = geo.cx + q[0] * geo.R * GZOOM, ty = geo.cy + q[1] * geo.R * GZOOM;
+        var cands = disk.filter(function (dc) {
+          if (which[dc] !== gi || land[dc] < 0.2) return false;
+          var ex = (dc % cols) + 0.5 - geo.cx, ey = ((dc / cols) | 0) + 0.5 - geo.cy;
+          return ex * ex + ey * ey <= (geo.R - 1.2) * (geo.R - 1.2);
+        });
+        if (!cands.length) cands = disk.filter(function (dc) { return which[dc] === gi; });
+        cands.sort(function (a1, b1) {
+          var ax = (a1 % cols) + 0.5 - tx, ay = ((a1 / cols) | 0) + 0.5 - ty, bx = (b1 % cols) + 0.5 - tx, by = ((b1 / cols) | 0) + 0.5 - ty;
+          return (ax * ax + ay * ay) - (bx * bx + by * by);
+        });
+        var pick = cands[0];
+        for (var ci = 0; ci < cands.length; ci++) {
+          var px = cands[ci] % cols, py = (cands[ci] / cols) | 0, free = true;
+          for (var k = 0; k < placed.length; k++) if (Math.max(Math.abs(placed[k][0] - px), Math.abs(placed[k][1] - py)) < 3) { free = false; break; }
+          if (free) { pick = cands[ci]; break; }
+        }
+        var pcx = pick % cols, pcy = (pick / cols) | 0;
+        placed.push([pcx, pcy]);
+        isPin[best] = 1;
+        put(Lk, best, gx + (pcx + 0.5) * s0 - ps / 2, gy + (pcy + 0.5) * s0 - ps / 2, ps, 1, 0, 0, 0, 0, 1);
+        globePins.push({ x: gx + (pcx + 0.5) * s0 - ps / 2, y: gy + (pcy + 0.5) * s0 - ps / 2, s: ps });
+      });
+      var rest = [];
+      rankOrder.forEach(function (t) { if (!isPin[t]) rest.push(t); });
+      var onDisk = rest.slice(0, disk.length), offDisk = rest.slice(disk.length);
+      byPrevX(onDisk, prev); cellsByX(disk);
+      for (i = 0; i < onDisk.length; i++) { var dc = disk[i]; put(Lk, onDisk[i], cellX(dc), cellY(dc), s0, 1, col[dc * 3], col[dc * 3 + 1], col[dc * 3 + 2], 0.84, 0); }
+      out.sort(function (a1, b1) {
+        function dist(q1) {
+          var qx = (q1 % cols) + 0.5, qy = ((q1 / cols) | 0) + 0.5, m1 = Infinity;
+          globeGeo.forEach(function (gg) { m1 = Math.min(m1, Math.hypot(qx - gg.cx, qy - gg.cy) - gg.R); });
+          return m1;
+        }
+        return dist(a1) - dist(b1);
+      });
+      var outCells = out.slice(0, offDisk.length);
+      byPrevX(offDisk, prev); cellsByX(outCells);
+      for (i = 0; i < offDisk.length; i++) { var oc2 = outCells[i]; put(Lk, offDisk[i], cellX(oc2), cellY(oc2), s0, 0.06, 0, 0, 0, 0, 0); }
+      renderGlobeLabels();
+      return Lk;
+    }
+    /* limb outlines + "us" / "asia" gallery labels over the canvas */
+    function renderGlobeLabels() {
+      if (!glabels) return;
+      glabels.textContent = "";
+      var counts = { us: 0, asia: 0 };
+      DATA.travel.forEach(function (t) { counts[t.region === "asia" ? "asia" : "us"]++; });
+      globeGeo.forEach(function (g, gi) {
+        var id = GLOBES[gi].id, left = gx + (g.cx - g.R) * s0, top = gy + (g.cy - g.R) * s0, size = 2 * g.R * s0;
+        var ring = document.createElement("span");
+        ring.className = "gring";
+        ring.style.left = left + "px"; ring.style.top = top + "px"; ring.style.width = size + "px"; ring.style.height = size + "px";
+        glabels.appendChild(ring);
+        var lb = document.createElement("span");
+        lb.className = "glab" + (isMobile ? " is-small" : "");
+        var nm = document.createElement("b"); nm.textContent = id;
+        lb.appendChild(nm);
+        if (isMobile) lb.appendChild(document.createElement("br"));
+        lb.appendChild(document.createTextNode((isMobile ? "" : " · ") + counts[id] + " photos"));
+        lb.style.left = (left - (isMobile ? 8 : 14)) + "px"; lb.style.top = (top + size * 0.2) + "px";
+        glabels.appendChild(lb);
+      });
+      globePins.forEach(function (pn) {
+        var f = document.createElement("span");
+        f.className = "gpin";
+        f.style.left = pn.x + "px"; f.style.top = pn.y + "px"; f.style.width = pn.s + "px"; f.style.height = pn.s + "px";
+        glabels.appendChild(f);
+      });
+    }
+
+    function buildScatter() {
+      var Lk = newLayout(), rnd = mulberry32(5);
+      for (var i = 0; i < N; i++) put(Lk, i, gx + (rnd() * 1.4 - 0.2) * cols * s0, gy + (rnd() * 1.3 - 0.15) * rows * s0, s0 * 0.4, 0, colors.bg[0], colors.bg[1], colors.bg[2], 1, 0);
+      return Lk;
+    }
+
+    function buildTextStops() {
+      L[2] = buildText(projectLines(DATA.projects[projIdx]), L[1]);
+      L[3] = buildText(gamesLines(), L[2]);
+    }
+    function buildAll() {
+      TINT = isMobile ? 0.5 : 0.45;
+      L[0] = buildPortrait(false);
+      L[1] = buildWork(L[0]);
+      buildTextStops();
+      L[4] = buildGlobe(L[3]);
+      L[5] = buildPortrait(true);
+      renderWorkLabels();
+      segKey = -1;
+    }
+
+    /* =====================================================================
+       7. renderer: webgl2, one instanced draw call. every tile's flight between two stops
+          is evaluated in the vertex shader from the scroll progress uniform, so scrubbing
+          only updates one number. 2d canvas fallback if webgl2 is missing.
+       ===================================================================== */
+    var gl = null, prog = null, vao = null, vbo = null, tex = null, uni = {}, texInfo = null, inst = null, drawOrder = null, useGL = false, ctx2 = null;
+    var FL = 24, DELAY = 0.42;
+    var VS = [
+      "#version 300 es",
+      "precision highp float;",
+      "layout(location=0) in vec4 aA; layout(location=1) in vec4 aB; layout(location=2) in vec4 aTA;",
+      "layout(location=3) in vec4 aTB; layout(location=4) in vec4 aM; layout(location=5) in vec4 aH;",
+      "uniform vec2 uView; uniform float uT; uniform float uSpan; uniform int uMode; uniform float uFade;",
+      "uniform vec3 uAtlas; uniform vec2 uTexSize; uniform float uHi; uniform float uHiAmt;",
+      "out vec2 vUV; out vec4 vTint; out float vAlpha; out float vDim;",
+      "void main() {",
+      "  vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1));",
+      "  float e = 0.0, lift = 0.0;",
+      "  if (uMode == 2) e = 1.0;",
+      "  else if (uMode == 0) {",
+      "    float p = clamp((uT - aM.x) / uSpan, 0.0, 1.0);",
+      "    e = p < 0.5 ? 4.0 * p * p * p : 1.0 - pow(-2.0 * p + 2.0, 3.0) * 0.5;",
+      "    lift = sin(3.14159265 * e);",
+      "  }",
+      "  vec2 a = aA.xy + aA.z * 0.5, b = aB.xy + aB.z * 0.5, d = b - a;",
+      "  float len = length(d);",
+      "  vec2 ctrl = (a + b) * 0.5 + vec2(-d.y, d.x) * aM.y - vec2(0.0, len * 0.14 * aM.z);",
+      "  float u = 1.0 - e;",
+      "  vec2 c = u * u * a + 2.0 * u * e * ctrl + e * e * b;",
+      "  float s = mix(aA.z, aB.z, e) * (1.0 + 0.32 * aM.z * lift);",
+      "  vec2 pos = c + (corner - 0.5) * s;",
+      "  gl_Position = vec4(pos.x / uView.x * 2.0 - 1.0, 1.0 - pos.y / uView.y * 2.0, 0.0, 1.0);",
+      "  float v = floor(aM.w + 0.5), row = floor(v / uAtlas.x), col = v - row * uAtlas.x;",
+      "  vUV = (vec2(col, row) * uAtlas.y + 1.0 + corner * uAtlas.z) / uTexSize;",
+      "  vTint = mix(aTA, aTB, e);",
+      "  float shed = 1.0 - lift; vTint.a *= shed * shed;",
+      "  vAlpha = mix(aA.w, aB.w, e) * uFade;",
+      "  vDim = (uHi > -1.5 && abs(aH.x - uHi) > 0.5) ? uHiAmt : 0.0;",
+      "}"
+    ].join("\n");
+    var FS = [
+      "#version 300 es",
+      "precision mediump float;",
+      "uniform sampler2D uTex; uniform vec3 uBg;",
+      "in vec2 vUV; in vec4 vTint; in float vAlpha; in float vDim;",
+      "out vec4 o;",
+      "void main() {",
+      "  vec3 c = texture(uTex, vUV).rgb;",
+      "  c = mix(c, vTint.rgb, vTint.a);",
+      "  float a = vAlpha * (1.0 - vDim * 0.82);",
+      "  o = vec4(c * a, a);",
+      "}"
+    ].join("\n");
+
+    function initGL() {
+      useGL = false;
+      try { gl = canvas.getContext("webgl2", { alpha: false, antialias: false, premultipliedAlpha: true, powerPreference: "high-performance" }); } catch (e) { gl = null; }
+      if (!gl) return false;
+      function sh(type, src) {
+        var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+        return s;
+      }
+      try {
+        prog = gl.createProgram();
+        gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      } catch (err) { console.warn("mosaic2: webgl unavailable, falling back to 2d", err); gl = null; return false; }
+      ["uView", "uT", "uSpan", "uMode", "uFade", "uAtlas", "uTexSize", "uHi", "uHiAmt", "uTex", "uBg"].forEach(function (n) { uni[n] = gl.getUniformLocation(prog, n); });
+      vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+      vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      for (var loc = 0; loc < 6; loc++) {
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, FL * 4, loc * 16);
+        gl.vertexAttribDivisor(loc, 1);
+      }
+      tex = gl.createTexture();
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      useGL = true;
+      return true;
+    }
+    canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); useGL = false; });
+    canvas.addEventListener("webglcontextrestored", function () { if (initGL()) { uploadTexture(); segKey = -1; requestFrame(); } });
+
+    /* tile atlas at exactly the on-screen device size of a resting tile: crisp, no mipmaps */
+    function buildTileCanvas(px) {
+      px = clamp(Math.round(px), 4, 64);
+      var slot = px + 2, ac = ATL.cols, ar = Math.ceil(T / ac);
+      var c = document.createElement("canvas"); c.width = ac * slot; c.height = ar * slot;
+      var x = c.getContext("2d"); x.imageSmoothingQuality = "high";
+      for (var v = 0; v < T; v++) {
+        var sx = (v % ac) * ATL.slot + 1, sy = ((v / ac) | 0) * ATL.slot + 1, dx = (v % ac) * slot, dy = ((v / ac) | 0) * slot;
+        x.drawImage(atlasImg, sx, sy, ATL.tile, ATL.tile, dx, dy, slot, slot);
+        x.drawImage(atlasImg, sx, sy, ATL.tile, ATL.tile, dx + 1, dy + 1, px, px);
+      }
+      return { c: c, px: px, slot: slot, cols: ac };
+    }
+    function uploadTexture() {
+      if (!useGL || !texInfo) return;
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texInfo.c);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+
+    /* instance data for one pair of layouts. tiles flagged "on top" draw last. */
+    function setSegment(A, B, byX) {
+      if (!inst || inst.length !== N * FL) { inst = new Float32Array(N * FL); drawOrder = new Int32Array(N); }
+      var o = 0, n = 0, span = cols * s0, spanY = rows * s0;
+      for (var pass = 0; pass < 2; pass++) for (var i = 0; i < N; i++) {
+        if ((A.top[i] || B.top[i] ? 1 : 0) !== pass) continue;
+        var a4 = i * 4, k;
+        for (k = 0; k < 4; k++) { inst[o + k] = A.pos[a4 + k]; inst[o + 4 + k] = B.pos[a4 + k]; inst[o + 8 + k] = A.tin[a4 + k]; inst[o + 12 + k] = B.tin[a4 + k]; }
+        var wave = byX ? (A.pos[a4] - gx) / span : (A.pos[a4 + 1] - gy) / spanY;
+        inst[o + 16] = DELAY * (0.7 * clamp(wave, 0, 1) + 0.3 * tJit[i]);
+        inst[o + 17] = tCurve[i]; inst[o + 18] = tLift[i]; inst[o + 19] = cellVar[i];
+        inst[o + 20] = tileCh[i]; inst[o + 21] = 0; inst[o + 22] = 0; inst[o + 23] = 0;
+        drawOrder[n++] = i; o += FL;
+      }
+      if (useGL) { gl.bindBuffer(gl.ARRAY_BUFFER, vbo); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.DYNAMIC_DRAW); }
+    }
+
+    function hlAmt() { return hl.amt * (1 - clamp(Math.abs(curU - 1) * 3.5, 0, 1)); }
+    function render(t) {
+      if (useGL) {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(colors.bg[0], colors.bg[1], colors.bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(prog); gl.bindVertexArray(vao);
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(uni.uTex, 0);
+        gl.uniform2f(uni.uView, W, H); gl.uniform1f(uni.uSpan, 1 - DELAY);
+        gl.uniform3f(uni.uAtlas, texInfo.cols, texInfo.slot, texInfo.px);
+        gl.uniform2f(uni.uTexSize, texInfo.c.width, texInfo.c.height);
+        gl.uniform3f(uni.uBg, colors.bg[0], colors.bg[1], colors.bg[2]);
+        var ha = hlAmt();
+        gl.uniform1f(uni.uHi, ha > 0.001 ? hl.ch : -2); gl.uniform1f(uni.uHiAmt, ha);
+        if (reduced && t > 0 && t < 1) {
+          gl.uniform1i(uni.uMode, 1); gl.uniform1f(uni.uFade, 1); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, N);
+          gl.uniform1i(uni.uMode, 2); gl.uniform1f(uni.uFade, t * t * (3 - 2 * t)); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, N);
+        } else {
+          gl.uniform1i(uni.uMode, reduced ? (t >= 1 ? 2 : 1) : 0); gl.uniform1f(uni.uFade, 1); gl.uniform1f(uni.uT, t);
+          gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, N);
+        }
+        return;
+      }
+      render2D(t);
+    }
+
+    /* 2d fallback: same maths on the cpu */
+    function render2D(t) {
+      if (!ctx2) ctx2 = canvas.getContext("2d", { alpha: false });
+      if (!ctx2) return;
+      var c = ctx2, ti = texInfo, span = 1 - DELAY, ha2 = hlAmt();
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.globalAlpha = 1; c.fillStyle = colors.bgCss; c.fillRect(0, 0, W, H);
+      var A = override.active ? override.A : L[Math.min(4, Math.floor(curU))], B = override.active ? override.B : L[Math.min(4, Math.floor(curU)) + 1];
+      for (var n = 0; n < N; n++) {
+        var i = drawOrder[n], o = n * FL, e;
+        if (reduced) e = t < 0.5 ? 0 : 1;
+        else { var p = clamp((t - inst[o + 16]) / span, 0, 1); e = easeIO(p); }
+        var lift = reduced ? 0 : Math.sin(Math.PI * e);
+        var ax = inst[o] + inst[o + 2] / 2, ay = inst[o + 1] + inst[o + 2] / 2, bx = inst[o + 4] + inst[o + 6] / 2, by = inst[o + 5] + inst[o + 6] / 2;
+        var dx = bx - ax, dy = by - ay, len = Math.sqrt(dx * dx + dy * dy);
+        var cx = (ax + bx) / 2 - dy * inst[o + 17], cy = (ay + by) / 2 + dx * inst[o + 17] - len * 0.14 * inst[o + 18];
+        var u = 1 - e, x = u * u * ax + 2 * u * e * cx + e * e * bx, y = u * u * ay + 2 * u * e * cy + e * e * by;
+        var s = (inst[o + 2] + (inst[o + 6] - inst[o + 2]) * e) * (1 + 0.32 * inst[o + 18] * lift);
+        var al = inst[o + 3] + (inst[o + 7] - inst[o + 3]) * e;
+        if (ha2 > 0.001 && inst[o + 20] !== hl.ch) al *= 1 - ha2 * 0.82;
+        if (al < 0.01 || s < 0.5) continue;
+        var v = inst[o + 19];
+        c.globalAlpha = al;
+        c.drawImage(ti.c, (v % ti.cols) * ti.slot + 1, ((v / ti.cols) | 0) * ti.slot + 1, ti.px, ti.px, x - s / 2, y - s / 2, s, s);
+        var amt = (inst[o + 11] + (inst[o + 15] - inst[o + 11]) * e) * (1 - lift) * (1 - lift);
+        if (amt > 0.01) { c.globalAlpha = al * amt; c.fillStyle = (e < 0.5 ? A : B).css[i]; c.fillRect(x - s / 2, y - s / 2, s, s); }
+      }
+      c.globalAlpha = 1;
+    }
+
+    /* =====================================================================
+       8. setup
+       ===================================================================== */
+    function loadImage(src) {
+      return new Promise(function (res, rej) { var im = new Image(); im.decoding = "async"; im.onload = function () { res(im); }; im.onerror = function () { rej(new Error("image " + src)); }; im.src = src; });
+    }
+    function fontsReady() {
+      if (!document.fonts || !document.fonts.load) return Promise.resolve();
+      return Promise.race([document.fonts.load('900 100px "Archivo"').catch(function () {}), new Promise(function (r) { setTimeout(r, 1800); })]);
+    }
+    function measureStage() {
+      var r = stage.getBoundingClientRect();
+      W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      var padX = isMobile ? 10 : Math.max(44, W * 0.075), padT = isMobile ? 8 : 34, padB = isMobile ? 34 : 58;
+      var fit = Math.min((W - 2 * padX) / cols, (H - padT - padB) / rows);
+      s0 = Math.max(2, Math.floor(fit * dpr)) / dpr;
+      gx = Math.round((W - cols * s0) / 2 * dpr) / dpr;
+      gy = Math.round((padT + (H - padT - padB - rows * s0) / 2) * dpr) / dpr;
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      loupeC.width = Math.round(180 * dpr); loupeC.height = Math.round(180 * dpr);
+    }
+
+    var base = null;   /* table + images, loaded once */
+    function setupGrid() {
+      isMobile = mobileMQ.matches;
+      if (isMobile) { cols = 42; rows = 54; } else { cols = 60; rows = 77; }
+      N = cols * rows;
+      rgbA = null; ready = false;
+      var A = sampleTarget(imgA, CROP_A), B = sampleTarget(imgB, CROP_B);
+      rgbA = A.rgb; rgbB = B.rgb;
+      runSolver({ cols: cols, rows: rows, NP: NP, T: T, tPhoto: tPhoto, tSig: tSig, sigA: A.sig, sigB: B.sig, meanA: A.mean, meanB: B.mean }, 7, function (r) {
+        cellVar = r.cellVar; permB = r.permB; tCurve = r.fCurve; tLift = r.fLift; tJit = r.fJit;
+        tileCh = new Uint8Array(N); tilePhoto = new Uint8Array(N);
+        CH.forEach(function (ch) { ch.tiles = 0; }); P.forEach(function (p) { p.tiles = 0; });
+        for (var i = 0; i < N; i++) { var p = tPhoto[cellVar[i]]; tilePhoto[i] = p; tileCh[i] = P[p].chi; P[p].tiles++; CH[P[p].chi].tiles++; }
+        var rnd = mulberry32(3); rankOrder = [];
+        for (i = 0; i < N; i++) rankOrder.push(i);
+        for (i = N - 1; i > 0; i--) { var j = (rnd() * (i + 1)) | 0, tt = rankOrder[i]; rankOrder[i] = rankOrder[j]; rankOrder[j] = tt; }
+        measureStage();
+        texInfo = buildTileCanvas(s0 * dpr); uploadTexture();
+        buildAll();
+        measurePanels();
+        ready = true;
+        loadingEl.classList.add("is-done");
+        stage.classList.add("is-ready");
+        startIntro();
+        requestFrame();
+        loadGlobe();
+      });
+    }
+
+    Promise.all([
+      fetch(TABLE_SRC).then(function (r) { if (!r.ok) throw new Error("tile table " + r.status); return r.json(); }),
+      loadImage(ATLAS_SRC), loadImage(DATA.photoThumb), loadImage(DATA.photoAltThumb), fontsReady()
+    ]).then(function (res) {
+      ATL = res[0]; atlasImg = res[1]; imgA = res[2]; imgB = res[3];
+      T = ATL.count;
+      tPhoto = new Uint8Array(T); tRect = new Float32Array(T * 4); tSig = new Float32Array(ATL.s);
+      var keyMap = {};
+      P.forEach(function (p) { keyMap[p.key] = p.i; });
+      var remap = ATL.keys.map(function (k) { return k in keyMap ? keyMap[k] : -1; });
+      if (remap.indexOf(-1) !== -1) console.warn("mosaic2: tile table keys do not match the photo list");
+      for (var v = 0; v < T; v++) {
+        var o = v * 5;
+        tPhoto[v] = Math.max(0, remap[ATL.t[o]]);
+        for (var k = 0; k < 4; k++) tRect[v * 4 + k] = ATL.t[o + 1 + k] / 1e4;
+      }
+      initGL();
+      setupGrid();
+    }).catch(function (err) {
+      console.error(err);
+      loadingEl.classList.add("is-done");
+      var im = document.createElement("img");
+      im.className = "fallback-img"; im.src = DATA.photoThumb; im.alt = "Portrait of Andrew Vu: " + DATA.photoDims.scene;
+      stage.insertBefore(im, canvas); canvas.style.display = "none";
+    });
+
+    /* world-atlas for the globe (same sources as /random/travel); the disc stays if it fails */
+    function loadScript(src) {
+      return new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.async = true; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    }
+    var globeLoading = false;
+    function loadGlobe() {
+      if (globeLoading || countries) { if (countries) { L[4] = buildGlobe(L[3]); segKey = -1; requestFrame(); } return; }
+      globeLoading = true;
+      var d3p = window.d3 ? Promise.resolve() : loadScript("https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js");
+      var tjp = window.topojson ? Promise.resolve() : loadScript("https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js");
+      Promise.all([d3p, tjp])
+        .then(function () { return fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"); })
+        .then(function (r) { if (!r.ok) throw new Error("world-atlas " + r.status); return r.json(); })
+        .then(function (world) {
+          countries = window.topojson.feature(world, world.objects.countries);
+          if (ready) { L[4] = buildGlobe(L[3]); segKey = -1; requestFrame(); }
+        })
+        .catch(function (e) { console.warn("mosaic2: globe data unavailable, using a plain disc", e); });
+    }
+
+    /* =====================================================================
+       9. scroll -> stop progress. each stop rests while its panel is centred; the
+          tiles fly in between. u = 0..5
+       ===================================================================== */
+    var centers = [0, 0, 0, 0, 0, 0], HOLD = 0.2;
+    function readLine() {
+      if (!isMobile) return window.innerHeight / 2;
+      var sh = stage.getBoundingClientRect().height;
+      return sh + (window.innerHeight - sh) / 2;
+    }
+    function measurePanels() {
+      panels.forEach(function (p, k) { var r = p.getBoundingClientRect(); centers[k] = r.top + window.scrollY + r.height / 2; });
+    }
+    function computeU() {
+      var p = window.scrollY + readLine();
+      if (p <= centers[0]) return 0;
+      if (p >= centers[5]) return 5;
+      for (var k = 0; k < 5; k++) {
+        if (p < centers[k + 1]) {
+          var t = (p - centers[k]) / Math.max(1, centers[k + 1] - centers[k]);
+          return k + clamp((t - HOLD) / (1 - 2 * HOLD), 0, 1);
+        }
+      }
+      return 5;
+    }
+    function scrollToStop(k) {
+      k = clamp(k, 0, 5);
+      window.scrollTo({ top: Math.max(0, centers[k] - readLine()), behavior: reduced ? "auto" : "smooth" });
+    }
+
+    /* =====================================================================
+       10. frame
+       ===================================================================== */
+    function requestFrame() { if (!raf) raf = requestAnimationFrame(frame); }
+    var lastT = 0;
+    function frame(now) {
+      raf = 0;
+      if (!ready || !texInfo) return;
+      var dt = Math.min(0.05, lastT ? (now - lastT) / 1000 : 0.016); lastT = now;
+      var again = false, t, u;
+      if (override.active) {
+        u = override.stop;
+        t = clamp((now - override.t0) / (override.dur * 1000), 0, 1);
+        if (segKey !== override.key) { setSegment(override.A, override.B, override.byX); segKey = override.key; }
+        if (t >= 1) { override.active = false; segKey = -1; }
+        again = true;
+      } else {
+        u = computeU();
+        var seg = Math.min(4, Math.floor(u));
+        t = u - seg;
+        if (segKey !== seg) { setSegment(L[seg], L[seg + 1], false); segKey = seg; }
+      }
+      curU = u;
+      var k = 1 - Math.exp(-dt * 12), d = hl.target - hl.amt;
+      if (Math.abs(d) > 0.002) { hl.amt += d * k; again = true; } else { hl.amt = hl.target; if (hl.target === 0) hl.ch = -1; }
+      render(t);
+      updateChrome(u);
+      if (again) requestFrame(); else lastT = 0;
+    }
+
+    var FIGS = [
+      function () { return "fig. 1 · <b>self-portrait</b>, " + cols + " × " + rows + " tiles from " + NP + " of my photos"; },
+      function () { return "fig. 2 · <b>the same tiles, sorted by chapter</b>, oldest first"; },
+      function () { return "fig. 3 · <b>" + DATA.projects[projIdx].name.toLowerCase() + "</b>, spelled in tiles"; },
+      function () { return "fig. 4 · <b>" + fmt(DATA.totalVisits) + " plays</b>, spelled in tiles"; },
+      function () { return "fig. 5 · <b>where the travel photos were taken</b>"; },
+      function () { return "fig. 6 · <b>the goofy one</b>"; }
+    ];
+    var ARIA = [
+      "a portrait of andy made of " + NP + " of andy's photos, cut into small tiles",
+      "the same photo tiles sorted into blocks by chapter: origin, gatorai, adtran, nvidia, and an empty block for cloudflare",
+      "the photo tiles spelling a project name",
+      "the photo tiles spelling the total number of plays across andy's roblox games",
+      "the photo tiles forming two globes, the us on top and east asia below, with the travel photos pinned where they were taken",
+      "andy's goofy portrait, made of the same photo tiles"
+    ];
+    var lastWl = -1, lastGl = -1;
+    function updateChrome(u) {
+      var stop = Math.round(u);
+      if (stop !== curStop) {
+        curStop = stop;
+        dots.forEach(function (b, i) { if (i === stop) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current"); });
+        figEl.innerHTML = FIGS[stop]();
+        canvas.setAttribute("aria-label", ARIA[stop]);
+      }
+      var w = 1 - clamp(Math.abs(u - 1) * 3.5, 0, 1);
+      if (Math.abs(w - lastWl) > 0.01) { wlabels.style.opacity = w.toFixed(3); lastWl = w; }
+      var gw = 1 - clamp(Math.abs(u - 4) * 3.5, 0, 1);
+      if (Math.abs(gw - lastGl) > 0.01) { glabels.style.opacity = gw.toFixed(3); lastGl = gw; }
+      if (u !== Math.round(u) || override.active) hideLoupe();
+    }
+
+    /* =====================================================================
+       11. intro + project morphs (time-driven flights on top of the scroll)
+       ===================================================================== */
+    function startOverride(A, B, stop, dur, byX) {
+      override.A = A; override.B = B; override.stop = stop; override.dur = dur; override.byX = byX;
+      override.t0 = performance.now(); override.active = true; override.key++;
+      requestFrame();
+    }
+    function startIntro() {
+      var u = computeU();
+      if (reduced || u !== Math.round(u)) return;
+      startOverride(buildScatter(), L[u], u, 1.6, false);
+    }
+    function setProject(i) {
+      if (i === projIdx || !ready) return;
+      document.querySelectorAll(".proj").forEach(function (el) { el.classList.toggle("is-on", +el.dataset.proj === i); });
+      var old = L[2];
+      projIdx = i;
+      L[2] = buildText(projectLines(DATA.projects[i]), old);
+      if (curStop === 2) figEl.innerHTML = FIGS[2]();
+      var u = override.active ? override.stop : computeU();
+      if (u === 2 && !override.active) startOverride(old, L[2], 2, reduced ? 0.3 : 0.95, true);
+      else { segKey = -1; requestFrame(); }
+    }
+    document.querySelectorAll(".proj").forEach(function (el) {
+      var i = +el.dataset.proj;
+      el.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") setProject(i); });
+      el.addEventListener("focusin", function () { setProject(i); });
+      el.addEventListener("click", function () { setProject(i); });
+    });
+
+    window.addEventListener("scroll", function () {
+      if (override.active && Math.abs(computeU() - override.stop) > 0.001) { override.active = false; segKey = -1; }
+      requestFrame();
+    }, { passive: true });
+
+    /* =====================================================================
+       12. stop nav: dots + keys
+       ===================================================================== */
+    dots.forEach(function (b) { b.addEventListener("click", function () { scrollToStop(+b.dataset.go); }); });
+    document.addEventListener("keydown", function (e) {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || lb.open) return;
+      var tg = e.target, tag = tg && tg.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (tg && tg.isContentEditable)) return;
+      var k = e.key, cur = Math.round(computeU());
+      if (k === "ArrowDown" || k === "j") { e.preventDefault(); scrollToStop(cur + 1); }
+      else if (k === "ArrowUp" || k === "k") { e.preventDefault(); scrollToStop(cur - 1); }
+    });
+
+    /* =====================================================================
+       13. work stop: block labels, highlight from the panel, click to open
+       ===================================================================== */
+    function renderWorkLabels() {
+      wlabels.textContent = "";
+      workBlocks.forEach(function (b) {
+        var l = document.createElement("span");
+        l.className = "wl"; l.dataset.hl = b.ch;
+        l.style.left = b.x + "px"; l.style.top = b.ly + "px";
+        var nm = document.createElement("b"); nm.textContent = b.label;
+        l.appendChild(nm);
+        l.appendChild(document.createTextNode(" · " + b.year + " · " + (b.empty ? "no photos yet" : b.photos + " photo" + (b.photos === 1 ? "" : "s"))));
+        wlabels.appendChild(l);
+        if (b.empty) {
+          var bx = document.createElement("span");
+          bx.className = "wbox"; bx.dataset.hl = b.ch;
+          bx.style.left = b.x + "px"; bx.style.top = b.y + "px"; bx.style.width = b.w + "px"; bx.style.height = b.h + "px";
+          bx.textContent = "no photos yet";
+          wlabels.appendChild(bx);
+        }
+      });
+    }
+    function setHighlight(id) {
+      document.querySelectorAll("[data-hl]").forEach(function (el) { el.classList.toggle("is-hot", !!id && el.dataset.hl === id); });
+      if (!id) { hl.target = 0; requestFrame(); return; }
+      hl.ch = id === "cloudflare" ? 99 : chIndex[id];
+      hl.target = 1;
+      requestFrame();
+    }
+    document.querySelectorAll(".job[data-hl], .origin-line[data-hl]").forEach(function (el) {
+      el.addEventListener("pointerenter", function () { setHighlight(el.dataset.hl); });
+      el.addEventListener("pointerleave", function () { setHighlight(null); });
+      el.addEventListener("focusin", function () { setHighlight(el.dataset.hl); });
+      el.addEventListener("focusout", function () { setHighlight(null); });
+      var ci = chIndex[el.dataset.hl];
+      if (ci !== undefined) el.addEventListener("click", function (e) {
+        if (e.target.closest("a, button")) return;
+        openLightbox(CH[ci].photos[0], el.querySelector("[data-open]") || el);
+      });
+    });
+
+    /* =====================================================================
+       14. loupe: a magnifier that redraws the tiles under the pointer from the photo thumbs
+       ===================================================================== */
+    var loupeOn = false, loupeX = 0, loupeY = 0, loupeTile = -1, loupeTouch = false;
+    function requestThumb(p) {
+      if (thumbState[p]) return;
+      thumbState[p] = 1;
+      var im = new Image(); im.decoding = "async";
+      im.onload = function () { thumbState[p] = 2; if (loupeOn) drawLoupe(); };
+      im.onerror = function () { thumbState[p] = 3; };
+      im.src = P[p].thumb; thumbs[p] = im;
+    }
+    function restLayout() {
+      if (!ready || override.active || curU !== Math.round(curU)) return null;
+      return L[curU];
+    }
+    function tileAt(x, y, Lk, minAlpha) {
+      for (var n = N - 1; n >= 0; n--) {
+        var i = drawOrder[n], o = i * 4, s = Lk.pos[o + 2];
+        if (Lk.pos[o + 3] < minAlpha) continue;
+        if (x >= Lk.pos[o] && x < Lk.pos[o] + s && y >= Lk.pos[o + 1] && y < Lk.pos[o + 1] + s) return i;
+      }
+      return -1;
+    }
+    function drawLoupe() {
+      var Lk = restLayout();
+      if (!drawOrder) return;
+      if (!Lk) { hideLoupe(); return; }
+      var M = clamp(56 / s0, 3.4, 9), R = 90 / M, x0 = loupeX - R, y0 = loupeY - R, c = lctx;
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.globalAlpha = 1; c.fillStyle = colors.bgCss; c.fillRect(0, 0, 180, 180);
+      for (var n = 0; n < N; n++) {
+        var i = drawOrder[n], o = i * 4, x = Lk.pos[o], y = Lk.pos[o + 1], s = Lk.pos[o + 2], a = Lk.pos[o + 3];
+        if (a < 0.01 || x + s < x0 || y + s < y0 || x > x0 + 2 * R || y > y0 + 2 * R) continue;
+        var dx = 90 + (x - loupeX) * M, dy = 90 + (y - loupeY) * M, ds = s * M, g = ds > 30 ? 1 : 0.5;
+        var v = cellVar[i], p = tilePhoto[i];
+        if (hlAmt() > 0.001 && tileCh[i] !== hl.ch) a *= 1 - hlAmt() * 0.82;
+        c.globalAlpha = a;
+        if (thumbState[p] === 2) {
+          var im = thumbs[p], iw = im.naturalWidth, ih = im.naturalHeight, r4 = v * 4;
+          c.drawImage(im, tRect[r4] * iw, tRect[r4 + 1] * ih, tRect[r4 + 2] * iw, tRect[r4 + 3] * ih, dx + g, dy + g, ds - 2 * g, ds - 2 * g);
+        } else {
+          requestThumb(p);
+          c.drawImage(atlasImg, (v % ATL.cols) * ATL.slot + 1, ((v / ATL.cols) | 0) * ATL.slot + 1, ATL.tile, ATL.tile, dx + g, dy + g, ds - 2 * g, ds - 2 * g);
+        }
+        var amt = Lk.tin[o + 3] * 0.5;
+        if (amt > 0.01) { c.globalAlpha = a * amt; c.fillStyle = Lk.css[i]; c.fillRect(dx + g, dy + g, ds - 2 * g, ds - 2 * g); }
+      }
+      c.globalAlpha = 1;
+      var hit = tileAt(loupeX, loupeY, Lk, 0.2);
+      if (hit !== loupeTile) {
+        loupeTile = hit;
+        loupeCap.textContent = "";
+        if (hit >= 0) {
+          var ph = P[tilePhoto[hit]];
+          var kk = document.createElement("p"); kk.className = "loupe-k"; kk.textContent = chapterLabel(ph) + " · frame " + pad2(ph.frame);
+          var tt = document.createElement("p"); tt.className = "loupe-t"; tt.textContent = ph.title;
+          var hh = document.createElement("p"); hh.className = "loupe-h"; hh.textContent = loupeTouch ? "tap to open" : "click to open";
+          loupeCap.appendChild(kk); loupeCap.appendChild(tt); loupeCap.appendChild(hh);
+        }
+      }
+      var lx = clamp(loupeX - 90, 4, W - 184), ly = loupeTouch ? loupeY - 250 : loupeY - 90;
+      ly = clamp(ly, 4, H - 250);
+      loupe.style.transform = "translate3d(" + lx + "px," + ly + "px,0)";
+      if (!loupeOn) { loupeOn = true; loupe.classList.add("is-on"); }
+    }
+    function hideLoupe() {
+      if (!loupeOn) return;
+      loupeOn = false; loupeTile = -1; loupe.classList.remove("is-on");
+    }
+    function localXY(e) { var r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+    function blockAt(x, y) {
+      for (var b = 0; b < workBlocks.length; b++) {
+        var wb = workBlocks[b];
+        if (x >= wb.x && x < wb.x + (wb.empty ? wb.w : cols * s0) && y >= wb.y && y < wb.y + wb.h) return wb;
+      }
+      return null;
+    }
+    var hoverBlock = null;
+    canvas.addEventListener("pointermove", function (e) {
+      if (e.pointerType !== "mouse" || !ready) return;
+      var xy = localXY(e);
+      loupeX = xy[0]; loupeY = xy[1]; loupeTouch = false;
+      drawLoupe();
+      if (curU === 1 && !override.active) {
+        var b = blockAt(xy[0], xy[1]), id = b ? b.ch : null;
+        if (id !== hoverBlock) { hoverBlock = id; setHighlight(id); }
+      }
+    });
+    canvas.addEventListener("pointerleave", function (e) {
+      if (e.pointerType === "mouse") { hideLoupe(); if (hoverBlock) { hoverBlock = null; setHighlight(null); } }
+    });
+    canvas.addEventListener("click", function (e) {
+      if (touchState.handled) { touchState.handled = false; return; }
+      var Lk = restLayout(); if (!Lk) return;
+      var xy = localXY(e), hit = tileAt(xy[0], xy[1], Lk, 0.2);
+      if (hit >= 0) openLightbox(tilePhoto[hit], canvas);
+    });
+    /* touch: press and hold for the loupe, tap to open */
+    var touchState = { timer: 0, x: 0, y: 0, active: false, handled: false, down: false };
+    canvas.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" || !ready) return;
+      var xy = localXY(e);
+      touchState.x = xy[0]; touchState.y = xy[1]; touchState.down = true; touchState.active = false;
+      clearTimeout(touchState.timer);
+      touchState.timer = setTimeout(function () {
+        if (!touchState.down || !restLayout()) return;
+        touchState.active = true; loupeX = touchState.x; loupeY = touchState.y; loupeTouch = true; drawLoupe();
+      }, 380);
+    });
+    canvas.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "mouse" || !touchState.down) return;
+      var xy = localXY(e);
+      if (touchState.active) { loupeX = xy[0]; loupeY = xy[1]; drawLoupe(); }
+      else if (Math.abs(xy[0] - touchState.x) + Math.abs(xy[1] - touchState.y) > 10) { clearTimeout(touchState.timer); touchState.down = false; }
+    });
+    function touchEnd(e) {
+      if (e.pointerType === "mouse") return;
+      clearTimeout(touchState.timer);
+      if (touchState.active) { touchState.active = false; touchState.handled = true; hideLoupe(); }
+      touchState.down = false;
+    }
+    canvas.addEventListener("pointerup", touchEnd);
+    canvas.addEventListener("pointercancel", touchEnd);
+    canvas.addEventListener("touchmove", function (e) { if (touchState.active && e.cancelable) e.preventDefault(); }, { passive: false });
+    canvas.addEventListener("contextmenu", function (e) { if (touchState.active || touchState.down) e.preventDefault(); });
+
+    /* =====================================================================
+       15. lightbox
+       ===================================================================== */
+    var lb = $("lb"), lbImg = $("lb-img"), lbLoad = $("lb-load"), lbCur = -1, lbOpener = null;
+    function openLightbox(pi, opener) {
+      lbOpener = opener || document.activeElement;
+      fillLightbox(pi);
+      hideLoupe();
+      if (!lb.open) {
+        if (typeof lb.showModal === "function") lb.showModal(); else lb.setAttribute("open", "");
+        root.classList.add("lb-open");
+        $("lb-x").focus();
+      }
+    }
+    function closeLightbox() { if (lb.open) { if (typeof lb.close === "function") lb.close(); else lb.removeAttribute("open"); } }
+    lb.addEventListener("close", function () { root.classList.remove("lb-open"); if (lbOpener && lbOpener.focus) lbOpener.focus({ preventScroll: true }); });
+    function fillLightbox(pi) {
+      var p = P[pi], ch = CH[p.chi];
+      lbCur = pi;
+      $("lb-k").textContent = chapterLabel(p) + " · frame " + pad2(p.frame) + "/" + NP;
+      $("lb-t").textContent = p.title;
+      var s = $("lb-s"); s.textContent = p.sub || ""; s.hidden = !p.sub;
+      lbImg.alt = p.alt; lbImg.src = p.thumb; lbImg.classList.add("is-low"); lbLoad.classList.add("is-on");
+      var full = new Image(); full.decoding = "async";
+      full.onload = function () { if (lbCur === pi) { lbImg.src = p.src; lbImg.classList.remove("is-low"); lbLoad.classList.remove("is-on"); } };
+      full.onerror = function () { if (lbCur === pi) { lbImg.classList.remove("is-low"); lbLoad.classList.remove("is-on"); } };
+      full.src = p.src;
+      var job = $("lb-job"); job.textContent = "";
+      var e = p.gallery ? expByGallery[p.gallery] : null;
+      if (e) {
+        var hd = document.createElement("div"); hd.className = "lb-job-h";
+        var lg = document.createElement("img"); lg.src = e.logo; lg.alt = e.company + " logo"; lg.width = 34; lg.height = 34;
+        var nm = document.createElement("b"); nm.textContent = e.company;
+        hd.appendChild(lg); hd.appendChild(nm); job.appendChild(hd);
+        e.roles.forEach(function (r) {
+          var rr = document.createElement("p"); rr.className = "lb-job-r"; rr.textContent = r.title + (r.team ? " · " + r.team : "");
+          var sp = document.createElement("span"); sp.textContent = r.dates + " · " + r.location; rr.appendChild(sp); job.appendChild(rr);
+        });
+        var g = DATA.galleries[p.gallery], gp = document.createElement("p"); gp.className = "lb-job-g"; gp.textContent = g.title + ": " + g.subtitle; job.appendChild(gp);
+        job.hidden = false;
+      } else job.hidden = true;
+      var list = ch.photos, k = list.indexOf(pi);
+      $("lb-pos").textContent = pad2(k + 1) + " / " + pad2(list.length) + " in " + ch.name;
+      $("lb-prev").disabled = $("lb-next").disabled = list.length < 2;
+    }
+    function stepLightbox(dir) { var list = CH[P[lbCur].chi].photos, k = list.indexOf(lbCur); fillLightbox(list[(k + dir + list.length) % list.length]); }
+    $("lb-x").addEventListener("click", closeLightbox);
+    $("lb-prev").addEventListener("click", function () { stepLightbox(-1); });
+    $("lb-next").addEventListener("click", function () { stepLightbox(1); });
+    lb.addEventListener("click", function (e) { if (e.target === lb) closeLightbox(); });
+    lb.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") { e.preventDefault(); stepLightbox(-1); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); stepLightbox(1); }
+    });
+    var swipe = null;
+    $("lb-fig").addEventListener("pointerdown", function (e) { swipe = { x: e.clientX, y: e.clientY }; });
+    $("lb-fig").addEventListener("pointerup", function (e) {
+      if (!swipe) return;
+      var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y; swipe = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) stepLightbox(dx < 0 ? 1 : -1);
+    });
+    document.querySelectorAll("[data-open]").forEach(function (b) {
+      b.addEventListener("click", function (e) { e.stopPropagation(); openLightbox(+b.dataset.open, b); });
+    });
+
+    /* =====================================================================
+       16. resize
+       ===================================================================== */
+    var wasMobile = mobileMQ.matches, resizeTimer = 0;
+    function onResize() {
+      if (!ready) { measurePanels(); return; }
+      if (mobileMQ.matches !== wasMobile) { wasMobile = mobileMQ.matches; setupGrid(); return; }
+      var oldPx = texInfo ? texInfo.px : 0;
+      measureStage();
+      if (Math.round(s0 * dpr) !== oldPx) { texInfo = buildTileCanvas(s0 * dpr); uploadTexture(); }
+      buildAll();
+      measurePanels();
+      requestFrame();
+    }
+    window.addEventListener("resize", function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(onResize, 120); });
+    if ("ResizeObserver" in window) new ResizeObserver(function () { measurePanels(); requestFrame(); }).observe($("main"));
+    window.addEventListener("load", function () { measurePanels(); requestFrame(); });
+  })();
+  </script>
+</body>
+</html>

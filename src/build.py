@@ -370,6 +370,18 @@ custom_pages = [
         },
     },
     {
+        "template": "redesigns/mosaic2.html",
+        "output": ("mosaic2.html",),
+        "title": f"{title_name} | Mosaic",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/mosaic2"),
+            "title": f"{title_name} | Mosaic",
+            "description": f"{title_name}'s photos, rearranged into everything else (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
         "template": "redesigns/cards.html",
         "output": ("cards.html",),
         "title": f"{title_name} | Cards",
