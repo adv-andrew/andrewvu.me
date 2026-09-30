@@ -1,6 +1,7 @@
 {#-
   Shared homepage content for the redesign prototypes
-  (/andyvusimulator, /routeguide, /studio).
+  (round 1: /andyvusimulator, /routeguide, /studio;
+   round 2: /zoom, /mosaic, /cards, /darkroom, /museum).
   Import with: {% import "redesigns/data.html" as d %}
 -#}
 
@@ -14,6 +15,44 @@
 {% set photo = "/assets/me.jpg" %}
 {% set photo_alt = "/assets/me_alt.jpg" %}
 {% set easter_egg = "you found my easter egg!" %}
+{#- Pixel sizes of the two portraits (same order as photo / photo_alt). -#}
+{% set photo_thumb = "/assets/redesigns/thumbs/me-me.thumb.jpg" %}
+{% set photo_alt_thumb = "/assets/redesigns/thumbs/me-me-alt.thumb.jpg" %}
+{% set photo_dims = {"w": 711, "h": 940, "scene": "white tee and beanie at a ski lodge, holding a ski helmet with reflective goggles"} %}
+{% set photo_alt_dims = {"w": 1536, "h": 2126, "scene": "throwing a peace sign and a big goofy smile at a night market"} %}
+
+{#- From the lore page. -#}
+{% set origin = {
+  "src": "/assets/lore/why_cs.jpeg", "thumb": "/assets/redesigns/thumbs/lore-why-cs.thumb.jpg", "w": 1860, "h": 1240, "year": 2019,
+  "caption": "built my first pc in 2019 for christmas",
+  "note": "the radeon card was a gift from my uncle's old bitcoin rig",
+  "scene": "standing behind a table covered in pc part boxes (msi motherboard, radeon card, fractal case)",
+} %}
+
+{#-
+  Travel photos (public/assets/travel). `place` and `caption` come from the travel page;
+  `caption` is none where that page has no caption. `scene` is a plain visual description
+  (useful for alt text and layout decisions), not a claim about the trip.
+-#}
+{% set travel = [
+  {"src": "/assets/travel/SLC utah.jpg", "thumb": "/assets/redesigns/thumbs/travel-slc-utah.thumb.jpg", "w": 1365, "h": 2048, "place": "Salt Lake City, Utah", "region": "us", "caption": "clean air, mountains, and one of the more unexpectedly nice trips.", "scene": "skiing down a foggy snow slope"},
+  {"src": "/assets/travel/atlanta ga.jpg", "thumb": "/assets/redesigns/thumbs/travel-atlanta-ga.thumb.jpg", "w": 1440, "h": 1920, "place": "Atlanta, Georgia", "region": "us", "caption": "intern summer city and one of the more important stops in the recent timeline.", "scene": "silhouetted in front of a giant blue aquarium tank"},
+  {"src": "/assets/travel/da nang vietnam.jpg", "thumb": "/assets/redesigns/thumbs/travel-da-nang-vietnam.thumb.jpg", "w": 1536, "h": 2304, "place": "Da Nang, Vietnam", "region": "asia", "caption": "one of the places on this page that already feels nostalgic.", "scene": "conical hat and life vest in front of a mossy cliff"},
+  {"src": "/assets/travel/gainesville fl.jpg", "thumb": "/assets/redesigns/thumbs/travel-gainesville-fl.thumb.jpg", "w": 1440, "h": 1920, "place": "Gainesville, Florida", "region": "us", "caption": "college town, current home base, and where a lot of this builder arc happens.", "scene": "yellow face paint and a peace sign next to someone in a red among us costume"},
+  {"src": "/assets/travel/hanoi vietnam.jpg", "thumb": "/assets/redesigns/thumbs/travel-hanoi-vietnam.thumb.jpg", "w": 1440, "h": 1920, "place": "Hanoi, Vietnam", "region": "asia", "caption": "chaotic in a way that somehow still feels alive and structured at the same time.", "scene": "walking a path through a dark cave toward the light"},
+  {"src": "/assets/travel/kyoto japan.png", "thumb": "/assets/redesigns/thumbs/travel-kyoto-japan.thumb.jpg", "w": 511, "h": 740, "place": "Kyoto, Japan", "region": "asia", "caption": "quiet streets, temples, and one of the easiest cities to romanticize.", "scene": "double thumbs up on a bamboo forest path"},
+  {"src": "/assets/travel/minnesota.jpg", "thumb": "/assets/redesigns/thumbs/travel-minnesota.thumb.jpg", "w": 1280, "h": 1920, "place": "Mankato, Minnesota", "region": "us", "caption": none, "scene": "snowboarding down a sunny snow hill"},
+  {"src": "/assets/travel/new symrna beach florida.jpg", "thumb": "/assets/redesigns/thumbs/travel-new-symrna-beach-florida.thumb.jpg", "w": 1920, "h": 1440, "place": "New Smyrna Beach, Florida", "region": "us", "caption": none, "scene": "four people doing handstands on the beach"},
+  {"src": "/assets/travel/new york city.jpg", "thumb": "/assets/redesigns/thumbs/travel-new-york-city.thumb.jpg", "w": 1920, "h": 2560, "place": "New York City", "region": "us", "caption": "one of the places i keep revisiting and still haven't gotten tired of.", "scene": "on the steps of a columned building with pigeons taking off"},
+  {"src": "/assets/travel/new york cityy.png", "thumb": "/assets/redesigns/thumbs/travel-new-york-cityy.thumb.jpg", "w": 576, "h": 740, "place": "New York City", "region": "us", "caption": none, "scene": "bundled in a scarf, holding up a pastry"},
+  {"src": "/assets/travel/nyc again.jpg", "thumb": "/assets/redesigns/thumbs/travel-nyc-again.thumb.jpg", "w": 1920, "h": 2559, "place": "New York City", "region": "us", "caption": none, "scene": "crouching on a cobblestone street at night under the manhattan bridge"},
+  {"src": "/assets/travel/nyc againnnn.jpg", "thumb": "/assets/redesigns/thumbs/travel-nyc-againnnn.thumb.jpg", "w": 1536, "h": 2048, "place": "New York City", "region": "us", "caption": none, "scene": "mid-climb on a bouldering wall at night"},
+  {"src": "/assets/travel/nyc.jpg", "thumb": "/assets/redesigns/thumbs/travel-nyc.thumb.jpg", "w": 1536, "h": 2048, "place": "New York City", "region": "us", "caption": none, "scene": "standing in front of a metal shutter painted with giant eyes"},
+  {"src": "/assets/travel/sapphire north carolina.jpg", "thumb": "/assets/redesigns/thumbs/travel-sapphire-north-carolina.thumb.jpg", "w": 1440, "h": 1920, "place": "Sapphire, North Carolina", "region": "us", "caption": "the kind of place that makes it easy to log off for a second.", "scene": "arms spread wide above a river in the woods"},
+  {"src": "/assets/travel/seoul korea.jpg", "thumb": "/assets/redesigns/thumbs/travel-seoul-korea.thumb.jpg", "w": 1536, "h": 2304, "place": "Seoul, South Korea", "region": "asia", "caption": "one of those cities that makes you want to stay out later than planned.", "scene": "hand up to the sun on a hanok village street"},
+  {"src": "/assets/travel/singapore.png", "thumb": "/assets/redesigns/thumbs/travel-singapore.thumb.jpg", "w": 555, "h": 628, "place": "Singapore", "region": "asia", "caption": "one of the cleanest and easiest cities to navigate i've been to.", "scene": "smiling at a table in a gator t-shirt"},
+  {"src": "/assets/travel/tokyo japan.jpg", "thumb": "/assets/redesigns/thumbs/travel-tokyo-japan.thumb.jpg", "w": 1280, "h": 1920, "place": "Tokyo, Japan", "region": "asia", "caption": "still one of my favorite city-energy combinations anywhere.", "scene": "in a yukata, half hidden behind a paper fan"},
+] %}
 
 {% set motto = {
   "text": "Let the weather be the weather",
@@ -121,39 +160,39 @@
     "title": "NVIDIA Pictures",
     "subtitle": "a summer of gpus and questionable altitude choices",
     "photos": [
-      {"src": "/assets/experience/pics_nvidia/rock climbing with nvidia interns.jpg", "caption": "rock climbing with nvidia interns"},
-      {"src": "/assets/experience/pics_nvidia/picture with jensen huang.jpg", "caption": "picture with jensen huang"},
-      {"src": "/assets/experience/pics_nvidia/intern social.jpg", "caption": "intern social"},
-      {"src": "/assets/experience/pics_nvidia/hong kong.jpg", "caption": "hong kong"},
-      {"src": "/assets/experience/pics_nvidia/volunteer event to make skateboards for underserved children.jpg", "caption": "volunteer event to make skateboards for underserved children"},
-      {"src": "/assets/experience/pics_nvidia/sky diving.jpg", "caption": "sky diving"},
+      {"src": "/assets/experience/pics_nvidia/rock climbing with nvidia interns.jpg", "thumb": "/assets/redesigns/thumbs/nvidia-rock-climbing-with-nvidia-interns.thumb.jpg", "w": 2576, "h": 1932, "caption": "rock climbing with nvidia interns"},
+      {"src": "/assets/experience/pics_nvidia/picture with jensen huang.jpg", "thumb": "/assets/redesigns/thumbs/nvidia-picture-with-jensen-huang.thumb.jpg", "w": 1206, "h": 1608, "caption": "picture with jensen huang"},
+      {"src": "/assets/experience/pics_nvidia/intern social.jpg", "thumb": "/assets/redesigns/thumbs/nvidia-intern-social.thumb.jpg", "w": 2576, "h": 1932, "caption": "intern social"},
+      {"src": "/assets/experience/pics_nvidia/hong kong.jpg", "thumb": "/assets/redesigns/thumbs/nvidia-hong-kong.thumb.jpg", "w": 2576, "h": 1932, "caption": "hong kong"},
+      {"src": "/assets/experience/pics_nvidia/volunteer event to make skateboards for underserved children.jpg", "thumb": "/assets/redesigns/thumbs/nvidia-volunteer-event-to-make-skateboards-for-underserved-children.thumb.jpg", "w": 1932, "h": 2576, "caption": "volunteer event to make skateboards for underserved children"},
+      {"src": "/assets/experience/pics_nvidia/sky diving.jpg", "thumb": "/assets/redesigns/thumbs/nvidia-sky-diving.thumb.jpg", "w": 2019, "h": 1206, "caption": "sky diving"},
     ],
   },
   "adtran": {
     "title": "Adtran Pictures",
     "subtitle": "a few snapshots from the internship arc",
     "photos": [
-      {"src": "/assets/experience/pics_adtran/company event pickleball.JPG", "caption": "company event pickleball"},
-      {"src": "/assets/experience/pics_adtran/first day of work.jpeg", "caption": "first day of work"},
-      {"src": "/assets/experience/pics_adtran/first time in heaven.JPG", "caption": "first time in heaven"},
-      {"src": "/assets/experience/pics_adtran/intern event baseball game.JPG", "caption": "intern event baseball game"},
-      {"src": "/assets/experience/pics_adtran/my amazing team.JPG", "caption": "my amazing team"},
-      {"src": "/assets/experience/pics_adtran/my cubicle.JPG", "caption": "my cubicle"},
-      {"src": "/assets/experience/pics_adtran/my second home after work.JPG", "caption": "my second home after work"},
-      {"src": "/assets/experience/pics_adtran/weekend trip to south carolina.jpeg", "caption": "weekend trip to south carolina"},
-      {"src": "/assets/experience/pics_adtran/weekend trip to south carolina 2.jpeg", "caption": "weekend trip to south carolina 2"},
+      {"src": "/assets/experience/pics_adtran/company event pickleball.JPG", "thumb": "/assets/redesigns/thumbs/adtran-company-event-pickleball.thumb.jpg", "w": 3024, "h": 4032, "caption": "company event pickleball"},
+      {"src": "/assets/experience/pics_adtran/first day of work.jpeg", "thumb": "/assets/redesigns/thumbs/adtran-first-day-of-work.thumb.jpg", "w": 2100, "h": 1576, "caption": "first day of work"},
+      {"src": "/assets/experience/pics_adtran/first time in heaven.JPG", "thumb": "/assets/redesigns/thumbs/adtran-first-time-in-heaven.thumb.jpg", "w": 3024, "h": 4032, "caption": "first time in heaven"},
+      {"src": "/assets/experience/pics_adtran/intern event baseball game.JPG", "thumb": "/assets/redesigns/thumbs/adtran-intern-event-baseball-game.thumb.jpg", "w": 4032, "h": 3024, "caption": "intern event baseball game"},
+      {"src": "/assets/experience/pics_adtran/my amazing team.JPG", "thumb": "/assets/redesigns/thumbs/adtran-my-amazing-team.thumb.jpg", "w": 3024, "h": 4032, "caption": "my amazing team"},
+      {"src": "/assets/experience/pics_adtran/my cubicle.JPG", "thumb": "/assets/redesigns/thumbs/adtran-my-cubicle.thumb.jpg", "w": 1242, "h": 2208, "caption": "my cubicle"},
+      {"src": "/assets/experience/pics_adtran/my second home after work.JPG", "thumb": "/assets/redesigns/thumbs/adtran-my-second-home-after-work.thumb.jpg", "w": 4032, "h": 3024, "caption": "my second home after work"},
+      {"src": "/assets/experience/pics_adtran/weekend trip to south carolina.jpeg", "thumb": "/assets/redesigns/thumbs/adtran-weekend-trip-to-south-carolina.thumb.jpg", "w": 4032, "h": 3024, "caption": "weekend trip to south carolina"},
+      {"src": "/assets/experience/pics_adtran/weekend trip to south carolina 2.jpeg", "thumb": "/assets/redesigns/thumbs/adtran-weekend-trip-to-south-carolina-2.thumb.jpg", "w": 5712, "h": 4284, "caption": "weekend trip to south carolina 2"},
     ],
   },
   "gatorai": {
     "title": "GatorAI Pictures",
     "subtitle": "club moments, events, and leadership arc snapshots",
     "photos": [
-      {"src": "/assets/experience/pics_gatorai/christmas party.png", "caption": "christmas party"},
-      {"src": "/assets/experience/pics_gatorai/elected eboard.png", "caption": "elected eboard"},
-      {"src": "/assets/experience/pics_gatorai/first gbm hosted 250 attendance.png", "caption": "first gbm hosted 250 attendance"},
-      {"src": "/assets/experience/pics_gatorai/hosted the first gatorai symposium.png", "caption": "hosted the first gatorai symposium"},
-      {"src": "/assets/experience/pics_gatorai/machine learning mondaysss.png", "caption": "machine learning mondaysss"},
-      {"src": "/assets/experience/pics_gatorai/tabling before the storm.png", "caption": "tabling before the storm"},
+      {"src": "/assets/experience/pics_gatorai/christmas party.png", "thumb": "/assets/redesigns/thumbs/gatorai-christmas-party.thumb.jpg", "w": 597, "h": 683, "caption": "christmas party"},
+      {"src": "/assets/experience/pics_gatorai/elected eboard.png", "thumb": "/assets/redesigns/thumbs/gatorai-elected-eboard.thumb.jpg", "w": 874, "h": 768, "caption": "elected eboard"},
+      {"src": "/assets/experience/pics_gatorai/first gbm hosted 250 attendance.png", "thumb": "/assets/redesigns/thumbs/gatorai-first-gbm-hosted-250-attendance.thumb.jpg", "w": 1219, "h": 810, "caption": "first gbm hosted 250 attendance"},
+      {"src": "/assets/experience/pics_gatorai/hosted the first gatorai symposium.png", "thumb": "/assets/redesigns/thumbs/gatorai-hosted-the-first-gatorai-symposium.thumb.jpg", "w": 1205, "h": 798, "caption": "hosted the first gatorai symposium"},
+      {"src": "/assets/experience/pics_gatorai/machine learning mondaysss.png", "thumb": "/assets/redesigns/thumbs/gatorai-machine-learning-mondaysss.thumb.jpg", "w": 1072, "h": 800, "caption": "machine learning mondaysss"},
+      {"src": "/assets/experience/pics_gatorai/tabling before the storm.png", "thumb": "/assets/redesigns/thumbs/gatorai-tabling-before-the-storm.thumb.jpg", "w": 594, "h": 727, "caption": "tabling before the storm"},
     ],
   },
 } %}
@@ -220,9 +259,18 @@
   "author_href": "https://sagarpatil.me/",
 } %}
 
-{#- The three prototype versions, for the little version switcher on each page. -#}
-{% set versions = [
+{#- First-round prototypes, for their version switcher. -#}
+{% set versions_v1 = [
   {"id": "simulator", "label": "Simulator", "href": "/andyvusimulator"},
   {"id": "routeguide", "label": "Route guide", "href": "/routeguide"},
   {"id": "studio", "label": "Studio", "href": "/studio"},
+] %}
+
+{#- Second-round prototypes (photo-driven), for the version switcher on each of them. -#}
+{% set versions = [
+  {"id": "zoom", "label": "Zoom", "href": "/zoom"},
+  {"id": "mosaic", "label": "Mosaic", "href": "/mosaic"},
+  {"id": "cards", "label": "Cards", "href": "/cards"},
+  {"id": "darkroom", "label": "Darkroom", "href": "/darkroom"},
+  {"id": "museum", "label": "Museum", "href": "/museum"},
 ] %}

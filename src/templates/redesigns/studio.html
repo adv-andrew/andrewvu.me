@@ -1123,7 +1123,7 @@
         <button type="button" class="file-btn" id="fileBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="fileMenu">FILE</button>
         <div class="menu" id="fileMenu" role="menu" aria-label="File" hidden>
           <p class="menu-h" role="presentation">open recent</p>
-          {% for v in d.versions %}
+          {% for v in d.versions_v1 %}
           <a role="menuitem" href="{{ v.href }}"{% if v.id == "studio" %} aria-current="page"{% endif %}>{{ v.label }}<span class="k">{% if v.id == "studio" %}you are here{% else %}{{ v.href }}{% endif %}</span></a>
           {% endfor %}
           <hr role="presentation">
@@ -1255,7 +1255,7 @@
       <span class="credit" id="credit">{{ lp[0] }} <a href="{{ d.credit.source_href }}">{{ lp[1] }}</a>{% if cp|length > 1 %} thanks to <a href="{{ d.credit.author_href }}">{{ cp[1] }}</a>{% endif %}</span>
       <nav class="versions" aria-label="prototype versions">
         <span class="v-l">versions:</span>
-        {% for v in d.versions %}
+        {% for v in d.versions_v1 %}
         <a href="{{ v.href }}"{% if v.id == "studio" %} aria-current="page"{% endif %}>{{ v.label }}</a>
         {% endfor %}
         <a class="cur-site" href="/">← current site</a>
@@ -1309,7 +1309,7 @@
       gamesTotal: {{ d.games_total_visits|tojson }},
       friends: {{ d.friends|tojson }},
       credit: {{ d.credit|tojson }},
-      versions: {{ d.versions|tojson }},
+      versions: {{ d.versions_v1|tojson }},
     };
 
     /* =====================================================================

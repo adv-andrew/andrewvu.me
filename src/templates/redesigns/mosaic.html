@@ -1,0 +1,2479 @@
+{% import "redesigns/data.html" as d %}
+{#-
+  /mosaic: a photomosaic self-portrait built from all 41 homepage photos.
+  Tiles come from src/redesign_tools/mosaic_assets.py (atlas + tile table in
+  /assets/redesigns/mosaic/). Everything else is data.html.
+-#}
+{%- set exp_by = {} -%}
+{%- for e in d.experience -%}{%- set _ = exp_by.update({e.id: e}) -%}{%- endfor -%}
+{%- set now_job = d.experience|selectattr("current")|first -%}
+{%- set prev_job = d.experience|rejectattr("current")|first -%}
+
+{#- canonical photo order (must match mosaic_assets.py): photo, photo_alt, origin, travel, gatorai, adtran, nvidia -#}
+{%- set g_off = {} -%}
+{%- set ns = namespace(o=3 + d.travel|length) -%}
+{%- for gid in ["gatorai", "adtran", "nvidia"] -%}
+  {%- set _ = g_off.update({gid: ns.o}) -%}
+  {%- set ns.o = ns.o + d.galleries[gid].photos|length -%}
+{%- endfor -%}
+
+{#- chapters of the portrait (display order). names/phrases are copy, years come from data -#}
+{%- set chapters = [
+  {"id": "origin", "name": "origin", "year": d.origin.year, "phrase": "my first pc build", "verb": "is"},
+  {"id": "gatorai", "name": "gatorai", "year": exp_by.gatorai.start_year, "phrase": "gatorai", "verb": "is"},
+  {"id": "adtran", "name": "adtran", "year": exp_by.adtran.start_year, "phrase": "adtran", "verb": "is"},
+  {"id": "nvidia", "name": "nvidia", "year": exp_by.nvidia.start_year, "phrase": "nvidia", "verb": "is"},
+  {"id": "asia", "name": "travel · asia", "year": none, "phrase": "trips around asia", "verb": "are"},
+  {"id": "us", "name": "travel · us", "year": none, "phrase": "trips around the us", "verb": "are"},
+  {"id": "me", "name": "me", "year": none, "phrase": "photos of me", "verb": "are"},
+] -%}
+
+{#- contact sheet = every photo, grouped in chapter order. i = canonical index -#}
+{%- set sheet = [] -%}
+{%- set _ = sheet.append({"i": 2, "ch": "origin", "thumb": d.origin.thumb, "alt": d.origin.scene, "cap": d.origin.caption}) -%}
+{%- for gid in ["gatorai", "adtran", "nvidia"] -%}
+  {%- for p in d.galleries[gid].photos -%}
+    {%- set _ = sheet.append({"i": g_off[gid] + loop.index0, "ch": gid, "thumb": p.thumb, "alt": p.caption, "cap": p.caption}) -%}
+  {%- endfor -%}
+{%- endfor -%}
+{%- for reg in ["asia", "us"] -%}
+  {%- for t in d.travel -%}
+    {%- if t.region == reg -%}
+      {%- set _ = sheet.append({"i": 3 + loop.index0, "ch": reg, "thumb": t.thumb, "alt": t.scene, "cap": t.place}) -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{%- set _ = sheet.append({"i": 0, "ch": "me", "thumb": d.photo_thumb, "alt": d.photo_dims.scene, "cap": "me"}) -%}
+{%- set _ = sheet.append({"i": 1, "ch": "me", "thumb": d.photo_alt_thumb, "alt": d.photo_alt_dims.scene, "cap": "me, the goofy one"}) -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script>
+    (function () {
+      var h = document.documentElement;
+      try { if (localStorage.getItem("theme") === "dark") h.classList.add("dark"); } catch (e) {}
+      h.classList.add("js");
+      if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) h.classList.add("motion");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ title }}</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="/assets/redesigns/mosaic/mosaic-atlas.v1.jpg">
+  <style>
+    /* =====================================================================
+       1. tokens
+       ===================================================================== */
+    :root {
+      color-scheme: light;
+      --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+      --mono: "Fragment Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+      --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+
+      --bg: #f3f1ec;
+      --bg-2: #ebe8e1;
+      --card: #faf9f6;
+      --ink: #141412;
+      --ink-2: #57544d;
+      --ink-3: #8b877e;
+      --rule: #dcd8ce;
+      --rule-2: #c3bdb0;
+      --accent: #cc3811;
+      --accent-soft: rgba(204, 56, 17, .1);
+      --on-accent: #fff;
+      --canvas: #e6e2d9;
+      --shadow: 0 1px 1px rgba(20, 18, 14, .06), 0 24px 48px -26px rgba(20, 18, 14, .45);
+      --gut: clamp(16px, 3.4vw, 48px);
+    }
+    html.dark {
+      color-scheme: dark;
+      --bg: #0f0f0e;
+      --bg-2: #171715;
+      --card: #141413;
+      --ink: #ecebe5;
+      --ink-2: #a9a69d;
+      --ink-3: #6f6c65;
+      --rule: #272623;
+      --rule-2: #3b3935;
+      --accent: #ff6a3d;
+      --accent-soft: rgba(255, 106, 61, .12);
+      --on-accent: #120a06;
+      --canvas: #181816;
+      --shadow: 0 1px 1px rgba(0, 0, 0, .4), 0 24px 60px -24px rgba(0, 0, 0, .9);
+    }
+
+    /* =====================================================================
+       2. base
+       ===================================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; scroll-padding-top: 16px; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.5;
+      overflow-x: clip;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color .3s ease, color .3s ease;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--accent); }
+    button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+    h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    ::selection { background: var(--accent); color: var(--on-accent); }
+    .mono { font-family: var(--mono); font-size: 12px; letter-spacing: .01em; }
+    .sr-only {
+      position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .skip {
+      position: absolute; left: 12px; top: -60px; z-index: 100; padding: 8px 12px;
+      background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 600;
+    }
+    .skip:focus { top: 12px; }
+
+    /* =====================================================================
+       3. top bar
+       ===================================================================== */
+    .bar {
+      display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap;
+      padding: 14px var(--gut);
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono); font-size: 12px;
+    }
+    .bar-home { font-family: var(--sans); font-weight: 700; font-size: 14px; letter-spacing: -.01em; text-decoration: none; }
+    .bar-home span { color: var(--ink-3); font-weight: 400; }
+    .versions { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; min-width: 0; }
+    .versions .v-l { color: var(--ink-3); margin-right: 6px; }
+    .versions a { padding: 3px 7px; text-decoration: none; border-radius: 2px; color: var(--ink-2); }
+    .versions a:hover { color: var(--ink); background: var(--bg-2); }
+    .versions a[aria-current="page"] { color: var(--on-accent); background: var(--accent); }
+    .versions .cur-site { margin-left: 8px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+    .bar-r { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .soc { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--ink-2); }
+    .soc:hover { color: var(--ink); background: var(--bg-2); }
+    .soc-i {
+      width: 16px; height: 16px; background: currentColor;
+      -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat;
+    }
+    .theme {
+      display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px 0 10px; margin-left: 6px;
+      border: 1px solid var(--rule-2); border-radius: 16px; font-family: var(--mono); font-size: 12px;
+    }
+    .theme:hover { border-color: var(--ink); }
+    .theme-dot {
+      width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid currentColor;
+      background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+      transition: transform .5s var(--ease);
+    }
+    html.dark .theme-dot { transform: rotate(180deg); }
+    @media (max-width: 640px) {
+      .bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; padding-top: 10px; padding-bottom: 8px; }
+      .bar-home { grid-row: 1; grid-column: 1; align-self: center; }
+      .bar-r { grid-row: 1; grid-column: 2; margin-left: 0; gap: 0; }
+      .bar .versions {
+        grid-row: 2; grid-column: 1 / -1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+        margin: 0 calc(var(--gut) * -1); padding: 2px var(--gut) 4px; white-space: nowrap;
+      }
+      .bar .versions::-webkit-scrollbar { display: none; }
+      .soc { width: 30px; height: 30px; }
+      .theme { margin-left: 4px; padding: 0 9px; }
+      .theme #theme-l { display: none; }
+    }
+
+    /* =====================================================================
+       4. hero: artist · artwork · wall label
+       ===================================================================== */
+    .hero {
+      display: grid;
+      grid-template-areas: "artist" "art" "label" "more";
+      gap: 28px;
+      padding: 28px var(--gut) 44px;
+      max-width: 1680px;
+      margin: 0 auto;
+    }
+    .artist { grid-area: artist; min-width: 0; }
+    .more { grid-area: more; min-width: 0; }
+    .art { grid-area: art; min-width: 0; width: 100%; justify-self: center; }
+    .label { grid-area: label; min-width: 0; }
+    .more .facts { margin-top: 0; }
+
+    @media (min-width: 860px) {
+      .hero {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas: "art artist" "art more" "art label";
+        column-gap: clamp(32px, 4vw, 56px);
+        row-gap: 26px;
+        align-items: start;
+        padding-top: 36px;
+      }
+      .art { width: max(380px, min(calc((100vh - 150px) * 7 / 9), calc((100svh - 150px) * 7 / 9), 52vw)); }
+      .label { padding-top: 6px; }
+    }
+    @media (min-width: 1320px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+        grid-template-areas: "artist art label" "more art label";
+        column-gap: clamp(40px, 4vw, 72px);
+        row-gap: 28px;
+      }
+      .art { width: max(420px, min(calc((100vh - 140px) * 7 / 9), calc((100svh - 140px) * 7 / 9), 700px)); }
+      .artist { align-self: start; padding-top: 8px; }
+      .label { align-self: end; padding-top: 0; }
+    }
+
+    /* -- artist column -- */
+    .kicker { color: var(--ink-3); margin-bottom: 18px; display: flex; gap: 10px; align-items: center; }
+    .kicker::before { content: ""; width: 22px; height: 1px; background: var(--accent); }
+    .name {
+      font-weight: 800;
+      font-stretch: 118%;
+      font-size: clamp(46px, 11vw, 88px);
+      line-height: .88;
+      letter-spacing: -.035em;
+      display: flex; flex-wrap: wrap; gap: 0 .22em;
+    }
+    @media (min-width: 860px) { .name { font-size: clamp(50px, 5.6vw, 88px); } }
+    @media (min-width: 1320px) { .name { font-size: clamp(56px, 4.9vw, 92px); flex-direction: column; } }
+    .name .w { display: inline-block; overflow: hidden; padding: 0 .06em .16em 0; margin-bottom: -.16em; }
+    .name .w > span { display: inline-block; }
+    .name .nick > span { font-weight: 250; font-style: italic; font-stretch: 96%; letter-spacing: -.02em; color: var(--ink-2); }
+    .intro { margin-top: 22px; font-size: clamp(17px, 1.35vw, 20px); line-height: 1.45; max-width: 34ch; }
+    .facts { margin-top: 22px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; max-width: 420px; }
+    .facts dt { color: var(--ink-3); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding-top: 2px; }
+    .facts dd { font-size: 14px; line-height: 1.4; }
+    .facts dd a { text-decoration-color: var(--rule-2); }
+    .jump { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .jump a {
+      font-family: var(--mono); font-size: 12px; text-decoration: none;
+      padding: 6px 10px; border: 1px solid var(--rule-2); border-radius: 999px;
+      transition: border-color .2s, background-color .2s, color .2s;
+    }
+    .jump a:hover { border-color: var(--ink); color: var(--ink); background: var(--card); }
+
+    /* -- artwork -- */
+    .frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 7 / 9;
+      background: var(--canvas);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: box-shadow .3s ease, outline-color .3s ease;
+      outline: 1px solid transparent;
+      outline-offset: 5px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .frame.is-engaged { outline-color: var(--accent); }
+    .frame canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+      touch-action: pan-y; cursor: crosshair;
+    }
+    .frame.is-engaged canvas { touch-action: none; }
+    .frame.can-pan canvas { cursor: grab; }
+    .frame.is-dragging canvas { cursor: grabbing; }
+    .frame canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .frame-fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .loading {
+      position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+      color: var(--ink-3); pointer-events: none; transition: opacity .4s ease; padding: 24px;
+    }
+    .loading.is-done { opacity: 0; }
+    html:not(.js) .loading, html:not(.js) .frame-ui, html:not(.js) .frame-ui-l { display: none; }
+    .loading i { display: block; width: 36px; height: 1px; margin: 12px auto 0; background: var(--ink-3); animation: load 1.2s var(--ease-in-out) infinite; transform-origin: left; }
+    @keyframes load { 0% { transform: scaleX(0); } 60% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
+    .frame-ui {
+      position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px;
+      opacity: 0; transition: opacity .25s ease;
+    }
+    .frame-ui-l { position: absolute; left: 10px; bottom: 10px; opacity: 0; transition: opacity .25s ease; }
+    .frame.is-ready .frame-ui, .frame.is-ready .frame-ui-l { opacity: 1; }
+    .fbtn {
+      width: 34px; height: 34px; display: grid; place-items: center;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+      border: 1px solid var(--rule-2); font-family: var(--mono); font-size: 16px; line-height: 1;
+      transition: background-color .2s, color .2s, border-color .2s;
+    }
+    .fbtn:hover { border-color: var(--ink); }
+    .fbtn:disabled { opacity: .4; cursor: default; }
+    .fbtn svg { width: 14px; height: 14px; }
+    .explore {
+      height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 8px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+      border: 1px solid var(--rule-2); font-family: var(--mono); font-size: 12px;
+    }
+    .explore:hover { border-color: var(--ink); }
+    .explore[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+    .explore-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .hint {
+      position: absolute; left: 50%; top: 12px; transform: translate(-50%, -6px);
+      padding: 7px 11px; background: var(--ink); color: var(--bg); white-space: nowrap;
+      font-family: var(--mono); font-size: 11.5px; opacity: 0; pointer-events: none;
+      transition: opacity .2s ease, transform .3s var(--ease);
+      max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis;
+    }
+    .hint.is-on { opacity: 1; transform: translate(-50%, 0); }
+    .plate {
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      margin-top: 14px; color: var(--ink-3); font-family: var(--mono); font-size: 11.5px;
+    }
+    .plate b { font-weight: 400; color: var(--ink); }
+    .plate .plate-r { display: flex; gap: 14px; }
+
+    /* tooltip for a tile */
+    .tip {
+      position: fixed; left: 0; top: 0; z-index: 40; width: 232px;
+      background: var(--card); border: 1px solid var(--rule-2); box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .45);
+      pointer-events: none; opacity: 0; transform: translate3d(0, 0, 0);
+      transition: opacity .12s ease;
+    }
+    .tip.is-on { opacity: 1; }
+    .tip-img { width: 100%; height: 140px; object-fit: cover; background: var(--bg-2); }
+    .tip-b { padding: 10px 12px 11px; }
+    .tip-k { color: var(--accent); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
+    .tip-t { margin-top: 3px; font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .tip-s { margin-top: 3px; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
+    .tip-m { margin-top: 7px; color: var(--ink-3); font-size: 10.5px; }
+
+    /* -- wall label column -- */
+    .wall { border-top: 1px solid var(--ink); padding-top: 14px; max-width: 440px; }
+    .wall-t { font-size: 19px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+    .wall-t em { font-weight: 400; font-style: italic; }
+    .wall-m { margin-top: 6px; color: var(--ink-2); }
+    .wall-d { margin-top: 12px; font-size: 14.5px; line-height: 1.5; color: var(--ink-2); max-width: 40ch; }
+    .ctrls { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .goofy {
+      display: inline-flex; align-items: center; gap: 11px; height: 44px; padding: 0 16px 0 12px;
+      border: 1px solid var(--ink); font-weight: 650; font-size: 15px; letter-spacing: -.005em;
+      transition: background-color .25s ease, color .25s ease, border-color .25s ease, transform .15s ease;
+    }
+    .goofy:hover { background: var(--ink); color: var(--bg); }
+    .goofy:active { transform: translateY(1px); }
+    .goofy .sw { position: relative; width: 32px; height: 18px; border: 1.5px solid currentColor; border-radius: 12px; flex: none; }
+    .goofy .sw i { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: currentColor; transition: transform .45s var(--ease); }
+    .goofy[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .goofy[aria-pressed="true"] .sw i { transform: translateX(14px); }
+    .goofy[aria-disabled="true"] { cursor: progress; }
+    .tbtn {
+      display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px;
+      border: 1px solid var(--rule-2); font-family: var(--mono); font-size: 12.5px;
+      transition: border-color .2s ease, background-color .2s ease;
+    }
+    .tbtn:hover { border-color: var(--ink); background: var(--card); }
+    .tbtn svg { width: 14px; height: 14px; transition: transform .6s var(--ease); }
+    .tbtn:hover svg { transform: rotate(180deg); }
+    .tbtn[aria-disabled="true"] { opacity: .5; cursor: progress; }
+    .egg {
+      margin-top: 10px; min-height: 18px; font-family: var(--mono); font-size: 12.5px; color: var(--accent);
+      display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateY(4px);
+      transition: opacity .3s ease, transform .4s var(--ease);
+    }
+    .egg.is-on { opacity: 1; transform: none; }
+    .egg::before { content: "✦"; }
+
+    /* chapter lens */
+    .lens { margin-top: 16px; max-width: 440px; }
+    .on-touch { display: none; }
+    @media (hover: none) { .on-touch { display: inline; } .on-mouse { display: none; } }
+    .lens-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--ink-3); }
+    .lens-h b { font-weight: 400; color: var(--ink); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+    .comp { display: flex; gap: 2px; height: 8px; margin: 10px 0 6px; }
+    .comp i { display: block; min-width: 2px; background: var(--rule-2); transition: background-color .25s ease, flex-grow .6s var(--ease); }
+    .comp i.is-on { background: var(--accent); }
+    .lens-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+    .lens-btn {
+      width: 100%; display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 9px;
+      padding: 7px 0; border-bottom: 1px solid var(--rule); text-align: left;
+      transition: color .2s ease;
+    }
+    .lens-sw { width: 22px; height: 22px; overflow: hidden; background: var(--bg-2); transition: transform .3s var(--ease), box-shadow .2s; }
+    .lens-sw img { width: 100%; height: 100%; object-fit: cover; }
+    .lens-nm { font-size: 14px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lens-nm small { font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--ink-3); margin-left: 5px; }
+    .lens-pc { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+    .lens-btn:hover .lens-sw, .lens-btn:focus-visible .lens-sw { transform: scale(1.15); }
+    .lens-btn[aria-pressed="true"] { color: var(--accent); }
+    .lens-btn[aria-pressed="true"] .lens-pc { color: var(--accent); }
+    .lens-btn[aria-pressed="true"] .lens-sw { box-shadow: 0 0 0 2px var(--accent); }
+    .lens-read { margin-top: 12px; min-height: 44px; font-size: 15px; line-height: 1.4; }
+    .lens-read b { font-weight: 700; }
+    .lens-read .pct { font-family: var(--mono); color: var(--accent); font-size: 14px; }
+    .lens-clear { margin-left: 6px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); text-decoration: underline; text-underline-offset: 3px; }
+    .lens-clear:hover { color: var(--ink); }
+    @media (max-width: 420px) { .lens-list { grid-template-columns: 1fr; } }
+
+    /* visitors notice */
+    .notice {
+      max-width: 1680px; margin: 0 auto; padding: 0 var(--gut);
+    }
+    .notice-in {
+      display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap;
+      padding: 14px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    }
+    .notice-k { color: var(--accent); }
+    .notice p { font-size: 15px; flex: 1 1 320px; }
+    .notice a.go {
+      display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px;
+      background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 14px;
+      transition: background-color .2s ease;
+    }
+    .notice a.go:hover { background: var(--accent); color: var(--on-accent); }
+
+    /* =====================================================================
+       5. rooms (content below the artwork)
+       ===================================================================== */
+    .room {
+      max-width: 1240px; margin: 0 auto;
+      padding: 76px var(--gut);
+      display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 24px 48px;
+    }
+    .room + .room { border-top: 1px solid var(--rule); }
+    .room-l { align-self: start; position: sticky; top: 24px; }
+    .room-no { color: var(--accent); }
+    .room-h { margin-top: 6px; font-size: 26px; font-weight: 750; font-stretch: 110%; letter-spacing: -.02em; line-height: 1.05; }
+    .room-d { margin-top: 10px; font-size: 14px; color: var(--ink-2); line-height: 1.45; max-width: 26ch; }
+    @media (max-width: 760px) {
+      .room { grid-template-columns: 1fr; padding: 52px var(--gut); }
+      .room-l { position: static; }
+      .room-d { max-width: none; }
+    }
+
+    /* about */
+    .about { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 40px; align-items: start; }
+    .about-t p { font-size: clamp(19px, 1.7vw, 23px); line-height: 1.45; letter-spacing: -.005em; max-width: 36ch; }
+    .about-t p + p { margin-top: 16px; }
+    .study { width: 100%; }
+    .study-btn { position: relative; display: block; width: 100%; aspect-ratio: 711 / 940; overflow: hidden; background: var(--bg-2); }
+    .study-btn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s ease, transform .6s var(--ease); }
+    .study-btn .alt { opacity: 0; }
+    .study-btn:hover .main, .study-btn[aria-pressed="true"] .main { opacity: 0; }
+    .study-btn:hover .alt, .study-btn[aria-pressed="true"] .alt { opacity: 1; transform: scale(1.03); }
+    .study figcaption { margin-top: 8px; color: var(--ink-3); line-height: 1.4; }
+    .study .egg-note { color: var(--accent); display: none; }
+    .study.found .egg-note { display: block; }
+    .study.found .egg-hint { display: none; }
+    .motto { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--rule); max-width: 40ch; }
+    .motto blockquote { margin: 8px 0 0; font-size: clamp(24px, 2.6vw, 34px); font-style: italic; font-weight: 300; font-stretch: 94%; line-height: 1.15; letter-spacing: -.02em; }
+    .motto figcaption { margin-top: 8px; color: var(--ink-3); }
+    @media (max-width: 640px) { .about { grid-template-columns: 1fr; } .study { max-width: 220px; } }
+
+    /* experience */
+    .jobs { border-top: 1px solid var(--ink); }
+    .job { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--rule); position: relative; }
+    .job-logo { width: 48px; height: 48px; background: #fff; border: 1px solid var(--rule); padding: 6px; }
+    .job-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .job-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .job-co { font-size: 20px; font-weight: 700; letter-spacing: -.015em; line-height: 1.2; }
+    .star { color: var(--accent); font-size: 13px; }
+    .tag { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; padding: 2px 6px; border: 1px solid currentColor; color: var(--accent); }
+    .role { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 18px; margin-top: 6px; }
+    .role + .role { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+    .role-t { font-size: 15.5px; }
+    .role-t span { color: var(--ink-2); }
+    .role-d { font-family: var(--mono); font-size: 12px; color: var(--ink-2); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .role-l { grid-column: 1 / -1; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+    @media (max-width: 560px) { .role { grid-template-columns: 1fr; } .role-d { text-align: left; } }
+    .job-note { margin-top: 8px; font-size: 15px; }
+    .chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px;
+      border: 1px solid var(--rule-2); font-family: var(--mono); font-size: 12px; text-decoration: none;
+      transition: border-color .2s ease, background-color .2s ease, color .2s ease;
+    }
+    .chip:hover { border-color: var(--ink); color: var(--ink); background: var(--card); }
+    .chip.find { border-color: var(--accent); color: var(--accent); }
+    .chip.find:hover { background: var(--accent); color: var(--on-accent); }
+    .strip { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .strip-btn { width: 56px; height: 56px; overflow: hidden; background: var(--bg-2); position: relative; }
+    .strip-btn img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s var(--ease), filter .3s ease; }
+    .strip-btn:hover img { transform: scale(1.12); }
+    .job-empty { margin-top: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+
+    /* contact sheet */
+    .sheet-g + .sheet-g { margin-top: 34px; }
+    .sheet-h { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); font-size: 15px; font-weight: 700; }
+    .sheet-h .mono { font-weight: 400; color: var(--ink-3); }
+    .sheet-h .n { margin-left: auto; }
+    .sheet-h button { font-family: var(--mono); font-size: 11.5px; font-weight: 400; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+    .sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px 10px; margin-top: 12px; }
+    @media (max-width: 480px) { .sheet { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; } }
+    .fr { display: block; width: 100%; text-align: left; }
+    .fr-img { display: block; position: relative; aspect-ratio: 1; overflow: hidden; background: var(--bg-2); }
+    .fr-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
+    .fr:hover .fr-img img { transform: scale(1.06); }
+    .fr-no { position: absolute; left: 0; top: 0; padding: 2px 5px; background: var(--bg); color: var(--ink-2); font-family: var(--mono); font-size: 10px; }
+    .fr-c { margin-top: 5px; font-size: 12.5px; line-height: 1.3; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .fr:hover .fr-c { color: var(--ink); }
+
+    /* projects */
+    .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 28px; }
+    @media (max-width: 640px) { .projects { grid-template-columns: 1fr; } }
+    .proj-img { aspect-ratio: 16 / 10; overflow: hidden; background: var(--bg-2); border: 1px solid var(--rule); }
+    .proj-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+    .proj-img.contain { background: #fff; }
+    .proj-img.contain img { object-fit: contain; padding: 14%; }
+    .proj:hover .proj-img img { transform: scale(1.03); }
+    .proj-h { margin-top: 12px; display: flex; align-items: baseline; gap: 8px; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+    .proj-p { margin-top: 5px; font-size: 14.5px; color: var(--ink-2); line-height: 1.5; }
+    .proj-links { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* games */
+    .games-meta { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--ink-2); margin-bottom: 22px; }
+    .games-meta b { color: var(--ink); font-weight: 400; }
+    .games { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 28px 20px; }
+    .game { display: block; text-decoration: none; }
+    .game-img { aspect-ratio: 500 / 280; overflow: hidden; background: var(--bg-2); }
+    .game-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+    .game:hover .game-img img { transform: scale(1.04); }
+    .game-h { margin-top: 10px; font-size: 16px; font-weight: 700; line-height: 1.25; }
+    .game:hover .game-h { color: var(--accent); }
+    .game-m { margin-top: 4px; display: flex; justify-content: space-between; gap: 8px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+    .game-bar { margin-top: 8px; height: 3px; background: var(--rule); }
+    .game-bar i { display: block; height: 100%; background: var(--ink); transition: background-color .2s ease; }
+    .game:hover .game-bar i { background: var(--accent); }
+
+    /* friends */
+    .friends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 28px; border-top: 1px solid var(--ink); }
+    @media (max-width: 900px) { .friends { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 480px) { .friends { grid-template-columns: 1fr; } }
+    .friends li { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+    .friends a { font-weight: 600; text-decoration: none; }
+    .friends a::after { content: " ↗"; font-weight: 400; color: var(--ink-3); }
+    .friends .fn { display: block; margin-top: 2px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+
+    /* random pages */
+    .rnd { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 900px) { .rnd { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 400px) { .rnd { grid-template-columns: 1fr; } }
+    .rnd a {
+      display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 124px;
+      padding: 14px; border: 1px solid var(--rule-2); text-decoration: none;
+      transition: border-color .2s ease, background-color .2s ease, transform .3s var(--ease);
+    }
+    .rnd a:hover { border-color: var(--ink); background: var(--card); color: var(--ink); transform: translateY(-2px); }
+    .rnd-l { font-size: 18px; font-weight: 700; letter-spacing: -.01em; display: flex; justify-content: space-between; }
+    .rnd-l::after { content: "→"; font-weight: 400; color: var(--accent); transition: transform .3s var(--ease); }
+    .rnd a:hover .rnd-l::after { transform: translateX(3px); }
+    .rnd-b { font-family: var(--mono); font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+
+    /* links + footer */
+    .links { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: clamp(22px, 2.4vw, 30px); font-weight: 700; letter-spacing: -.02em; }
+    .links a { text-decoration: none; background: linear-gradient(var(--accent), var(--accent)) 0 100% / 0 2px no-repeat; transition: background-size .35s var(--ease), color .2s; }
+    .links a:hover { background-size: 100% 2px; }
+    .foot {
+      max-width: 1240px; margin: 0 auto; padding: 28px var(--gut) 44px;
+      border-top: 1px solid var(--rule);
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 32px;
+      color: var(--ink-2); font-family: var(--mono); font-size: 12px;
+    }
+    .foot .versions a { color: var(--ink-2); }
+
+    /* =====================================================================
+       6. lightbox
+       ===================================================================== */
+    .lb {
+      position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+      margin: 0; padding: clamp(12px, 3vw, 36px); border: 0; background: transparent; color: var(--ink);
+      overflow: hidden;
+    }
+    .lb[open] { display: grid; place-items: center; }
+    .lb::backdrop { background: rgba(10, 10, 9, .72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+    .lb-in {
+      position: relative; width: min(1180px, 100%); max-height: 100%;
+      display: grid; grid-template-columns: minmax(0, 1fr) 320px;
+      background: var(--bg); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .7);
+      overflow: hidden;
+    }
+    .lb-fig { position: relative; background: #0c0c0b; display: grid; place-items: center; min-height: 240px; height: min(82vh, 820px); }
+    .lb-fig img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: contain; transition: filter .4s ease; }
+    .lb-fig img.is-low { filter: blur(6px); }
+    .lb-load { position: absolute; left: 12px; bottom: 10px; color: rgba(255, 255, 255, .7); font-family: var(--mono); font-size: 11px; opacity: 0; transition: opacity .2s ease; }
+    .lb-load.is-on { opacity: 1; }
+    .lb-side { display: flex; flex-direction: column; padding: 22px 22px 18px; overflow-y: auto; }
+    .lb-k { color: var(--accent); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; padding-right: 36px; }
+    .lb-t { margin-top: 10px; font-size: 24px; font-weight: 750; line-height: 1.12; letter-spacing: -.02em; }
+    .lb-s { margin-top: 8px; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+    .lb-job { margin-top: 18px; padding: 12px; border: 1px solid var(--rule); background: var(--card); }
+    .lb-job[hidden] { display: none; }
+    .lb-job-h { display: flex; align-items: center; gap: 10px; }
+    .lb-job-h img { width: 34px; height: 34px; object-fit: contain; background: #fff; border: 1px solid var(--rule); padding: 4px; }
+    .lb-job-h b { font-size: 15px; }
+    .lb-job-r { margin-top: 8px; font-size: 13.5px; line-height: 1.35; }
+    .lb-job-r span { display: block; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-top: 1px; }
+    .lb-job-g { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--rule); font-size: 13px; color: var(--ink-2); }
+    .lb-c { margin-top: 16px; color: var(--ink-2); }
+    .lb-find { margin-top: 12px; align-self: flex-start; }
+    .lb-nav { margin-top: auto; padding-top: 18px; display: flex; align-items: center; gap: 10px; }
+    .lb-nav .fbtn { width: 40px; height: 40px; }
+    .lb-pos { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+    .lb-x { position: absolute; top: 12px; right: 12px; z-index: 2; width: 36px; height: 36px; font-size: 18px; }
+    html.lb-open { overflow: hidden; }
+    @media (max-width: 820px) {
+      .lb { padding: 0; }
+      .lb-in { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; height: 100%; width: 100%; }
+      .lb-fig { height: auto; min-height: 0; }
+      .lb-side { max-height: 46vh; padding: 16px 16px 14px; }
+      .lb-t { font-size: 20px; }
+      .lb-x { top: 10px; right: 10px; }
+    }
+
+    /* =====================================================================
+       7. entrance
+       ===================================================================== */
+    html.motion .rise { animation: rise .9s var(--ease) both; animation-delay: calc(var(--d, 0) * 1ms + 120ms); }
+    html.motion .name .w > span { animation: word 1s var(--ease) both; animation-delay: calc(var(--d, 0) * 1ms + 180ms); }
+    html.motion .frame { animation: hang 1s var(--ease) both; animation-delay: 60ms; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes word { from { transform: translateY(105%); } to { transform: none; } }
+    @keyframes hang { from { opacity: 0; transform: translateY(10px); box-shadow: none; } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">skip to content</a>
+
+  <header class="bar">
+    <a class="bar-home" href="/">andrewvu.me <span>/ mosaic</span></a>
+    <nav class="versions" aria-label="prototype versions">
+      <span class="v-l">versions</span>
+      {%- for v in d.versions %}
+      <a href="{{ v.href }}"{% if v.id == "mosaic" %} aria-current="page"{% endif %}>{{ v.label }}</a>
+      {%- endfor %}
+      <a class="cur-site" href="/">← current site</a>
+    </nav>
+    <div class="bar-r">
+      {%- for s in d.socials %}
+      <a class="soc" href="{{ s.href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ s.label }}" title="{{ s.label }}"><span class="soc-i" style="--icon: url('{{ s.icon }}')"></span></a>
+      {%- endfor %}
+      <button class="theme" id="theme" type="button" aria-label="switch to dark mode"><span class="theme-dot" aria-hidden="true"></span><span id="theme-l">dark</span></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- =================================================================
+         hero
+         ================================================================= -->
+    <section class="hero" aria-label="intro">
+      <div class="artist">
+        <p class="kicker mono rise" style="--d:0">now on view</p>
+        <h1 class="name" aria-label="{{ name }}">
+          {%- for w in name.split(" ") %}
+          <span class="w{% if w.startswith('(') %} nick{% endif %}" aria-hidden="true"><span style="--d:{{ loop.index0 * 90 }}">{{ w }}</span></span>
+          {%- endfor %}
+        </h1>
+        <p class="intro rise" style="--d:260">
+          hii!! i'm andy, a cs student at uf and roblox game developer. right now i'm a
+          {{ now_job.roles[0].title|lower }} at {{ now_job.company|lower }} in {{ now_job.roles[0].location.split(",")[0]|lower }}.
+        </p>
+      </div>
+
+      <div class="more">
+        <dl class="facts rise" style="--d:340">
+          <dt>now</dt><dd>{{ now_job.roles[0].title }}, {{ now_job.company }}</dd>
+          <dt>before</dt><dd>{{ prev_job.roles[0].title }}, {{ prev_job.company }}</dd>
+          <dt>games</dt><dd><a href="#games">{{ "{:,}".format(d.games_total_visits) }} visits across {{ d.games|length }} roblox games</a></dd>
+        </dl>
+        <nav class="jump rise" style="--d:420" aria-label="jump to">
+          <a href="#experience">experience</a>
+          <a href="#projects">projects</a>
+          <a href="#games">games</a>
+          <a href="#contact-sheet">contact sheet</a>
+          <a href="#links">links</a>
+        </nav>
+      </div>
+
+      <figure class="art">
+        <div class="frame" id="frame">
+          <noscript><img class="frame-fallback" src="{{ d.photo_thumb }}" alt="Portrait of Andrew Vu: {{ d.photo_dims.scene }}"></noscript>
+          <canvas id="mosaic" tabindex="0" role="img" aria-roledescription="photo mosaic"
+            aria-label="a portrait of andy made of {{ sheet|length }} photos, cut into small tiles"
+            aria-describedby="art-help"></canvas>
+          <div class="loading mono" id="loading" aria-hidden="true">cutting {{ sheet|length }} photos into tiles<i></i></div>
+          <div class="hint" id="hint" aria-hidden="true"></div>
+          <div class="frame-ui-l">
+            <button class="explore" id="explore" type="button" aria-pressed="false"><span class="explore-dot" aria-hidden="true"></span><span id="explore-l">explore</span></button>
+          </div>
+          <div class="frame-ui" role="group" aria-label="zoom">
+            <button class="fbtn" id="zin" type="button" aria-label="zoom in">+</button>
+            <button class="fbtn" id="zout" type="button" aria-label="zoom out">−</button>
+            <button class="fbtn" id="zfit" type="button" aria-label="reset view"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1.5 5.5v-4h4M10.5 1.5h4v4M14.5 10.5v4h-4M5.5 14.5h-4v-4"/></svg></button>
+          </div>
+        </div>
+        <figcaption class="plate">
+          <span>fig. 1 &nbsp;<b id="grid-l">self-portrait</b></span>
+          <span class="plate-r"><span id="readout"></span><span id="zoom-l">1.0×</span></span>
+        </figcaption>
+        <p class="sr-only" id="art-help">focus the portrait and use the arrow keys to move between tiles, enter to open the photo under the cursor, plus and minus to zoom. every photo is also listed in the contact sheet below.</p>
+        <p class="sr-only" aria-live="polite" id="art-live"></p>
+      </figure>
+
+      <aside class="label" aria-label="about this portrait">
+        <div class="wall rise" style="--d:480">
+          <p class="wall-t">Self-portrait <em>(made of everything i've done)</em></p>
+          <p class="wall-m mono">{{ sheet|length }} photographs · <span id="tile-count">6,300</span> tiles · 1 goofy alternate</p>
+          <p class="wall-d">from far away it's my face. up close, every tile is one of my photos: trips, internships, club nights, my first pc. <span class="on-mouse">hover a tile to read it, click to open it.</span><span class="on-touch">tap a tile to open it, pinch to look closer.</span></p>
+        </div>
+        <div class="ctrls rise" style="--d:560">
+          <button class="goofy" id="goofy" type="button" aria-pressed="false"><span class="sw" aria-hidden="true"><i></i></span>the goofy one</button>
+          <button class="tbtn" id="shuffle" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13.5 5.5A6 6 0 0 0 2.6 4.4M2.5 10.5a6 6 0 0 0 10.9 1.1"/><path d="M13.8 1.8v3.9H9.9M2.2 14.2v-3.9h3.9"/></svg>shuffle tiles</button>
+        </div>
+        <p class="egg" id="egg" aria-live="polite"></p>
+
+        <div class="lens rise" style="--d:640" role="group" aria-labelledby="lens-h">
+          <p class="lens-h mono"><b id="lens-h">chapters</b><span>find them in my face</span></p>
+          <div class="comp" id="comp" aria-hidden="true">
+            {%- for ch in chapters %}
+            <i data-ch="{{ ch.id }}" style="flex-grow:{{ sheet|selectattr('ch', 'equalto', ch.id)|list|length }}"></i>
+            {%- endfor %}
+          </div>
+          <ul class="lens-list">
+            {%- for ch in chapters %}
+            {%- set first = sheet|selectattr("ch", "equalto", ch.id)|first %}
+            <li><button class="lens-btn" type="button" data-ch="{{ ch.id }}" aria-pressed="false">
+              <span class="lens-sw" aria-hidden="true"><img src="{{ first.thumb }}" alt="{{ first.alt }}" loading="lazy" width="22" height="22"></span>
+              <span class="lens-nm">{{ ch.name }}{% if ch.year %}<small>{{ ch.year }}</small>{% endif %}</span>
+              <span class="lens-pc" data-pct="{{ ch.id }}">·</span>
+            </button></li>
+            {%- endfor %}
+          </ul>
+          <p class="lens-read" id="lens-read" aria-live="polite"></p>
+        </div>
+      </aside>
+    </section>
+
+    <div class="notice">
+      <div class="notice-in">
+        <span class="notice-k mono">for visitors</span>
+        <p>{{ d.visitors.text }}</p>
+        <a class="go" href="{{ d.visitors.href }}">{{ d.visitors.label }} <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+
+    <!-- =================================================================
+         wall text (about + motto)
+         ================================================================= -->
+    <section class="room" id="about" aria-labelledby="about-h">
+      <div class="room-l">
+        <p class="room-no mono">01</p>
+        <h2 class="room-h" id="about-h">wall text</h2>
+        <p class="room-d">the artist statement, if the artist was a cs student.</p>
+      </div>
+      <div>
+        <div class="about">
+          <div class="about-t">
+            {%- for p in d.about %}
+            <p>{{ p }}</p>
+            {%- endfor %}
+          </div>
+          <figure class="study" id="study">
+            <button class="study-btn" id="study-btn" type="button" aria-pressed="false" aria-label="swap to the goofy portrait">
+              <img class="main" src="{{ d.photo_thumb }}" alt="Portrait of Andrew Vu: {{ d.photo_dims.scene }}" loading="lazy">
+              <img class="alt" src="{{ d.photo_alt_thumb }}" alt="Goofy portrait of Andrew Vu: {{ d.photo_alt_dims.scene }}" loading="lazy">
+            </button>
+            <figcaption class="mono">
+              <span class="egg-hint">study for the portrait. <span class="on-mouse">click</span><span class="on-touch">tap</span> it, or try the goofy one up top.</span>
+              <span class="egg-note">{{ d.easter_egg }}</span>
+            </figcaption>
+          </figure>
+        </div>
+        <figure class="motto">
+          <span class="mono" style="color:var(--ink-3)">my life motto</span>
+          <blockquote>“{{ d.motto.text }}”</blockquote>
+          <figcaption class="mono">— {{ d.motto.source }}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         experience
+         ================================================================= -->
+    <section class="room" id="experience" aria-labelledby="exp-h">
+      <div class="room-l">
+        <p class="room-no mono">02</p>
+        <h2 class="room-h" id="exp-h">experience</h2>
+        <p class="room-d">the professional-looking part. the ones with pictures are also in my face, hit “find it” to see where.</p>
+      </div>
+      <div class="jobs">
+        {%- for e in d.experience %}
+        <article class="job" id="job-{{ e.id }}">
+          <div class="job-logo"><img src="{{ e.logo }}" alt="{{ e.company }} logo" loading="lazy" width="36" height="36"></div>
+          <div class="job-b">
+            <div class="job-top">
+              <h3 class="job-co">{{ e.company }}</h3>
+              {%- if e.favorite %}<span class="star" title="favorite" aria-label="favorite">★</span>{% endif %}
+              {%- if e.current %}<span class="tag">now</span>{% endif %}
+            </div>
+            {%- for r in e.roles %}
+            <div class="role">
+              <p class="role-t">{{ r.title }}{% if r.team %}<span> · {{ r.team }}</span>{% endif %}</p>
+              <p class="role-d">{{ r.dates }}</p>
+              <p class="role-l">{{ r.location }}</p>
+            </div>
+            {%- endfor %}
+            {%- if e.note %}<p class="job-note">{{ e.note }}</p>{% endif %}
+            {%- if e.gallery or e.links %}
+            <div class="chips">
+              {%- if e.gallery %}
+              <button class="chip find" type="button" data-lens="{{ e.gallery }}">find it in my face ↑ <span data-pct="{{ e.gallery }}"></span></button>
+              <button class="chip" type="button" data-open="{{ g_off[e.gallery] }}">pictures! ({{ d.galleries[e.gallery].photos|length }})</button>
+              {%- endif %}
+              {%- for l in e.links %}
+              <a class="chip" href="{{ l.href }}"{% if not l.href.startswith("#") %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ l.label }}{% if not l.href.startswith("#") %} ↗{% endif %}</a>
+              {%- endfor %}
+            </div>
+            {%- endif %}
+            {%- if e.gallery %}
+            <div class="strip" aria-label="{{ d.galleries[e.gallery].title }}">
+              {%- for p in d.galleries[e.gallery].photos %}
+              <button class="strip-btn" type="button" data-open="{{ g_off[e.gallery] + loop.index0 }}" title="{{ p.caption }}"><img src="{{ p.thumb }}" alt="{{ p.caption }}" loading="lazy" width="56" height="56"></button>
+              {%- endfor %}
+            </div>
+            {%- elif loop.first %}
+            <p class="job-empty">no tiles in the portrait yet. give it time.</p>
+            {%- endif %}
+          </div>
+        </article>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <!-- =================================================================
+         contact sheet: all 41 photos
+         ================================================================= -->
+    <section class="room" id="contact-sheet" aria-labelledby="sheet-h">
+      <div class="room-l">
+        <p class="room-no mono">03</p>
+        <h2 class="room-h" id="sheet-h">contact sheet</h2>
+        <p class="room-d">every frame the portrait is cut from, all {{ sheet|length }} of them.</p>
+      </div>
+      <div>
+        {%- for ch in chapters %}
+        {%- set items = sheet|selectattr("ch", "equalto", ch.id)|list %}
+        <section class="sheet-g" aria-label="{{ ch.name }}">
+          <h3 class="sheet-h">{{ ch.name }}{% if ch.year %}<span class="mono">{{ ch.year }}</span>{% endif %}
+            <span class="mono n">{{ items|length }} frame{% if items|length != 1 %}s{% endif %}</span>
+            <button type="button" data-lens="{{ ch.id }}">find in face ↑</button>
+          </h3>
+          <ul class="sheet">
+            {%- for p in items %}
+            <li><button class="fr" type="button" data-open="{{ p.i }}">
+              <span class="fr-img"><img src="{{ p.thumb }}" alt="{{ p.alt }}" loading="lazy"><span class="fr-no">{{ "%02d"|format(sheet.index(p) + 1) }}</span></span>
+              <span class="fr-c">{{ p.cap }}</span>
+            </button></li>
+            {%- endfor %}
+          </ul>
+        </section>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <!-- =================================================================
+         projects
+         ================================================================= -->
+    <section class="room" id="projects" aria-labelledby="proj-h">
+      <div class="room-l">
+        <p class="room-no mono">04</p>
+        <h2 class="room-h" id="proj-h">projects</h2>
+        <p class="room-d">things i built that aren't roblox games.</p>
+      </div>
+      <div class="projects">
+        {%- for p in d.projects %}
+        <article class="proj">
+          <div class="proj-img{% if p.thumb_contain %} contain{% endif %}"><img src="{{ p.thumb }}" alt="{{ p.name }} project thumbnail" loading="lazy"></div>
+          <h3 class="proj-h">{{ p.name }}{% if p.favorite %}<span class="star" title="favorite" aria-label="favorite">★</span>{% endif %}</h3>
+          <p class="proj-p">{{ p.desc }}</p>
+          <p class="proj-links">
+            {%- for l in p.links %}
+            <a class="chip" href="{{ l.href }}" target="_blank" rel="noopener noreferrer">{{ l.label }} ↗</a>
+            {%- endfor %}
+          </p>
+        </article>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <!-- =================================================================
+         games
+         ================================================================= -->
+    {%- set top_visits = d.games|map(attribute="visits")|max %}
+    <section class="room" id="games" aria-labelledby="games-h">
+      <div class="room-l">
+        <p class="room-no mono">05</p>
+        <h2 class="room-h" id="games-h">my games :D</h2>
+        <p class="room-d">the “roblox game developer” part. you've probably played one.</p>
+      </div>
+      <div>
+        <p class="games-meta mono"><span><b>{{ "{:,}".format(d.games_total_visits) }}</b> total visits</span><span>visits as of {{ d.games_as_of }}</span></p>
+        <div class="games">
+          {%- for g in d.games %}
+          <a class="game" href="{{ g.href }}" target="_blank" rel="noopener noreferrer">
+            <div class="game-img"><img src="{{ g.img }}" alt="{{ g.name }} thumbnail" loading="lazy"></div>
+            <h3 class="game-h">{{ g.name }}</h3>
+            <p class="game-m mono"><span>created {{ g.created }}</span><span>{{ "{:,}".format(g.visits) }} visits</span></p>
+            <div class="game-bar" aria-hidden="true"><i style="width:{{ (g.visits / top_visits * 100)|round(1) }}%"></i></div>
+          </a>
+          {%- endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         friends + random pages + links
+         ================================================================= -->
+    <section class="room" id="friends" aria-labelledby="friends-h">
+      <div class="room-l">
+        <p class="room-no mono">06</p>
+        <h2 class="room-h" id="friends-h">cool friends</h2>
+        <p class="room-d">people whose sites you should also visit.</p>
+      </div>
+      <ul class="friends">
+        {%- for f in d.friends %}
+        <li><a href="{{ f.href }}" target="_blank" rel="noopener noreferrer">{{ f.name }}</a><span class="fn">{{ f.note }}</span></li>
+        {%- endfor %}
+      </ul>
+    </section>
+
+    <section class="room" id="random" aria-labelledby="random-h">
+      <div class="room-l">
+        <p class="room-no mono">07</p>
+        <h2 class="room-h" id="random-h">random pages</h2>
+        <p class="room-d">the side rooms of this site.</p>
+      </div>
+      <div class="rnd">
+        {%- for r in d.random_pages %}
+        <a href="{{ r.href }}"><span class="rnd-l">{{ r.label }}</span><span class="rnd-b">{{ r.blurb }}</span></a>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <section class="room" id="links" aria-labelledby="links-h">
+      <div class="room-l">
+        <p class="room-no mono">08</p>
+        <h2 class="room-h" id="links-h">links!</h2>
+        <p class="room-d">say hi. linkedin is a good place to start.</p>
+      </div>
+      <p class="links">
+        {%- for l in d.links %}
+        <a href="{{ l.href }}"{% if l.href.startswith("http") %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ l.label }}</a>
+        {%- endfor %}
+      </p>
+    </section>
+  </main>
+
+  {%- set credit_parts = d.credit.text.split(" thanks to ") %}
+  <footer class="foot">
+    <p><a href="{{ d.credit.source_href }}" target="_blank" rel="noopener noreferrer">{{ credit_parts[0] }}</a> thanks to <a href="{{ d.credit.author_href }}" target="_blank" rel="noopener noreferrer">{{ credit_parts[1] }}</a></p>
+    <nav class="versions" aria-label="prototype versions (footer)">
+      <span class="v-l">versions</span>
+      {%- for v in d.versions %}
+      <a href="{{ v.href }}"{% if v.id == "mosaic" %} aria-current="page"{% endif %}>{{ v.label }}</a>
+      {%- endfor %}
+      <a class="cur-site" href="/">← current site</a>
+    </nav>
+  </footer>
+
+  <!-- tile tooltip -->
+  <div class="tip" id="tip" aria-hidden="true">
+    <img class="tip-img" id="tip-img" alt="" width="232" height="140">
+    <div class="tip-b">
+      <p class="tip-k mono" id="tip-k"></p>
+      <p class="tip-t" id="tip-t"></p>
+      <p class="tip-s" id="tip-s"></p>
+      <p class="tip-m mono" id="tip-m"></p>
+    </div>
+  </div>
+
+  <!-- lightbox -->
+  <dialog class="lb" id="lb" aria-labelledby="lb-t">
+    <div class="lb-in">
+      <button class="fbtn lb-x" id="lb-x" type="button" aria-label="close">×</button>
+      <div class="lb-fig" id="lb-fig">
+        <img id="lb-img" alt="">
+        <span class="lb-load" id="lb-load">loading full size…</span>
+      </div>
+      <div class="lb-side">
+        <p class="lb-k mono" id="lb-k"></p>
+        <h2 class="lb-t" id="lb-t"></h2>
+        <p class="lb-s" id="lb-s"></p>
+        <div class="lb-job" id="lb-job" hidden></div>
+        <p class="lb-c mono" id="lb-c"></p>
+        <button class="chip find lb-find" id="lb-find" type="button">find it in my face ↑</button>
+        <div class="lb-nav">
+          <button class="fbtn" id="lb-prev" type="button" aria-label="previous photo in this chapter">←</button>
+          <button class="fbtn" id="lb-next" type="button" aria-label="next photo in this chapter">→</button>
+          <span class="lb-pos mono" id="lb-pos"></span>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+  (function () {
+    "use strict";
+
+    /* =====================================================================
+       0. data (all from data.html)
+       ===================================================================== */
+    var DATA = {
+      photo: {{ d.photo|tojson }},
+      photoAlt: {{ d.photo_alt|tojson }},
+      photoThumb: {{ d.photo_thumb|tojson }},
+      photoAltThumb: {{ d.photo_alt_thumb|tojson }},
+      photoDims: {{ d.photo_dims|tojson }},
+      photoAltDims: {{ d.photo_alt_dims|tojson }},
+      egg: {{ d.easter_egg|tojson }},
+      origin: {{ d.origin|tojson }},
+      travel: {{ d.travel|tojson }},
+      galleries: {{ d.galleries|tojson }},
+      experience: {{ d.experience|tojson }},
+      chapters: {{ chapters|tojson }},
+      frames: {{ sheet|map(attribute="i")|list|tojson }}
+    };
+    var ATLAS_SRC = "/assets/redesigns/mosaic/mosaic-atlas.v1.jpg";
+    var TABLE_SRC = "/assets/redesigns/mosaic/mosaic-tiles.v1.json";
+    /* face-centred crops of the two portraits (normalised to the image; height follows the 7:9 grid) */
+    var CROP_A = { cx: 0.499, cy: 0.421, w: 0.55 };
+    var CROP_B = { cx: 0.529, cy: 0.592, w: 0.827 };
+
+    var root = document.documentElement;
+    var $ = function (id) { return document.getElementById(id); };
+    var reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var reduced = reduceMQ.matches;
+    if (reduceMQ.addEventListener) reduceMQ.addEventListener("change", function (e) { reduced = e.matches; root.classList.toggle("motion", !reduced); });
+    var hoverMQ = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+    function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+    function easeIO(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function easeOut(t) { return 1 - (1 - t) * (1 - t) * (1 - t); }
+    function fmt(n) { return n.toLocaleString("en-US"); }
+    function pct(n, of) { var v = n / of * 100; return (v < 10 ? v.toFixed(1) : Math.round(v)) + "%"; }
+    function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+    function mulberry32(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        var t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    /* =====================================================================
+       1. photos + chapters (canonical order = mosaic_assets.py)
+       ===================================================================== */
+    var CH = DATA.chapters;
+    var chIndex = {};
+    CH.forEach(function (c, i) { chIndex[c.id] = i; c.photos = []; c.tiles = 0; });
+    var expByGallery = {};
+    DATA.experience.forEach(function (e) { if (e.gallery) expByGallery[e.gallery] = e; });
+
+    var P = [];
+    function keyOf(path) { return path.split("/").pop().split(".thumb")[0]; }
+    function addPhoto(o) { o.i = P.length; o.key = keyOf(o.thumb); o.chi = chIndex[o.ch]; o.tiles = 0; P.push(o); }
+    addPhoto({ src: DATA.photo, thumb: DATA.photoThumb, w: DATA.photoDims.w, h: DATA.photoDims.h, ch: "me", title: "me", sub: null, alt: DATA.photoDims.scene });
+    addPhoto({ src: DATA.photoAlt, thumb: DATA.photoAltThumb, w: DATA.photoAltDims.w, h: DATA.photoAltDims.h, ch: "me", title: "me, the goofy one", sub: DATA.egg, alt: DATA.photoAltDims.scene, goofy: true });
+    addPhoto({ src: DATA.origin.src, thumb: DATA.origin.thumb, w: DATA.origin.w, h: DATA.origin.h, ch: "origin", title: DATA.origin.caption, sub: DATA.origin.note, alt: DATA.origin.scene });
+    DATA.travel.forEach(function (t) {
+      addPhoto({ src: t.src, thumb: t.thumb, w: t.w, h: t.h, ch: t.region === "asia" ? "asia" : "us", title: t.place, sub: t.caption, alt: t.scene });
+    });
+    ["gatorai", "adtran", "nvidia"].forEach(function (g) {
+      DATA.galleries[g].photos.forEach(function (p) {
+        addPhoto({ src: p.src, thumb: p.thumb, w: p.w, h: p.h, ch: g, title: p.caption, sub: null, alt: p.caption, gallery: g });
+      });
+    });
+    DATA.frames.forEach(function (pi, f) { P[pi].frame = f + 1; CH[P[pi].chi].photos.push(pi); });
+    var NP = P.length;
+
+    /* =====================================================================
+       2. dom refs
+       ===================================================================== */
+    var frame = $("frame"), canvas = $("mosaic"), ctx = canvas.getContext("2d", { alpha: false });
+    var loadingEl = $("loading"), hintEl = $("hint"), readoutEl = $("readout"), zoomEl = $("zoom-l");
+    var goofyBtn = $("goofy"), shuffleBtn = $("shuffle"), eggEl = $("egg"), exploreBtn = $("explore");
+    var lensRead = $("lens-read"), liveEl = $("art-live");
+    var tip = $("tip"), tipImg = $("tip-img"), tipK = $("tip-k"), tipT = $("tip-t"), tipS = $("tip-s"), tipM = $("tip-m");
+    var lensBtns = Array.prototype.slice.call(document.querySelectorAll(".lens-btn"));
+    var compSegs = Array.prototype.slice.call(document.querySelectorAll("#comp i"));
+
+    /* =====================================================================
+       3. colours (read from css tokens so the canvas follows the theme)
+       ===================================================================== */
+    var colors = { canvas: "#e6e2d9", accent: "#cc3811", bg: [243, 241, 236] };
+    function hexToRgb(h) {
+      h = h.trim().replace("#", "");
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      var n = parseInt(h, 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    function readColors() {
+      var cs = getComputedStyle(root);
+      colors.canvas = cs.getPropertyValue("--canvas").trim() || colors.canvas;
+      colors.accent = cs.getPropertyValue("--accent").trim() || colors.accent;
+      colors.bg = hexToRgb(cs.getPropertyValue("--bg") || "#f3f1ec");
+    }
+
+    /* =====================================================================
+       4. theme toggle
+       ===================================================================== */
+    var themeBtn = $("theme"), themeL = $("theme-l");
+    function syncThemeBtn() {
+      var dark = root.classList.contains("dark");
+      themeL.textContent = dark ? "light" : "dark";
+      themeBtn.setAttribute("aria-label", dark ? "switch to light mode" : "switch to dark mode");
+    }
+    themeBtn.addEventListener("click", function () {
+      var dark = !root.classList.contains("dark");
+      root.classList.toggle("dark", dark);
+      try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (e) {}
+      syncThemeBtn();
+      readColors();
+      cOk = false;
+      tintDirty = true;
+      requestFrame();
+    });
+    syncThemeBtn();
+    readColors();
+
+    /* =====================================================================
+       5. mosaic state
+       ===================================================================== */
+    var ready = false, solving = false;
+    var cols = 70, rows = 90, N = cols * rows;
+    var ATL = null;               // tile table
+    var T = 0;                    // number of tile variants
+    var tPhoto, tRect, tSig;      // per variant
+    var atlasImg, mips = [];      // [{c, m, slot}] 64 / 32 / 16
+    var imgA, imgB;               // portrait thumbs (targets)
+    var rgbA, rgbB;
+    var cellVar, permB, invB, tilePhoto;   // solution (tile i sits at A cell i and B cell permB[i])
+    var fCurve, fLift, fRot, fJit, mDelay, mE;
+    var introDelay, appear;
+    var flipOld, flipDelay;
+    var dimCur, clrCur;
+    var coarse = [];
+    /* tint layers: cell-indexed (tiles at rest, drawn in one call) and tile-indexed (tiles in flight).
+       one 3x3 pixel block per entry, sampled at the block centre so bilinear filtering never bleeds */
+    var tintCanvas = document.createElement("canvas"), tintCtx, tintImg, tintData, tintDirty = true;
+    var tintFly = document.createElement("canvas"), flyCtx, flyImg, flyData;
+    var flyX, flyY, flyS, flyCo, flySi, flyOn;
+
+    var state = "A";              // which portrait is showing
+    var W = 0, H = 0, dpr = 1, baseS = 1;
+    var z = 1, tz = 1, ox = 0, oy = 0, tox = 0, toy = 0, zmax = 20;
+    var engaged = false;
+    var hoverCell = -1, cursorCell = -1;
+    var morph = { active: false, from: "A", to: "B", t0: 0, dur: 1.55, fly: 0.6 };
+    var flip = { active: false, t0: 0, dur: 0.34, span: 0.75 };
+    var intro = { active: false, t0: 0, phase2: false };
+    var xfade = { active: false, t0: 0, dur: 0.45, snap: null };
+    var lens = { pinned: null, preview: null, on: false, mask: new Uint8Array(64), anim: false };
+    var nowT = 0, lastT = 0, rafId = 0;
+    var heroVisible = true;
+    var thumbs = [], thumbState = new Uint8Array(64), thumbLoading = 0;
+    var HI_PX = 84;               // device px per tile above which tiles redraw from the photo thumbs
+
+    /* =====================================================================
+       6. colour science: sRGB -> CIE Lab
+       ===================================================================== */
+    var LIN = new Float32Array(256);
+    for (var li = 0; li < 256; li++) { var cc = li / 255; LIN[li] = cc <= 0.04045 ? cc / 12.92 : Math.pow((cc + 0.055) / 1.055, 2.4); }
+    function labInto(r, g, b, out, o) {
+      var R = LIN[r], G = LIN[g], B = LIN[b];
+      var x = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047;
+      var y = R * 0.2126 + G * 0.7152 + B * 0.0722;
+      var zz = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883;
+      x = x > 0.008856 ? Math.cbrt(x) : 7.787 * x + 16 / 116;
+      y = y > 0.008856 ? Math.cbrt(y) : 7.787 * y + 16 / 116;
+      zz = zz > 0.008856 ? Math.cbrt(zz) : 7.787 * zz + 16 / 116;
+      out[o] = 116 * y - 16; out[o + 1] = 500 * (x - y); out[o + 2] = 200 * (y - zz);
+    }
+
+    function cropRect(img, crop) {
+      var iw = img.naturalWidth, ih = img.naturalHeight;
+      var w = crop.w * iw, h = w * rows / cols;
+      if (h > ih) { h = ih; w = h * cols / rows; }
+      var x = clamp(crop.cx * iw - w / 2, 0, iw - w), y = clamp(crop.cy * ih - h / 2, 0, ih - h);
+      return [x, y, w, h];
+    }
+
+    /* sample a portrait at 3x the grid: per cell a 3x3 Lab signature, a mean L and an average rgb */
+    function sampleTarget(img, crop) {
+      var sw = cols * 3, sh = rows * 3;
+      var r = cropRect(img, crop);
+      var mid = document.createElement("canvas"); mid.width = sw * 2; mid.height = sh * 2;
+      var mx = mid.getContext("2d"); mx.imageSmoothingQuality = "high";
+      mx.drawImage(img, r[0], r[1], r[2], r[3], 0, 0, mid.width, mid.height);
+      var c = document.createElement("canvas"); c.width = sw; c.height = sh;
+      var x = c.getContext("2d", { willReadFrequently: true }); x.imageSmoothingQuality = "high";
+      x.drawImage(mid, 0, 0, sw, sh);
+      var px = x.getImageData(0, 0, sw, sh).data;
+      var sig = new Float32Array(N * 27), mean = new Float32Array(N), rgb = new Uint8ClampedArray(N * 3);
+      for (var cy = 0; cy < rows; cy++) {
+        for (var cx = 0; cx < cols; cx++) {
+          var cell = cy * cols + cx, so = cell * 27, rr = 0, gg = 0, bb = 0, lsum = 0;
+          for (var k = 0; k < 9; k++) {
+            var p = ((cy * 3 + ((k / 3) | 0)) * sw + cx * 3 + (k % 3)) * 4;
+            rr += px[p]; gg += px[p + 1]; bb += px[p + 2];
+            labInto(px[p], px[p + 1], px[p + 2], sig, so + k * 3);
+            lsum += sig[so + k * 3];
+          }
+          mean[cell] = lsum / 9;
+          rgb[cell * 3] = rr / 9; rgb[cell * 3 + 1] = gg / 9; rgb[cell * 3 + 2] = bb / 9;
+        }
+      }
+      return { sig: sig, mean: mean, rgb: rgb };
+    }
+
+    /* =====================================================================
+       7. the solver. self-contained (no outer variables) so it can be stringified
+          into a web worker; falls back to running inline.
+          7a pairs every cell of portrait A with a cell of portrait B (brightness-quantile
+          buckets, nearest free cell within a bucket), so one tile can serve both poses.
+          7b picks a tile variant for each pair: closest 3x3 Lab signature to the blend of
+          both targets, with penalties for repeating a photo nearby (in both poses) and for
+          over-using a photo. 7c tops up photos that ended up too rare.
+       ===================================================================== */
+    function makeSolver() {
+      var S = null;
+      function rng(a) {
+        return function () {
+          a |= 0; a = a + 0x6D2B79F5 | 0;
+          var t = Math.imul(a ^ a >>> 15, 1 | a);
+          t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+      function shuffled(arr, rnd) {
+        for (var i = arr.length - 1; i > 0; i--) { var j = (rnd() * (i + 1)) | 0, t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+        return arr;
+      }
+      function sortedBy(vals, n) {
+        var idx = [];
+        for (var i = 0; i < n; i++) idx.push(i);
+        return idx.sort(function (a, b) { return vals[a] - vals[b]; });
+      }
+      function setup(d) {
+        S = d;
+        var T = d.T, i, k, nb = [], wts = [0, 1, 0.5, 0.25];
+        for (var dy = -3; dy <= 3; dy++) for (var dx = -3; dx <= 3; dx++) {
+          var dd = Math.max(Math.abs(dx), Math.abs(dy));
+          if (dd) nb.push(dx, dy, wts[dd]);
+        }
+        S.NB = new Float32Array(nb);
+        S.vL = new Float32Array(T); S.vA = new Float32Array(T); S.vB = new Float32Array(T);
+        for (i = 0; i < T; i++) {
+          var sl = 0, sa = 0, sb = 0;
+          for (k = 0; k < 27; k += 3) { sl += d.tSig[i * 27 + k]; sa += d.tSig[i * 27 + k + 1]; sb += d.tSig[i * 27 + k + 2]; }
+          S.vL[i] = sl / 9; S.vA[i] = sa / 9; S.vB[i] = sb / 9;
+        }
+        S.sortV = new Int16Array(sortedBy(S.vL, T));
+        S.sortL = new Float32Array(T);
+        for (i = 0; i < T; i++) S.sortL[i] = S.vL[S.sortV[i]];
+        S.photoVars = [];
+        for (i = 0; i < d.NP; i++) S.photoVars.push([]);
+        for (i = 0; i < T; i++) S.photoVars[d.tPhoto[i]].push(i);
+        var N = d.cols * d.rows;
+        S.ia = sortedBy(d.meanA, N); S.ib = sortedBy(d.meanB, N);
+      }
+      function solve(seed) {
+        var cols = S.cols, rows = S.rows, N = cols * rows, T = S.T, NP = S.NP;
+        var tPhoto = S.tPhoto, tSig = S.tSig, sigA = S.sigA, sigB = S.sigB, NB = S.NB;
+        var vL = S.vL, vA = S.vA, vB = S.vB, sortV = S.sortV, sortL = S.sortL;
+        var rnd = rng(seed), i, k, q;
+        var cellVar = new Int16Array(N), permB = new Int32Array(N), invB = new Int32Array(N);
+        var use = new Int32Array(NP), scratch = new Float32Array(N);
+
+        /* 7a */
+        var K = 12, per = Math.ceil(N / K);
+        for (k = 0; k < K; k++) {
+          var lo = k * per, hi = Math.min(N, lo + per), n = hi - lo;
+          if (n <= 0) break;
+          var As = shuffled(S.ia.slice(lo, hi), rnd), Bs = S.ib.slice(lo, hi);
+          var bx = new Int16Array(n), by = new Int16Array(n), used = new Uint8Array(n);
+          for (i = 0; i < n; i++) { bx[i] = Bs[i] % cols; by[i] = (Bs[i] / cols) | 0; }
+          for (q = 0; q < n; q++) {
+            var a = As[q], ax = a % cols, ay = (a / cols) | 0, best = -1, bd = 1e9;
+            for (var j = 0; j < n; j++) {
+              if (used[j]) continue;
+              var ddx = bx[j] - ax, ddy = by[j] - ay, dd = ddx * ddx + ddy * ddy;
+              if (dd < bd) { bd = dd; best = j; }
+            }
+            used[best] = 1; permB[a] = Bs[best]; invB[Bs[best]] = a;
+          }
+        }
+
+        /* 7b */
+        var order = [];
+        for (i = 0; i < N; i++) order.push(i);
+        shuffled(order, rnd);
+        var M = new Float32Array(27), pen = new Float32Array(NP), useCost = new Float32Array(NP);
+        var WA = 0.62, WB = 0.38, AB = 0.55, REP = 2400, USE = 700, expected = N / NP;
+        cellVar.fill(-1);
+        for (q = 0; q < N; q++) {
+          var ca = order[q], cb = permB[ca], oa = ca * 27, ob = cb * 27;
+          for (k = 0; k < 27; k++) M[k] = WA * sigA[oa + k] + WB * sigB[ob + k];
+          pen.fill(0);
+          var cax = ca % cols, cay = (ca / cols) | 0, cbx = cb % cols, cby = (cb / cols) | 0;
+          for (var o = 0; o < NB.length; o += 3) {
+            var ndx = NB[o], ndy = NB[o + 1], w = NB[o + 2], x = cax + ndx, y = cay + ndy, v;
+            if (x >= 0 && x < cols && y >= 0 && y < rows) { v = cellVar[y * cols + x]; if (v >= 0) pen[tPhoto[v]] += w; }
+            x = cbx + ndx; y = cby + ndy;
+            if (x >= 0 && x < cols && y >= 0 && y < rows) { v = cellVar[invB[y * cols + x]]; if (v >= 0) pen[tPhoto[v]] += w * 0.8; }
+          }
+          /* walk variants outwards from the target's mean lightness: 9 * gap^2 bounds the
+             signature distance from below, so a direction stops once it can't win */
+          var mL = (M[0] + M[3] + M[6] + M[9] + M[12] + M[15] + M[18] + M[21] + M[24]) / 9;
+          var mA = (M[1] + M[4] + M[7] + M[10] + M[13] + M[16] + M[19] + M[22] + M[25]) / 9;
+          var mB = (M[2] + M[5] + M[8] + M[11] + M[14] + M[17] + M[20] + M[23] + M[26]) / 9;
+          var minPen = Infinity;
+          for (var pp = 0; pp < NP; pp++) { var pc = pen[pp] * REP + useCost[pp]; if (pc < minPen) minPen = pc; }
+          var l0 = 0, h0 = T;
+          while (l0 < h0) { var mid = (l0 + h0) >> 1; if (sortL[mid] < mL) l0 = mid + 1; else h0 = mid; }
+          var dn = l0 - 1, upi = l0, bestV = sortV[Math.min(l0, T - 1)], bestC = Infinity;
+          while (dn >= 0 || upi < T) {
+            var gd = dn >= 0 ? mL - sortL[dn] : 1e9, gu = upi < T ? sortL[upi] - mL : 1e9, tv;
+            if (gd <= gu) { if (minPen + 9 * gd * gd >= bestC) { dn = -1; continue; } tv = sortV[dn--]; }
+            else { if (minPen + 9 * gu * gu >= bestC) { upi = T; continue; } tv = sortV[upi++]; }
+            var tp = tPhoto[tv], cst = pen[tp] * REP + useCost[tp];
+            if (cst >= bestC) continue;
+            var el = vL[tv] - mL, ea = vA[tv] - mA, eb = vB[tv] - mB;
+            if (cst + 9 * (el * el + AB * (ea * ea + eb * eb)) >= bestC) continue;
+            var to = tv * 27;
+            for (k = 0; k < 27; k += 3) {
+              var dL = tSig[to + k] - M[k], da = tSig[to + k + 1] - M[k + 1], db = tSig[to + k + 2] - M[k + 2];
+              cst += dL * dL + AB * (da * da + db * db);
+              if (cst >= bestC) break;
+            }
+            if (cst < bestC) { bestC = cst; bestV = tv; }
+          }
+          cellVar[ca] = bestV;
+          var up = tPhoto[bestV]; use[up]++;
+          var ratio = use[up] / expected; useCost[up] = USE * ratio * ratio;
+        }
+
+        /* 7c: every photo has to show up. top up rare ones where it costs least, never right
+               next to another tile of the same photo */
+        function sigCost(v, oA, oB) {
+          var s = 0, t0 = v * 27;
+          for (var kk = 0; kk < 27; kk += 3) {
+            var l1 = tSig[t0 + kk] - (WA * sigA[oA + kk] + WB * sigB[oB + kk]);
+            var a1 = tSig[t0 + kk + 1] - (WA * sigA[oA + kk + 1] + WB * sigB[oB + kk + 1]);
+            var b1 = tSig[t0 + kk + 2] - (WA * sigA[oA + kk + 2] + WB * sigB[oB + kk + 2]);
+            s += l1 * l1 + AB * (a1 * a1 + b1 * b1);
+          }
+          return s;
+        }
+        function nearSame(cell, p) {
+          var cx = cell % cols, cy = (cell / cols) | 0;
+          for (var o2 = 0; o2 < NB.length; o2 += 3) {
+            if (NB[o2 + 2] < 0.5) continue;
+            var x2 = cx + NB[o2], y2 = cy + NB[o2 + 1];
+            if (x2 >= 0 && x2 < cols && y2 >= 0 && y2 < rows && tPhoto[cellVar[y2 * cols + x2]] === p) return true;
+          }
+          return false;
+        }
+        var minUse = Math.max(3, Math.round(expected * 0.22));
+        for (var p = 0; p < NP; p++) {
+          if (use[p] >= minUse) continue;
+          var vars = S.photoVars[p], cand = [], alt = new Int16Array(N);
+          for (var c = 0; c < N; c++) {
+            var cur = cellVar[c], curP = tPhoto[cur];
+            if (curP === p || use[curP] <= minUse + 1) continue;
+            var moA = c * 27, moB = permB[c] * 27, bestAlt = Infinity;
+            for (var vi = 0; vi < vars.length; vi++) {
+              var c2 = sigCost(vars[vi], moA, moB);
+              if (c2 < bestAlt) { bestAlt = c2; alt[c] = vars[vi]; }
+            }
+            cand.push(c); scratch[c] = bestAlt - sigCost(cur, moA, moB);
+          }
+          cand.sort(function (m1, m2) { return scratch[m1] - scratch[m2]; });
+          for (var ci = 0; ci < cand.length && use[p] < minUse; ci++) {
+            var c3 = cand[ci], old = tPhoto[cellVar[c3]];
+            if (use[old] <= minUse || nearSame(c3, p)) continue;
+            use[old]--; use[p]++; cellVar[c3] = alt[c3];
+          }
+        }
+
+        /* flight personality for the morph */
+        var fCurve = new Float32Array(N), fLift = new Float32Array(N), fRot = new Float32Array(N), fJit = new Float32Array(N);
+        for (i = 0; i < N; i++) {
+          fCurve[i] = (rnd() * 2 - 1) * (0.18 + rnd() * 0.32);
+          fLift[i] = 0.35 + rnd() * 1.05;
+          fRot[i] = (rnd() * 2 - 1) * 0.9;
+          fJit[i] = rnd();
+        }
+        return { cellVar: cellVar, permB: permB, invB: invB, fCurve: fCurve, fLift: fLift, fRot: fRot, fJit: fJit };
+      }
+      return { setup: setup, solve: solve };
+    }
+
+    var solverData = null, solverInline = null, worker = null, solveSeq = 0, solvePending = {};
+    function startSolver(data) {
+      solverData = data;
+      try {
+        var src = "var api=(" + makeSolver.toString() + ")();" +
+          "onmessage=function(e){var m=e.data;if(m.setup){api.setup(m.setup);return;}var r=api.solve(m.seed);" +
+          "postMessage({id:m.id,r:r},[r.cellVar.buffer,r.permB.buffer,r.invB.buffer,r.fCurve.buffer,r.fLift.buffer,r.fRot.buffer,r.fJit.buffer]);};";
+        worker = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+        worker.onmessage = function (e) { var cb = solvePending[e.data.id]; delete solvePending[e.data.id]; if (cb) cb(e.data.r); };
+        worker.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); workerFailed(); };
+        worker.postMessage({ setup: data });
+      } catch (err) { workerFailed(); }
+    }
+    function workerFailed() {
+      if (worker) { try { worker.terminate(); } catch (e) {} }
+      worker = null;
+      var waiting = solvePending; solvePending = {};
+      Object.keys(waiting).forEach(function (id) { requestSolve(waiting[id].seed, waiting[id]); });
+    }
+    function requestSolve(seed, cb) {
+      cb.seed = seed;
+      if (worker) { var id = ++solveSeq; solvePending[id] = cb; worker.postMessage({ id: id, seed: seed }); return; }
+      if (!solverInline) { solverInline = makeSolver(); solverInline.setup(solverData); }
+      setTimeout(function () { cb(solverInline.solve(seed)); }, 0);
+    }
+    function applySolution(r) {
+      cellVar = r.cellVar; permB = r.permB; invB = r.invB; solveVer++;
+      fCurve = r.fCurve; fLift = r.fLift; fRot = r.fRot; fJit = r.fJit;
+      CH.forEach(function (ch) { ch.tiles = 0; });
+      P.forEach(function (ph) { ph.tiles = 0; });
+      for (var i = 0; i < N; i++) {
+        var pp = tPhoto[cellVar[i]];
+        tilePhoto[i] = pp; P[pp].tiles++; CH[P[pp].chi].tiles++;
+      }
+    }
+
+    /* =====================================================================
+       8. setup once assets arrive
+       ===================================================================== */
+    function loadImage(src) {
+      return new Promise(function (res, rej) {
+        var im = new Image();
+        im.decoding = "async";
+        im.onload = function () { res(im); };
+        im.onerror = function () { rej(new Error("image failed: " + src)); };
+        im.src = src;
+      });
+    }
+
+    function pickGrid() {
+      var w = frame.getBoundingClientRect().width;
+      if (w < 440) { cols = 49; rows = 63; } else if (w < 560) { cols = 56; rows = 72; } else { cols = 70; rows = 90; }
+      N = cols * rows;
+    }
+
+    function allocGrid() {
+      tilePhoto = new Uint8Array(N);
+      mDelay = new Float32Array(N); mE = new Float32Array(N);
+      introDelay = new Float32Array(N); appear = new Float32Array(N).fill(1);
+      flipOld = new Int16Array(N); flipDelay = new Float32Array(N);
+      dimCur = new Float32Array(N); clrCur = new Float32Array(N);
+      tintCanvas.width = cols * 3; tintCanvas.height = rows * 3;
+      tintCtx = tintCanvas.getContext("2d");
+      tintImg = tintCtx.createImageData(cols * 3, rows * 3);
+      tintData = tintImg.data;
+      tintFly.width = cols * 3; tintFly.height = rows * 3;
+      flyCtx = tintFly.getContext("2d");
+      flyImg = flyCtx.createImageData(cols * 3, rows * 3);
+      flyData = flyImg.data;
+      landed = new Uint8Array(N);
+      flyX = new Float32Array(N); flyY = new Float32Array(N); flyS = new Float32Array(N); flyCo = new Float32Array(N); flySi = new Float32Array(N); flyOn = new Uint8Array(N);
+    }
+
+    function buildMips() {
+      mips = [{ c: atlasImg, m: ATL.tile, slot: ATL.slot }];
+      [32, 16].forEach(function (m) {
+        var slot = m + 2, ac = ATL.cols, ar = Math.ceil(T / ac);
+        var c = document.createElement("canvas"); c.width = ac * slot; c.height = ar * slot;
+        var x = c.getContext("2d"); x.imageSmoothingQuality = "high";
+        for (var v = 0; v < T; v++) {
+          var sx = (v % ac) * ATL.slot + 1, sy = ((v / ac) | 0) * ATL.slot + 1, dx = (v % ac) * slot, dy = ((v / ac) | 0) * slot;
+          x.drawImage(atlasImg, sx, sy, ATL.tile, ATL.tile, dx, dy, slot, slot);
+          x.drawImage(atlasImg, sx, sy, ATL.tile, ATL.tile, dx + 1, dy + 1, m, m);
+        }
+        mips.push({ c: c, m: m, slot: slot });
+      });
+    }
+
+    function buildCoarse() {
+      coarse = [[7, 9], [14, 18], [35, 45]].map(function (s) {
+        var c = document.createElement("canvas"); c.width = s[0]; c.height = s[1];
+        var x = c.getContext("2d"); x.imageSmoothingQuality = "high";
+        var r = cropRect(imgA, CROP_A);
+        x.drawImage(imgA, r[0], r[1], r[2], r[3], 0, 0, s[0], s[1]);
+        return c;
+      });
+    }
+
+    function init(res) {
+      ATL = res[0]; atlasImg = res[1]; imgA = res[2]; imgB = res[3];
+      T = ATL.count;
+      tPhoto = new Uint8Array(T); tRect = new Float32Array(T * 4); tSig = new Float32Array(ATL.s);
+      /* map the table's photo keys onto this page's photo list (robust to reordering) */
+      var keyMap = {};
+      P.forEach(function (p) { keyMap[p.key] = p.i; });
+      var remap = ATL.keys.map(function (k) { return k in keyMap ? keyMap[k] : -1; });
+      if (remap.indexOf(-1) !== -1) console.warn("mosaic: tile table keys do not match the photo list", ATL.keys);
+      for (var v = 0; v < T; v++) {
+        var o = v * 5;
+        tPhoto[v] = Math.max(0, remap[ATL.t[o]]);
+        tRect[v * 4] = ATL.t[o + 1] / 1e4; tRect[v * 4 + 1] = ATL.t[o + 2] / 1e4; tRect[v * 4 + 2] = ATL.t[o + 3] / 1e4; tRect[v * 4 + 3] = ATL.t[o + 4] / 1e4;
+      }
+      pickGrid();
+      allocGrid();
+      var A = sampleTarget(imgA, CROP_A), B = sampleTarget(imgB, CROP_B);
+      rgbA = A.rgb; rgbB = B.rgb;
+      buildMips();
+      buildCoarse();
+      $("tile-count").textContent = fmt(N);
+      $("grid-l").textContent = "self-portrait, " + cols + " × " + rows + " tiles";
+      resize();
+      startIntro();
+      if (intro.active) loadingEl.classList.add("is-done");
+      startSolver({ cols: cols, rows: rows, NP: NP, T: T, tPhoto: tPhoto, tSig: tSig, sigA: A.sig, sigB: B.sig, meanA: A.mean, meanB: B.mean });
+      requestSolve(7, function (r) {
+        applySolution(r);
+        updateCounts();
+        ready = true;
+        renderLensRead();
+        frame.classList.add("is-ready");
+        loadingEl.classList.add("is-done");
+        syncZoomUi();
+        requestFrame();
+      });
+    }
+
+    Promise.all([
+      fetch(TABLE_SRC).then(function (r) { if (!r.ok) throw new Error("tile table " + r.status); return r.json(); }),
+      loadImage(ATLAS_SRC), loadImage(DATA.photoThumb), loadImage(DATA.photoAltThumb)
+    ]).then(init).catch(function (err) {
+      console.error(err);
+      loadingEl.classList.add("is-done");
+      var im = document.createElement("img");
+      im.className = "frame-fallback"; im.src = DATA.photoThumb; im.alt = "Portrait of Andrew Vu: " + DATA.photoDims.scene;
+      frame.insertBefore(im, canvas); canvas.style.display = "none";
+    });
+
+    /* =====================================================================
+       9. view: size, zoom, pan
+       ===================================================================== */
+    function resize() {
+      var r = frame.getBoundingClientRect();
+      if (!r.width) return;
+      var oldBase = baseS;
+      W = r.width; H = r.height;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      baseS = W / cols;
+      if (oldBase > 0 && oldBase !== 1) { var f = baseS / oldBase; ox *= f; oy *= f; tox *= f; toy *= f; }
+      zmax = Math.max(3, 200 / baseS);
+      tz = clamp(tz, 1, zmax); z = clamp(z, 1, zmax);
+      clampView();
+      ox = tox; oy = toy;
+      tintDirty = true;
+      requestFrame();
+    }
+    function clampView() {
+      var s = baseS * tz;
+      tox = clamp(tox, W - cols * s, 0); toy = clamp(toy, H - rows * s, 0);
+    }
+    function zoomAt(px, py, nz) {
+      nz = clamp(nz, 1, zmax);
+      var s = baseS * tz, wx = (px - tox) / s, wy = (py - toy) / s;
+      tz = nz; var ns = baseS * tz;
+      tox = px - wx * ns; toy = py - wy * ns;
+      clampView();
+      if (reduced) { z = tz; ox = tox; oy = toy; }
+      syncZoomUi();
+      requestFrame();
+    }
+    function resetView() { tz = 1; tox = 0; toy = 0; if (reduced) { z = 1; ox = 0; oy = 0; } syncZoomUi(); requestFrame(); }
+    function syncZoomUi() {
+      zoomEl.textContent = (tz < 9.95 ? tz.toFixed(1) : Math.round(tz)) + "×";
+      $("zin").disabled = tz >= zmax - 1e-3; $("zout").disabled = tz <= 1.001;
+      frame.classList.toggle("can-pan", tz > 1.001);
+    }
+    function setEngaged(on) {
+      engaged = on;
+      frame.classList.toggle("is-engaged", on);
+      exploreBtn.setAttribute("aria-pressed", on ? "true" : "false");
+      $("explore-l").textContent = on ? "done" : "explore";
+      if (on) flashHint(hoverMQ.matches ? "scroll to zoom · drag to look around · esc to exit" : "pinch to zoom · drag to look around", 2600);
+    }
+    var hintTimer = 0, lastHint = -1e9;
+    function flashHint(text, ms) {
+      hintEl.textContent = text;
+      hintEl.classList.add("is-on");
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(function () { hintEl.classList.remove("is-on"); }, ms || 1800);
+    }
+
+    /* =====================================================================
+       10. frame loop (draws only when something changed)
+       ===================================================================== */
+    function requestFrame() { if (!rafId) rafId = requestAnimationFrame(frameLoop); }
+    function frameLoop(t) {
+      rafId = 0;
+      nowT = t;
+      var dt = Math.min(0.05, lastT ? (t - lastT) / 1000 : 0.016);
+      lastT = t;
+      if (!W || (!ready && !intro.active)) return;
+      var again = false;
+      if (Math.abs(tz - z) > 1e-4 || Math.abs(tox - ox) > 0.05 || Math.abs(toy - oy) > 0.05) {
+        var k = 1 - Math.exp(-dt * 15);
+        z += (tz - z) * k; ox += (tox - ox) * k; oy += (toy - oy) * k;
+        again = true; tintDirty = true;
+      } else if (z !== tz || ox !== tox || oy !== toy) { z = tz; ox = tox; oy = toy; tintDirty = true; }
+      if (intro.active) again = stepIntro(t) || again;
+      if (morph.active) again = stepMorph(t) || again;
+      if (flip.active) again = stepFlip(t) || again;
+      if (xfade.active) { if ((t - xfade.t0) / 1000 >= xfade.dur) { xfade.active = false; xfade.snap = null; } else again = true; }
+      if (lens.anim) { lens.anim = stepLens(dt); tintDirty = true; again = again || lens.anim; }
+      if (tintDirty) { writeTint(); tintDirty = false; }
+      draw();
+      if (again) requestFrame();
+      else lastT = 0;
+    }
+
+    function tintBase() {
+      var t = clamp(Math.log(z) / Math.log(Math.max(2.5, zmax * 0.55)), 0, 1);
+      var b0 = cols < 60 ? 0.5 : 0.45;
+      return b0 - (b0 - 0.12) * t * t * (3 - 2 * t);
+    }
+
+    function putBlock(d, idx, r, g, b, A) {
+      var W3 = cols * 3, x0 = (idx % cols) * 3, y0 = ((idx / cols) | 0) * 3;
+      for (var dy = 0; dy < 3; dy++) {
+        var p = ((y0 + dy) * W3 + x0) * 4;
+        d[p] = r; d[p + 1] = g; d[p + 2] = b; d[p + 3] = A;
+        d[p + 4] = r; d[p + 5] = g; d[p + 6] = b; d[p + 7] = A;
+        d[p + 8] = r; d[p + 9] = g; d[p + 10] = b; d[p + 11] = A;
+      }
+    }
+    var tintRGB = new Float32Array(4);
+    /* colour + alpha for one tile (lens dimming/clearing, intro develop) into tintRGB */
+    function tintFor(tile, r, g, b, a) {
+      var dm = dimCur[tile], cl = clrCur[tile];
+      if (dm > 0.001) { var dk = dm * 0.9; r += (colors.bg[0] - r) * dk; g += (colors.bg[1] - g) * dk; b += (colors.bg[2] - b) * dk; a += (0.86 - a) * dm; }
+      if (cl > 0.001) a *= 1 - 0.72 * cl;
+      tintRGB[0] = r; tintRGB[1] = g; tintRGB[2] = b; tintRGB[3] = a * 255;
+    }
+    function writeTint() {
+      var base = tintBase(), stB = state === "B", intro2 = intro.active && intro.phase2, idx, o, t, a;
+      var flipOn = flip.active, fel = flipOn ? (nowT - flip.t0) / 1000 : 0;
+      if (!morph.active) {
+        for (idx = 0; idx < N; idx++) {
+          t = stB ? invB[idx] : idx; o = idx * 3; a = base;
+          if (intro2) a += (1 - a) * (1 - appear[idx]);
+          if (flipOn) { var ff = clamp((fel - flipDelay[idx]) / flip.dur, 0, 1); if (ff > 0 && ff < 1) { var cf = Math.cos(Math.PI * ff); a *= cf * cf; } }
+          if (stB) tintFor(t, rgbB[o], rgbB[o + 1], rgbB[o + 2], a); else tintFor(t, rgbA[o], rgbA[o + 1], rgbA[o + 2], a);
+          putBlock(tintData, idx, tintRGB[0], tintRGB[1], tintRGB[2], tintRGB[3]);
+        }
+        tintCtx.putImageData(tintImg, 0, 0);
+        return;
+      }
+      var fromB = morph.from === "B";
+      /* cells: whichever tile is resting there (an arrived tile sits on top of one yet to leave) */
+      for (idx = 0; idx < N; idx++) {
+        var jIn = fromB ? idx : invB[idx], iOut = fromB ? invB[idx] : idx, src = null;
+        o = idx * 3;
+        if (mE[jIn] >= 1) { t = jIn; src = fromB ? rgbA : rgbB; }
+        else if (mE[iOut] <= 0) { t = iOut; src = fromB ? rgbB : rgbA; }
+        if (src) { tintFor(t, src[o], src[o + 1], src[o + 2], base); putBlock(tintData, idx, tintRGB[0], tintRGB[1], tintRGB[2], tintRGB[3]); }
+        else putBlock(tintData, idx, 0, 0, 0, 0);
+      }
+      tintCtx.putImageData(tintImg, 0, 0);
+      /* tiles in flight shed their tint mid-air, so you see the real photo */
+      for (idx = 0; idx < N; idx++) {
+        var e = mE[idx], oA = idx * 3, oB = permB[idx] * 3, ec = fromB ? 1 - e : e, fl = 1 - Math.sin(Math.PI * e);
+        tintFor(idx, rgbA[oA] + (rgbB[oB] - rgbA[oA]) * ec, rgbA[oA + 1] + (rgbB[oB + 1] - rgbA[oA + 1]) * ec, rgbA[oA + 2] + (rgbB[oB + 2] - rgbA[oA + 2]) * ec, base * fl * fl);
+        putBlock(flyData, idx, tintRGB[0], tintRGB[1], tintRGB[2], tintRGB[3]);
+      }
+      flyCtx.putImageData(flyImg, 0, 0);
+    }
+
+    function pickMip(dev) { return dev <= 17 ? mips[2] : dev <= 34 ? mips[1] : mips[0]; }
+    function grout(s) { return clamp((s - 16) * 0.05, 0, 2.5); }
+
+    var curMip = null, curHi = false, dctx = ctx;
+    /* the resting tiles are drawn once into this cache and blitted; lens, hover and tint changes
+       then cost two draw calls instead of thousands */
+    var cache = document.createElement("canvas"), cctx = cache.getContext("2d", { alpha: false });
+    var cOk = false, cState = "", cSolve = -1, cZ = 0, cOx = 0, cOy = 0, cW = 0, cDpr = 0, cMip = 0, cHi = false, cThumb = -1;
+    var solveVer = 0, thumbVer = 0;
+    /* during the morph: the pre-morph render (cache) with departed cells erased, plus an
+       "arrivals" layer that each tile is drawn into once, when it lands */
+    var arr = document.createElement("canvas"), actx = arr.getContext("2d"), landed = null;
+    var mFast = false, mZ = 0, mOx = 0, mOy = 0, fFast = false, fZ = 0, fOx = 0, fOy = 0, nLanded = 0, allLanded = false;
+    function drawTile(v, x, y, w, h) {
+      if (curHi) {
+        var p = tPhoto[v];
+        if (thumbState[p] === 2) {
+          var im = thumbs[p], iw = im.naturalWidth, ih = im.naturalHeight, o = v * 4;
+          dctx.drawImage(im, tRect[o] * iw, tRect[o + 1] * ih, tRect[o + 2] * iw, tRect[o + 3] * ih, x, y, w, h);
+          return;
+        }
+        requestThumb(p);
+      }
+      var m = curMip, ac = ATL.cols;
+      dctx.drawImage(m.c, (v % ac) * m.slot + 1, ((v / ac) | 0) * m.slot + 1, m.m, m.m, x, y, w, h);
+    }
+    function requestThumb(p) {
+      if (thumbState[p] !== 0 || thumbLoading >= 6) return;
+      thumbState[p] = 1; thumbLoading++;
+      var im = new Image();
+      im.decoding = "async";
+      im.onload = function () { thumbState[p] = 2; thumbLoading--; thumbVer++; requestFrame(); };
+      im.onerror = function () { thumbState[p] = 3; thumbLoading--; };
+      im.src = P[p].thumb;
+      thumbs[p] = im;
+    }
+
+    function draw() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.imageSmoothingEnabled = true;
+      ctx.fillStyle = colors.canvas;
+      ctx.fillRect(0, 0, W, H);
+      var s = baseS * z;
+      curMip = pickMip(s * dpr); curHi = s * dpr > HI_PX;
+      if (intro.active && !intro.phase2) { drawCoarse(s); return; }
+      if (morph.active) drawMorph(s); else drawSteady(s);
+      if (xfade.active && xfade.snap) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1 - easeOut(clamp((nowT - xfade.t0) / 1000 / xfade.dur, 0, 1));
+        ctx.drawImage(xfade.snap, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      if (!morph.active) drawMarks(s);
+    }
+
+    function drawCoarse(s) {
+      var el = (nowT - intro.t0) / 1000, lvl = el < 0.12 ? -1 : el < 0.26 ? 0 : el < 0.4 ? 1 : 2;
+      if (lvl < 0) return;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(coarse[lvl], ox, oy, cols * s, rows * s);
+      ctx.imageSmoothingEnabled = true;
+    }
+
+    function visRange(s) {
+      return [Math.max(0, Math.floor(-ox / s)), Math.min(cols - 1, Math.floor((W - ox) / s)),
+              Math.max(0, Math.floor(-oy / s)), Math.min(rows - 1, Math.floor((H - oy) / s))];
+    }
+
+    function renderTiles(s, flipOn) {
+      var vr = visRange(s), c0 = vr[0], c1 = vr[1], r0 = vr[2], r1 = vr[3];
+      var stB = state === "B", ov = grout(s) > 0 ? 0 : 0.6 / dpr, fel = flipOn ? (nowT - flip.t0) / 1000 : 0, fd = flip.dur;
+      var r, c, cell, v, x, y, w, f, sx;
+      for (r = r0; r <= r1; r++) {
+        y = oy + r * s;
+        for (c = c0; c <= c1; c++) {
+          cell = r * cols + c; v = cellVar[stB ? invB[cell] : cell]; x = ox + c * s; w = s + ov;
+          if (flipOn) {
+            f = clamp((fel - flipDelay[cell]) / fd, 0, 1);
+            if (f < 1) { if (f < 0.5) v = flipOld[cell]; sx = Math.abs(Math.cos(Math.PI * f)); x += s * (1 - sx) / 2; w = s * sx + ov; }
+          }
+          drawTile(v, x, y, w, s + ov);
+        }
+      }
+    }
+
+    function drawSteady(s) {
+      var vr = visRange(s), c0 = vr[0], c1 = vr[1], r0 = vr[2], r1 = vr[3];
+      var g = grout(s), ov = g > 0 ? 0 : 0.6 / dpr, flipOn = flip.active;
+      var r, c, x, y, w, f, sx;
+      if (flipOn && fFast && z === fZ && ox === fOx && oy === fOy) {
+        /* card flip (fast): old render with turning cells erased, landed tiles, turning tiles */
+        var fel0 = (nowT - flip.t0) / 1000, fd0 = flip.dur, cell0, f0, ov0 = g > 0 ? 0 : 0.6 / dpr;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(cache, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.beginPath();
+        for (r = r0; r <= r1; r++) for (c = c0; c <= c1; c++) {
+          if (fel0 > flipDelay[r * cols + c]) ctx.rect(ox + c * s, oy + r * s, s, s);
+        }
+        ctx.fillStyle = colors.canvas; ctx.fill();
+        dctx = actx;
+        var stB0 = state === "B";
+        for (r = r0; r <= r1; r++) for (c = c0; c <= c1; c++) {
+          cell0 = r * cols + c;
+          if (landed[cell0] || fel0 < flipDelay[cell0] + fd0) continue;
+          landed[cell0] = 1; nLanded++;
+          drawTile(cellVar[stB0 ? invB[cell0] : cell0], ox + c * s, oy + r * s, s + ov0, s + ov0);
+        }
+        dctx = ctx;
+        allLanded = nLanded === (c1 - c0 + 1) * (r1 - r0 + 1);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(arr, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        for (r = r0; r <= r1; r++) for (c = c0; c <= c1; c++) {
+          cell0 = r * cols + c;
+          f0 = (fel0 - flipDelay[cell0]) / fd0;
+          if (f0 <= 0 || f0 >= 1) continue;
+          sx = Math.abs(Math.cos(Math.PI * f0));
+          drawTile(f0 < 0.5 ? flipOld[cell0] : cellVar[stB0 ? invB[cell0] : cell0], ox + c * s + s * (1 - sx) / 2, oy + r * s, s * sx + ov0, s + ov0);
+        }
+        flipOn = false;   /* tint below goes in one draw */
+      } else if (flipOn) {
+        dctx = ctx; renderTiles(s, true);
+      } else {
+        var same = cOk && cState === state && cSolve === solveVer && cW === W && cDpr === dpr;
+        var exact = same && cZ === z && cOx === ox && cOy === oy && cMip === curMip.m && cHi === curHi && (!curHi || cThumb === thumbVer);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        if (!exact && same && tz > z && z !== cZ && (c1 - c0 + 1) * (r1 - r0 + 1) > 1600) {
+          /* zooming in: stretch the last crisp render for a moment, redraw once it settles */
+          var k = z / cZ;
+          ctx.drawImage(cache, (ox - cOx * k) * dpr, (oy - cOy * k) * dpr, cache.width * k, cache.height * k);
+        } else {
+          if (!exact) {
+            if (cache.width !== canvas.width || cache.height !== canvas.height) { cache.width = canvas.width; cache.height = canvas.height; }
+            cctx.setTransform(1, 0, 0, 1, 0, 0);
+            cctx.fillStyle = colors.canvas; cctx.fillRect(0, 0, cache.width, cache.height);
+            cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            cctx.imageSmoothingEnabled = true;
+            dctx = cctx; renderTiles(s, false); dctx = ctx;
+            cOk = true; cState = state; cSolve = solveVer; cZ = z; cOx = ox; cOy = oy; cW = W; cDpr = dpr; cMip = curMip.m; cHi = curHi; cThumb = thumbVer;
+          }
+          ctx.drawImage(cache, 0, 0);
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      if (flipOn) {
+        var fel = (nowT - flip.t0) / 1000, fd = flip.dur;
+        for (r = r0; r <= r1; r++) {
+          y = oy + r * s;
+          for (c = c0; c <= c1; c++) {
+            x = ox + c * s; w = s + ov;
+            f = clamp((fel - flipDelay[r * cols + c]) / fd, 0, 1);
+            if (f < 1) { sx = Math.abs(Math.cos(Math.PI * f)); x += s * (1 - sx) / 2; w = s * sx + ov; }
+            ctx.drawImage(tintCanvas, c * 3 + 1, r * 3 + 1, 1, 1, x, y, w, s + ov);
+          }
+        }
+      } else {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(tintCanvas, c0 * 3, r0 * 3, (c1 - c0 + 1) * 3, (r1 - r0 + 1) * 3, ox + c0 * s, oy + r0 * s, (c1 - c0 + 1) * s, (r1 - r0 + 1) * s);
+        ctx.imageSmoothingEnabled = true;
+      }
+      if (g > 0) {
+        ctx.fillStyle = colors.canvas;
+        for (c = c0; c <= c1 + 1; c++) ctx.fillRect(ox + c * s - g, 0, g * 2, H);
+        for (r = r0; r <= r1 + 1; r++) ctx.fillRect(0, oy + r * s - g, W, g * 2);
+      }
+    }
+
+    function drawMorph(s) {
+      var fromB = morph.from === "B", ov = 0.6 / dpr, vr = visRange(s), i, e, c, r, cell, x, y;
+      if (mFast && (z !== mZ || ox !== mOx || oy !== mOy)) mFast = false;   /* view moved mid-morph */
+      if (mFast) {
+        /* pass 1 (fast): pre-morph render, departed cells erased, arrivals layer on top */
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(cache, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.beginPath();
+        for (i = 0; i < N; i++) {
+          if (mE[i] <= 0) continue;
+          cell = fromB ? permB[i] : i;
+          ctx.rect(ox + (cell % cols) * s, oy + ((cell / cols) | 0) * s, s, s);
+        }
+        ctx.fillStyle = colors.canvas; ctx.fill();
+        dctx = actx;
+        for (i = 0; i < N; i++) {
+          if (landed[i] || mE[i] < 1) continue;
+          landed[i] = 1; nLanded++; cell = fromB ? i : permB[i];
+          drawTile(cellVar[i], ox + (cell % cols) * s, oy + ((cell / cols) | 0) * s, s + ov, s + ov);
+        }
+        dctx = ctx;
+        allLanded = nLanded === N;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(arr, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      } else {
+        /* pass 1: resting tiles (one per cell) */
+        for (r = vr[2]; r <= vr[3]; r++) {
+          y = oy + r * s;
+          for (c = vr[0]; c <= vr[1]; c++) {
+            cell = r * cols + c;
+            var jIn = fromB ? cell : invB[cell], iOut = fromB ? invB[cell] : cell;
+            i = mE[jIn] >= 1 ? jIn : mE[iOut] <= 0 ? iOut : -1;
+            if (i >= 0) drawTile(cellVar[i], ox + c * s, y, s + ov, s + ov);
+          }
+        }
+      }
+      /* the resting tiles' tint in a single draw */
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(tintCanvas, vr[0] * 3, vr[2] * 3, (vr[1] - vr[0] + 1) * 3, (vr[3] - vr[2] + 1) * 3, ox + vr[0] * s, oy + vr[2] * s, (vr[1] - vr[0] + 1) * s, (vr[3] - vr[2] + 1) * s);
+      ctx.imageSmoothingEnabled = true;
+      /* pass 2: tiles in flight on curved paths, lifted towards the viewer. tiles first, then
+         their fading tints, so the draw calls batch by source image */
+      for (i = 0; i < N; i++) {
+        e = mE[i]; flyOn[i] = 0;
+        if (e <= 0 || e >= 1) continue;
+        var a = fromB ? permB[i] : i, b = fromB ? i : permB[i];
+        var ax = (a % cols) + 0.5, ay = ((a / cols) | 0) + 0.5, bx = (b % cols) + 0.5, by = ((b / cols) | 0) + 0.5;
+        var dx = bx - ax, dy = by - ay, len = Math.sqrt(dx * dx + dy * dy) + 2;
+        var cx = (ax + bx) / 2 - dy * fCurve[i] * 1.4, cy = (ay + by) / 2 + dx * fCurve[i] * 1.4 - len * 0.12 * fLift[i];
+        var u = 1 - e, px = u * u * ax + 2 * u * e * cx + e * e * bx, py = u * u * ay + 2 * u * e * cy + e * e * by;
+        var sn = Math.sin(Math.PI * e), size = s * (1 + fLift[i] * sn * 0.9), rot = fRot[i] * sn;
+        var X = ox + px * s, Y = oy + py * s, hs = size / 2;
+        if (X + size < 0 || Y + size < 0 || X - size > W || Y - size > H) continue;
+        var co = Math.cos(rot) * dpr, si = Math.sin(rot) * dpr;
+        ctx.setTransform(co, si, -si, co, X * dpr, Y * dpr);
+        drawTile(cellVar[i], -hs, -hs, size, size);
+        if (sn < 0.8) { flyOn[i] = 1; flyX[i] = X; flyY[i] = Y; flyS[i] = size; flyCo[i] = co; flySi[i] = si; }
+      }
+      for (i = 0; i < N; i++) {
+        if (!flyOn[i]) continue;
+        var h2 = flyS[i] / 2;
+        ctx.setTransform(flyCo[i], flySi[i], -flySi[i], flyCo[i], flyX[i] * dpr, flyY[i] * dpr);
+        ctx.drawImage(tintFly, (i % cols) * 3 + 1, ((i / cols) | 0) * 3 + 1, 1, 1, -h2, -h2, flyS[i], flyS[i]);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    /* hover / keyboard cursor: outline the tile, and faintly every other tile cut from the same photo */
+    function tileAtCell(cell) { return state === "B" ? invB[cell] : cell; }
+    function drawMarks(s) {
+      var mark = cursorCell >= 0 ? cursorCell : hoverCell;
+      if (mark < 0 || intro.active) return;
+      var p = tilePhoto[tileAtCell(mark)], vr = visRange(s), g = grout(s);
+      ctx.beginPath();
+      for (var r = vr[2]; r <= vr[3]; r++) {
+        for (var c = vr[0]; c <= vr[1]; c++) {
+          var cell = r * cols + c;
+          if (cell !== mark && tilePhoto[tileAtCell(cell)] === p) ctx.rect(ox + c * s + g + 0.5, oy + r * s + g + 0.5, s - g * 2 - 1, s - g * 2 - 1);
+        }
+      }
+      ctx.strokeStyle = colors.accent; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      var mx = ox + (mark % cols) * s, my = oy + ((mark / cols) | 0) * s, lw = s > 24 ? 3 : 2;
+      ctx.lineWidth = lw;
+      ctx.strokeRect(mx - lw / 2, my - lw / 2, s + lw, s + lw);
+    }
+
+    /* =====================================================================
+       11. animations: intro, morph, shuffle flip, lens
+       ===================================================================== */
+    function startIntro() {
+      if (reduced || !heroVisible) { requestFrame(); return; }
+      var rnd = mulberry32(11), fx = cols * 0.5, fy = rows * 0.4, maxD = Math.sqrt(fx * fx + (rows - fy) * (rows - fy));
+      for (var i = 0; i < N; i++) {
+        var dx = (i % cols) - fx, dy = ((i / cols) | 0) - fy;
+        introDelay[i] = Math.sqrt(dx * dx + dy * dy) / maxD * 0.95 + rnd() * 0.18;
+        appear[i] = 0;
+      }
+      intro.active = true; intro.phase2 = false; intro.t0 = performance.now();
+      requestFrame();
+    }
+    function stepIntro(t) {
+      var el = (t - intro.t0) / 1000;
+      if (el >= 0.54 && !ready) { intro.t0 = t - 540; return true; }   /* hold the finest pixel step until the tiles are solved */
+      if (el < 0.54) return true;
+      if (!intro.phase2) intro.phase2 = true;
+      var e2 = el - 0.54, done = true;
+      for (var i = 0; i < N; i++) {
+        var a = clamp((e2 - introDelay[i]) / 0.55, 0, 1);
+        appear[i] = easeOut(a);
+        if (a < 1) done = false;
+      }
+      tintDirty = true;
+      if (done) { intro.active = false; appear.fill(1); }
+      return true;
+    }
+
+    function worldFromElement(el) {
+      var fr = canvas.getBoundingClientRect(), br = el.getBoundingClientRect();
+      var px = clamp(br.left + br.width / 2 - fr.left, 0, W), py = clamp(br.top + br.height / 2 - fr.top, 0, H);
+      var s = baseS * z;
+      return [(px - ox) / s, (py - oy) / s];
+    }
+
+    function snapshot() {
+      var c = document.createElement("canvas"); c.width = canvas.width; c.height = canvas.height;
+      c.getContext("2d").drawImage(canvas, 0, 0);
+      return c;
+    }
+
+    function setGoofy(on, originEl) {
+      var to = on ? "B" : "A";
+      if (!ready) return;
+      if (morph.active || flip.active || solving) return;
+      if (to === state) return;
+      goofyBtn.setAttribute("aria-pressed", on ? "true" : "false");
+      eggEl.textContent = on ? DATA.egg : "";
+      eggEl.classList.toggle("is-on", on);
+      var study = $("study"), studyBtn = $("study-btn");
+      studyBtn.setAttribute("aria-pressed", on ? "true" : "false");
+      studyBtn.setAttribute("aria-label", on ? "swap back to the regular portrait" : "swap to the goofy portrait");
+      if (on) study.classList.add("found");
+      canvas.setAttribute("aria-label", on
+        ? "andy's goofy portrait (" + DATA.photoAltDims.scene + "), made of " + NP + " photos cut into small tiles"
+        : "a portrait of andy made of " + NP + " photos, cut into small tiles");
+      hideTip(); hoverCell = -1;
+      if (intro.active) { intro.active = false; appear.fill(1); }
+      if (reduced || !heroVisible) {
+        if (heroVisible) { xfade.snap = snapshot(); xfade.t0 = performance.now(); xfade.active = true; }
+        state = to; tintDirty = true; requestFrame();
+        return;
+      }
+      /* delays ripple out from the control that triggered it (clamped onto the canvas) */
+      var org = worldFromElement(originEl || goofyBtn), fromB = state === "B", maxD = 1;
+      var i, a, ax, ay, d;
+      for (i = 0; i < N; i++) {
+        a = fromB ? permB[i] : i; ax = (a % cols) + 0.5 - org[0]; ay = ((a / cols) | 0) + 0.5 - org[1];
+        d = Math.sqrt(ax * ax + ay * ay); mDelay[i] = d; if (d > maxD) maxD = d;
+      }
+      var spread = morph.dur - morph.fly;
+      for (i = 0; i < N; i++) { mDelay[i] = (mDelay[i] / maxD * 0.8 + fJit[i] * 0.2) * spread; mE[i] = 0; }
+      morph.from = state; morph.to = to; morph.t0 = performance.now(); morph.active = true;
+      mFast = cOk && cState === state && cSolve === solveVer && cZ === z && cOx === ox && cOy === oy && cW === W && cDpr === dpr;
+      mZ = z; mOx = ox; mOy = oy;
+      if (mFast) prepArrivals();
+      goofyBtn.setAttribute("aria-disabled", "true");
+      tintDirty = true;
+      requestFrame();
+    }
+    function stepMorph(t) {
+      var el = (t - morph.t0) / 1000, fly = morph.fly;
+      for (var i = 0; i < N; i++) mE[i] = easeIO(clamp((el - mDelay[i]) / fly, 0, 1));
+      tintDirty = true;
+      var fastOk = mFast && z === mZ && ox === mOx && oy === mOy;
+      if (el >= morph.dur + 0.02 && (!fastOk || allLanded)) {
+        morph.active = false; state = morph.to;
+        goofyBtn.removeAttribute("aria-disabled");
+        if (fastOk) adoptArrivals();
+      }
+      return true;
+    }
+
+    /* the arrivals layer holds every tile at its new cell: make it the resting cache */
+    function adoptArrivals() {
+      cctx.setTransform(1, 0, 0, 1, 0, 0);
+      cctx.fillStyle = colors.canvas; cctx.fillRect(0, 0, cache.width, cache.height);
+      cctx.drawImage(arr, 0, 0);
+      cState = state; cSolve = solveVer;
+    }
+    function prepArrivals() {
+      if (arr.width !== canvas.width || arr.height !== canvas.height) { arr.width = canvas.width; arr.height = canvas.height; }
+      actx.setTransform(1, 0, 0, 1, 0, 0); actx.clearRect(0, 0, arr.width, arr.height);
+      actx.setTransform(dpr, 0, 0, dpr, 0, 0); actx.imageSmoothingEnabled = true;
+      landed.fill(0); nLanded = 0; allLanded = false;
+    }
+
+    function shuffle(originEl) {
+      if (!ready || morph.active || flip.active || solving) return;
+      solving = true;
+      shuffleBtn.setAttribute("aria-disabled", "true");
+      requestSolve((Math.random() * 1e9) | 0, function (r) {
+        solving = false;
+        var old = new Int16Array(N), stB = state === "B", c;
+        for (c = 0; c < N; c++) old[c] = cellVar[stB ? invB[c] : c];
+        fFast = cOk && cState === state && cSolve === solveVer && cZ === z && cOx === ox && cOy === oy && cW === W && cDpr === dpr;
+        applySolution(r);
+        updateCounts();
+        applyLens(true);
+        if (reduced || !heroVisible) {
+          if (heroVisible) { xfade.snap = snapshot(); xfade.t0 = performance.now(); xfade.active = true; }
+          shuffleBtn.removeAttribute("aria-disabled");
+          tintDirty = true; requestFrame(); return;
+        }
+        flipOld.set(old);
+        var org = worldFromElement(originEl || shuffleBtn), maxD = 1, d, dx, dy;
+        for (c = 0; c < N; c++) { dx = (c % cols) + 0.5 - org[0]; dy = ((c / cols) | 0) + 0.5 - org[1]; d = Math.sqrt(dx * dx + dy * dy); flipDelay[c] = d; if (d > maxD) maxD = d; }
+        for (c = 0; c < N; c++) flipDelay[c] = (flipDelay[c] / maxD * 0.85 + Math.random() * 0.15) * flip.span;
+        if (fFast) { prepArrivals(); fZ = z; fOx = ox; fOy = oy; }
+        flip.t0 = performance.now(); flip.active = true;
+        tintDirty = true;
+        requestFrame();
+      });
+    }
+    function stepFlip(t) {
+      tintDirty = true;
+      var fastOk = fFast && z === fZ && ox === fOx && oy === fOy;
+      if ((t - flip.t0) / 1000 > flip.span + flip.dur + 0.02 && (!fastOk || allLanded)) {
+        flip.active = false; shuffleBtn.removeAttribute("aria-disabled");
+        if (fastOk) adoptArrivals();
+      }
+      return true;
+    }
+
+    function stepLens(dt) {
+      var k = reduced ? 1 : 1 - Math.exp(-dt * 11), moving = false, on = lens.on, mask = lens.mask;
+      for (var i = 0; i < N; i++) {
+        var hit = on && mask[tilePhoto[i]] === 1, td = on && !hit ? 1 : 0, tc = hit ? 1 : 0;
+        var d1 = td - dimCur[i], d2 = tc - clrCur[i];
+        if (d1 > 0.003 || d1 < -0.003) { dimCur[i] += d1 * k; moving = true; } else dimCur[i] = td;
+        if (d2 > 0.003 || d2 < -0.003) { clrCur[i] += d2 * k; moving = true; } else clrCur[i] = tc;
+      }
+      return moving;
+    }
+
+    /* =====================================================================
+       12. chapter lens
+       ===================================================================== */
+    function updateCounts() {
+      CH.forEach(function (ch) {
+        document.querySelectorAll('[data-pct="' + ch.id + '"]').forEach(function (el) { el.textContent = pct(ch.tiles, N); });
+        var seg = document.querySelector('#comp i[data-ch="' + ch.id + '"]');
+        if (seg) seg.style.flexGrow = String(Math.max(1, ch.tiles));
+      });
+    }
+    function lensTarget() { return lens.preview || lens.pinned; }
+    function applyLens(instant) {
+      var tgt = lensTarget();
+      lens.mask.fill(0);
+      lens.on = !!tgt;
+      if (tgt) {
+        if (tgt.ch) CH[chIndex[tgt.ch]].photos.forEach(function (p) { lens.mask[p] = 1; });
+        else lens.mask[tgt.photo] = 1;
+      }
+      lensBtns.forEach(function (b) { b.setAttribute("aria-pressed", lens.pinned && lens.pinned.ch === b.dataset.ch ? "true" : "false"); });
+      compSegs.forEach(function (sg) { sg.classList.toggle("is-on", !!tgt && tgt.ch === sg.dataset.ch); });
+      renderLensRead();
+      if (!ready) return;
+      if (instant) { lens.anim = false; stepLens(1); }
+      else lens.anim = true;
+      tintDirty = true;
+      requestFrame();
+    }
+    function renderLensRead() {
+      var tgt = lensTarget();
+      lensRead.textContent = "";
+      if (!tgt) {
+        lensRead.appendChild(document.createTextNode(ready ? (hoverMQ.matches ? "hover" : "tap") + " a chapter to light up its tiles." : ""));
+        return;
+      }
+      var name, verb, n;
+      if (tgt.ch) { var ch = CH[chIndex[tgt.ch]]; name = ch.phrase; verb = ch.verb; n = ch.tiles; }
+      else { var p = P[tgt.photo]; name = "“" + p.title + "”"; verb = "is"; n = p.tiles; }
+      var b = document.createElement("b"); b.textContent = name;
+      var sp = document.createElement("span"); sp.className = "pct"; sp.textContent = pct(n, N);
+      lensRead.appendChild(b);
+      lensRead.appendChild(document.createTextNode(" " + verb + " "));
+      lensRead.appendChild(sp);
+      lensRead.appendChild(document.createTextNode(" of my face (" + fmt(n) + " tiles)"));
+      if (lens.pinned) {
+        var clr = document.createElement("button");
+        clr.type = "button"; clr.className = "lens-clear"; clr.textContent = "clear";
+        clr.addEventListener("click", function () { lens.pinned = null; lens.preview = null; applyLens(); });
+        lensRead.appendChild(clr);
+      }
+    }
+    lensBtns.forEach(function (b) {
+      var id = b.dataset.ch;
+      b.addEventListener("click", function () {
+        lens.pinned = lens.pinned && lens.pinned.ch === id ? null : { ch: id };
+        lens.preview = null; applyLens();
+      });
+      b.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") { lens.preview = { ch: id }; applyLens(); } });
+      b.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") { lens.preview = null; applyLens(); } });
+      b.addEventListener("focus", function () { if (b.matches(":focus-visible")) { lens.preview = { ch: id }; applyLens(); } });
+      b.addEventListener("blur", function () { if (lens.preview) { lens.preview = null; applyLens(); } });
+    });
+    renderLensRead();
+
+    /* from anywhere on the page: scroll up to the portrait and light up a chapter or a photo */
+    function lensFromPage(target, focusEl) {
+      lens.pinned = target; lens.preview = null;
+      var top = frame.getBoundingClientRect().top + window.scrollY - 24;
+      window.scrollTo({ top: Math.max(0, top), behavior: reduced ? "auto" : "smooth" });
+      setTimeout(function () { applyLens(); }, reduced ? 0 : 380);
+      var btn = target.ch ? document.querySelector('.lens-btn[data-ch="' + target.ch + '"]') : canvas;
+      if (btn && focusEl !== false) setTimeout(function () { btn.focus({ preventScroll: true }); }, reduced ? 0 : 700);
+    }
+    document.querySelectorAll("[data-lens]").forEach(function (b) {
+      b.addEventListener("click", function () { lensFromPage({ ch: b.dataset.lens }); });
+    });
+
+    /* =====================================================================
+       13. goofy + shuffle + zoom buttons
+       ===================================================================== */
+    goofyBtn.addEventListener("click", function () { setGoofy(state === "A", goofyBtn); });
+    $("study-btn").addEventListener("click", function () { setGoofy(state === "A", goofyBtn); });
+    shuffleBtn.addEventListener("click", function () { shuffle(shuffleBtn); });
+    $("zin").addEventListener("click", function () { zoomAt(W / 2, H / 2, tz * 1.9); if (!engaged) setEngaged(true); });
+    $("zout").addEventListener("click", function () { zoomAt(W / 2, H / 2, tz / 1.9); });
+    $("zfit").addEventListener("click", function () { resetView(); setEngaged(false); });
+    exploreBtn.addEventListener("click", function () {
+      if (engaged) { setEngaged(false); resetView(); } else setEngaged(true);
+    });
+
+    /* =====================================================================
+       14. pointer: hover, click, drag, pinch, wheel
+       ===================================================================== */
+    function cellAt(px, py) {
+      var s = baseS * z, c = Math.floor((px - ox) / s), r = Math.floor((py - oy) / s);
+      return c < 0 || r < 0 || c >= cols || r >= rows ? -1 : r * cols + c;
+    }
+    function localXY(e) { var r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+
+    function chapterLabel(p) { var ch = CH[p.chi]; return ch.name + (ch.year ? " · " + ch.year : ""); }
+    var tipPhoto = -1;
+    function showTip(cell, clientX, clientY) {
+      var p = P[tilePhoto[tileAtCell(cell)]];
+      if (tipPhoto !== p.i) {
+        tipPhoto = p.i;
+        tipImg.src = p.thumb; tipImg.alt = p.alt;
+        tipK.textContent = chapterLabel(p) + " · frame " + pad2(p.frame);
+        tipT.textContent = p.title;
+        tipS.textContent = p.sub || ""; tipS.style.display = p.sub ? "" : "none";
+        tipM.textContent = "in " + fmt(p.tiles) + " tiles · click to open";
+      }
+      var tw = 232, th = tip.offsetHeight || 230, x = clientX + 18, y = clientY + 18;
+      if (x + tw > window.innerWidth - 8) x = clientX - tw - 18;
+      if (y + th > window.innerHeight - 8) y = clientY - th - 18;
+      tip.style.transform = "translate3d(" + Math.max(8, x) + "px," + Math.max(8, y) + "px,0)";
+      tip.classList.add("is-on");
+      var r = (cell / cols) | 0, c = cell % cols;
+      readoutEl.textContent = "r" + pad2(r + 1) + " c" + pad2(c + 1) + " · " + CH[p.chi].name;
+    }
+    window.addEventListener("scroll", function () {
+      if (hoverCell >= 0 || tip.classList.contains("is-on")) { hoverCell = -1; hideTip(); requestFrame(); }
+    }, { passive: true });
+    function hideTip() { tip.classList.remove("is-on"); readoutEl.textContent = hoverMQ.matches ? "hover a tile" : "tap a tile"; }
+    hideTip();
+
+    var ptrs = {}, nPtr = 0, drag = null, pinch = null;
+    canvas.addEventListener("pointerdown", function (e) {
+      if (!ready || e.button > 0) return;
+      var xy = localXY(e);
+      ptrs[e.pointerId] = { x: xy[0], y: xy[1] }; nPtr++;
+      if (nPtr === 1) {
+        drag = { x0: xy[0], y0: xy[1], lx: xy[0], ly: xy[1], t0: performance.now(), moved: false, type: e.pointerType, pan: e.pointerType === "mouse" ? tz > 1.001 : (engaged || tz > 1.001) };
+        if (drag.pan || e.pointerType === "mouse") { try { canvas.setPointerCapture(e.pointerId); } catch (er) {} }
+      } else if (nPtr === 2) {
+        var ids = Object.keys(ptrs), p1 = ptrs[ids[0]], p2 = ptrs[ids[1]];
+        pinch = { d0: Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1, z0: tz, mx: (p1.x + p2.x) / 2, my: (p1.y + p2.y) / 2 };
+        if (drag) drag.moved = true;
+        if (!engaged) setEngaged(true);
+        hideTip();
+      }
+    });
+    canvas.addEventListener("pointermove", function (e) {
+      if (!ready) return;
+      var xy = localXY(e);
+      if (ptrs[e.pointerId]) { ptrs[e.pointerId].x = xy[0]; ptrs[e.pointerId].y = xy[1]; }
+      if (pinch && nPtr >= 2) {
+        var ids = Object.keys(ptrs), p1 = ptrs[ids[0]], p2 = ptrs[ids[1]];
+        var d = Math.hypot(p2.x - p1.x, p2.y - p1.y), mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+        tox += mx - pinch.mx; toy += my - pinch.my; pinch.mx = mx; pinch.my = my;
+        zoomAt(mx, my, pinch.z0 * d / pinch.d0);
+        z = tz; ox = tox; oy = toy;
+        return;
+      }
+      if (drag && nPtr === 1) {
+        var dx = xy[0] - drag.lx, dy = xy[1] - drag.ly;
+        if (Math.abs(xy[0] - drag.x0) + Math.abs(xy[1] - drag.y0) > 6) drag.moved = true;
+        if (drag.pan && drag.moved) {
+          frame.classList.add("is-dragging");
+          tox += dx; toy += dy; clampView(); ox = tox; oy = toy;
+          hideTip(); hoverCell = -1;
+          requestFrame();
+        }
+        drag.lx = xy[0]; drag.ly = xy[1];
+        if (drag.pan) return;
+      }
+      if (e.pointerType === "mouse" && !morph.active && !intro.active) {
+        var cell = cellAt(xy[0], xy[1]);
+        cursorCell = -1;
+        if (cell !== hoverCell) { hoverCell = cell; requestFrame(); }
+        if (cell >= 0) showTip(cell, e.clientX, e.clientY); else hideTip();
+      }
+    });
+    function endPointer(e) {
+      if (!ptrs[e.pointerId]) return;
+      delete ptrs[e.pointerId]; nPtr = Math.max(0, nPtr - 1);
+      if (nPtr < 2) pinch = null;
+      if (nPtr === 0) {
+        frame.classList.remove("is-dragging");
+        if (drag && !drag.moved && e.type === "pointerup" && performance.now() - drag.t0 < 600 && !morph.active) {
+          var xy = localXY(e), cell = cellAt(xy[0], xy[1]);
+          if (cell >= 0) openLightbox(tilePhoto[tileAtCell(cell)], canvas);
+        }
+        drag = null;
+      }
+    }
+    canvas.addEventListener("pointerup", endPointer);
+    canvas.addEventListener("pointercancel", endPointer);
+    canvas.addEventListener("pointerleave", function (e) {
+      if (e.pointerType === "mouse") { hoverCell = -1; hideTip(); requestFrame(); }
+      if (engaged && tz <= 1.001 && e.pointerType === "mouse" && nPtr === 0) setEngaged(false);
+    });
+    /* two fingers on the portrait = pinch it, not the page */
+    canvas.addEventListener("touchstart", function (e) { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, { passive: false });
+    canvas.addEventListener("touchmove", function (e) { if ((e.touches.length > 1 || engaged) && e.cancelable) e.preventDefault(); }, { passive: false });
+
+    canvas.addEventListener("wheel", function (e) {
+      if (!ready) return;
+      var pinchy = e.ctrlKey || e.metaKey;
+      if (!pinchy && !engaged) {
+        if (performance.now() - lastHint < 9000) return;
+        lastHint = performance.now();
+        flashHint(/Mac|iPhone|iPad/.test(navigator.platform) ? "hold ⌘ and scroll to zoom, or hit explore" : "hold ctrl and scroll to zoom, or hit explore");
+        return;
+      }
+      e.preventDefault();
+      var dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H : 1);
+      var f = pinchy ? Math.exp(-clamp(dy, -40, 40) * 0.012) : Math.exp(-clamp(dy, -120, 120) * 0.0022);
+      var xy = localXY(e);
+      zoomAt(xy[0], xy[1], tz * f);
+      if (!engaged) setEngaged(true);
+    }, { passive: false });
+
+    /* keyboard: arrow keys walk a cursor over the tiles */
+    canvas.addEventListener("keydown", function (e) {
+      if (!ready) return;
+      var k = e.key, handled = true;
+      if (cursorCell < 0 && /^Arrow/.test(k)) cursorCell = Math.round(rows * 0.4) * cols + (cols >> 1);
+      var r = (cursorCell / cols) | 0, c = cursorCell % cols;
+      if (k === "ArrowLeft") c = Math.max(0, c - 1);
+      else if (k === "ArrowRight") c = Math.min(cols - 1, c + 1);
+      else if (k === "ArrowUp") r = Math.max(0, r - 1);
+      else if (k === "ArrowDown") r = Math.min(rows - 1, r + 1);
+      else if ((k === "Enter" || k === " ") && cursorCell >= 0) { openLightbox(tilePhoto[tileAtCell(cursorCell)], canvas); }
+      else if (k === "+" || k === "=") { var sp = cursorPx(); zoomAt(sp[0], sp[1], tz * 1.6); }
+      else if (k === "-" || k === "_") { var sp2 = cursorPx(); zoomAt(sp2[0], sp2[1], tz / 1.6); }
+      else if (k === "0") resetView();
+      else if (k === "Escape") { cursorCell = -1; hideTip(); setEngaged(false); resetView(); }
+      else handled = false;
+      if (!handled) return;
+      e.preventDefault();
+      if (/^Arrow/.test(k)) {
+        cursorCell = r * cols + c; hoverCell = -1;
+        keepCursorVisible();
+        var p = P[tilePhoto[tileAtCell(cursorCell)]];
+        liveEl.textContent = p.title + ", " + chapterLabel(p) + ". row " + (r + 1) + ", column " + (c + 1) + ".";
+        var sp3 = cursorPx(), fr = canvas.getBoundingClientRect();
+        if (hoverMQ.matches) showTip(cursorCell, fr.left + sp3[0] + baseS * z, fr.top + sp3[1] + baseS * z);
+      }
+      requestFrame();
+    });
+    canvas.addEventListener("blur", function () { cursorCell = -1; hideTip(); requestFrame(); });
+    function cursorPx() {
+      if (cursorCell < 0) return [W / 2, H / 2];
+      var s = baseS * tz;
+      return [tox + (cursorCell % cols + 0.5) * s, toy + (((cursorCell / cols) | 0) + 0.5) * s];
+    }
+    function keepCursorVisible() {
+      var s = baseS * tz, cx = (cursorCell % cols) * s, cy = ((cursorCell / cols) | 0) * s, m = s * 1.5;
+      if (tox + cx < m) tox = m - cx; if (tox + cx + s > W - m) tox = W - m - s - cx;
+      if (toy + cy < m) toy = m - cy; if (toy + cy + s > H - m) toy = H - m - s - cy;
+      clampView();
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && engaged && !lb.open) { setEngaged(false); resetView(); }
+    });
+
+    if ("ResizeObserver" in window) new ResizeObserver(function () { if (tintCtx) resize(); }).observe(frame);
+    else window.addEventListener("resize", function () { if (tintCtx) resize(); });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (en) { heroVisible = en[0].isIntersecting; }, { threshold: 0.05 }).observe(frame);
+    }
+
+    /* =====================================================================
+       15. lightbox
+       ===================================================================== */
+    var lb = $("lb"), lbImg = $("lb-img"), lbLoad = $("lb-load"), lbCur = -1, lbOpener = null, lbFull = null;
+    function openLightbox(pi, opener) {
+      lbOpener = opener || document.activeElement;
+      fillLightbox(pi);
+      if (!lb.open) {
+        hideTip();
+        if (typeof lb.showModal === "function") lb.showModal(); else lb.setAttribute("open", "");
+        root.classList.add("lb-open");
+        $("lb-x").focus();
+      }
+    }
+    function closeLightbox() {
+      if (lb.open) { if (typeof lb.close === "function") lb.close(); else lb.removeAttribute("open"); }
+    }
+    lb.addEventListener("close", function () {
+      root.classList.remove("lb-open");
+      if (lbOpener && lbOpener.focus) lbOpener.focus({ preventScroll: true });
+    });
+    function fillLightbox(pi) {
+      var p = P[pi], ch = CH[p.chi];
+      lbCur = pi;
+      $("lb-k").textContent = chapterLabel(p) + " · frame " + pad2(p.frame) + "/" + NP;
+      $("lb-t").textContent = p.title;
+      var s = $("lb-s"); s.textContent = p.sub || ""; s.hidden = !p.sub;
+      lbImg.alt = p.alt;
+      lbImg.src = p.thumb; lbImg.classList.add("is-low"); lbLoad.classList.add("is-on");
+      lbFull = new Image();
+      lbFull.decoding = "async";
+      lbFull.onload = function () { if (lbCur === pi) { lbImg.src = p.src; lbImg.classList.remove("is-low"); lbLoad.classList.remove("is-on"); } };
+      lbFull.onerror = function () { if (lbCur === pi) { lbImg.classList.remove("is-low"); lbLoad.classList.remove("is-on"); } };
+      lbFull.src = p.src;
+      var job = $("lb-job"); job.textContent = "";
+      var e = p.gallery ? expByGallery[p.gallery] : null;
+      if (e) {
+        var hd = document.createElement("div"); hd.className = "lb-job-h";
+        var lg = document.createElement("img"); lg.src = e.logo; lg.alt = e.company + " logo"; lg.width = 34; lg.height = 34;
+        var nm = document.createElement("b"); nm.textContent = e.company;
+        hd.appendChild(lg); hd.appendChild(nm); job.appendChild(hd);
+        e.roles.forEach(function (r) {
+          var rr = document.createElement("p"); rr.className = "lb-job-r";
+          rr.textContent = r.title + (r.team ? " · " + r.team : "");
+          var sp = document.createElement("span"); sp.textContent = r.dates + " · " + r.location;
+          rr.appendChild(sp); job.appendChild(rr);
+        });
+        var g = DATA.galleries[p.gallery], gp = document.createElement("p"); gp.className = "lb-job-g";
+        gp.textContent = g.title + ": " + g.subtitle;
+        job.appendChild(gp);
+        job.hidden = false;
+      } else job.hidden = true;
+      $("lb-c").textContent = "cut into " + fmt(p.tiles) + " tiles, " + pct(p.tiles, N) + " of my face";
+      var list = ch.photos, k = list.indexOf(pi);
+      $("lb-pos").textContent = pad2(k + 1) + " / " + pad2(list.length) + " in " + ch.name;
+      $("lb-prev").disabled = $("lb-next").disabled = list.length < 2;
+    }
+    function stepLightbox(dir) {
+      var list = CH[P[lbCur].chi].photos, k = list.indexOf(lbCur);
+      fillLightbox(list[(k + dir + list.length) % list.length]);
+    }
+    $("lb-x").addEventListener("click", closeLightbox);
+    $("lb-prev").addEventListener("click", function () { stepLightbox(-1); });
+    $("lb-next").addEventListener("click", function () { stepLightbox(1); });
+    $("lb-find").addEventListener("click", function () {
+      var pi = lbCur; lbOpener = null; closeLightbox();
+      lensFromPage({ photo: pi }, false);
+      setTimeout(function () { canvas.focus({ preventScroll: true }); }, reduced ? 0 : 700);
+    });
+    lb.addEventListener("click", function (e) { if (e.target === lb) closeLightbox(); });
+    lb.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") { e.preventDefault(); stepLightbox(-1); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); stepLightbox(1); }
+    });
+    var swipe = null;
+    $("lb-fig").addEventListener("pointerdown", function (e) { swipe = { x: e.clientX, y: e.clientY }; });
+    $("lb-fig").addEventListener("pointerup", function (e) {
+      if (!swipe) return;
+      var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y; swipe = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) stepLightbox(dx < 0 ? 1 : -1);
+    });
+    document.querySelectorAll("[data-open]").forEach(function (b) {
+      b.addEventListener("click", function () { openLightbox(+b.dataset.open, b); });
+    });
+  })();
+  </script>
+</body>
+</html>

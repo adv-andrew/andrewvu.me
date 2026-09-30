@@ -345,6 +345,66 @@ custom_pages = [
             "image": urljoin(url, "/assets/me.jpg"),
         },
     },
+    {
+        "template": "redesigns/zoom.html",
+        "output": ("zoom.html",),
+        "title": f"{title_name} | Zoom",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/zoom"),
+            "title": f"{title_name} | Zoom",
+            "description": f"an infinite zoom through {title_name}'s photos (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
+        "template": "redesigns/mosaic.html",
+        "output": ("mosaic.html",),
+        "title": f"{title_name} | Mosaic",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/mosaic"),
+            "title": f"{title_name} | Mosaic",
+            "description": f"a portrait of {title_name} made of {title_name}'s photos (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
+        "template": "redesigns/cards.html",
+        "output": ("cards.html",),
+        "title": f"{title_name} | Cards",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/cards"),
+            "title": f"{title_name} | Cards",
+            "description": f"{title_name}'s photos as a trading card game (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
+        "template": "redesigns/darkroom.html",
+        "output": ("darkroom.html",),
+        "title": f"{title_name} | Darkroom",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/darkroom"),
+            "title": f"{title_name} | Darkroom",
+            "description": f"{title_name}'s photos in a darkroom (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
+    {
+        "template": "redesigns/museum.html",
+        "output": ("museum.html",),
+        "title": f"{title_name} | Museum",
+        "seo": {
+            **seo_common,
+            "url": urljoin(url, "/museum"),
+            "title": f"{title_name} | Museum",
+            "description": f"the {title_name} retrospective, a museum of photos (prototype)",
+            "image": urljoin(url, "/assets/me.jpg"),
+        },
+    },
 ]
 
 for page in custom_pages:

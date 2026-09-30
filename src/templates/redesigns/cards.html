@@ -1,0 +1,2496 @@
+{% import "redesigns/data.html" as d %}<!doctype html>
+{#-
+  /cards — "ANDY VU TCG": my life as a trading card game.
+  Every photo is a holo card, every chapter is a booster pack, and the page is a card shop
+  playmat where you rip packs and fill a binder. All content comes from redesigns/data.html.
+
+  file map:
+    1. head: theme boot, fonts
+    2. css: tokens · playmat · chrome · hero/player card · packs · career checklist · binder
+            · cards (frame, foil, back) · opener · inspect · deck list · worlds · trades · footer
+    3. markup: versions strip · top bar · hero · shelf+checklist · binder · deck list · worlds
+               · trade partners · expansions · footer · dialogs · svg sprite
+    4. js: data model (sets, rarity, packs) · collection · tilt engine · rack · binder
+           · pack opener · inspect · toasts · misc
+-#}
+{%- set cur = d.experience|selectattr("current")|first -%}
+{%- set cur_role = cur.roles[0].title ~ " @ " ~ cur.company -%}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script>
+    /* theme before first paint. cards defaults to the dark playmat. */
+    (function () {
+      var h = document.documentElement, t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (t === "dark" || t === null) h.classList.add("dark");
+      var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce) h.classList.add("intro");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ title }}</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Archivo:wdth,wght@62..125,400..800&family=Newsreader:ital,opsz,wght@1,6..72,400..600&family=Martian+Mono:wdth,wght@75..112.5,400..600&display=swap" rel="stylesheet">
+  <style>
+    /* =====================================================================
+       1. tokens — light = bright card shop / white binder, dark = velvet playmat
+       ===================================================================== */
+    :root {
+      color-scheme: light;
+      --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+      --f-ui: "Archivo", "Helvetica Neue", Arial, sans-serif;
+      --f-flavor: "Newsreader", Georgia, "Times New Roman", serif;
+      --f-mono: "Martian Mono", ui-monospace, Consolas, monospace;
+      --ease-out: cubic-bezier(.2, .8, .2, 1);
+      --ease-back: cubic-bezier(.34, 1.56, .64, 1);
+      --ease-deal: cubic-bezier(.18, .9, .22, 1.08);
+
+      --bg: #efe8da;
+      --mat-1: #fbf7ef;
+      --mat-2: #efe6d4;
+      --mat-3: #e0d3ba;
+      --spot: rgba(255, 206, 130, .55);
+      --grain-blend: multiply;
+      --grain-op: .35;
+      --ink: #1d1b17;
+      --ink-2: #57524a;
+      --ink-3: #8a8274;
+      --line: rgba(29, 27, 23, .13);
+      --line-2: rgba(29, 27, 23, .26);
+      --panel: rgba(255, 253, 248, .74);
+      --panel-2: rgba(255, 253, 248, .92);
+      --paper: #fdfaf3;
+      --paper-2: #f3ecdc;
+      --paper-ink: #1f1c17;
+      --paper-ink-2: #5d574b;
+      --paper-line: rgba(31, 28, 23, .14);
+      --gold: #9c6d14;
+      --gold-hi: #e4b44d;
+      --accent: #d8412a;
+      --accent-ink: #fff;
+      --chip: rgba(29, 27, 23, .06);
+      --binder: #fbfbf9;
+      --binder-edge: #d9d5cb;
+      --page: #eeece6;
+      --pocket: rgba(255, 255, 255, .6);
+      --pocket-line: rgba(29, 27, 23, .12);
+      --zone: rgba(29, 27, 23, .13);
+      --shadow-lg: 0 30px 60px -30px rgba(70, 45, 10, .45), 0 10px 24px -14px rgba(70, 45, 10, .3);
+      --shadow-md: 0 14px 30px -16px rgba(70, 45, 10, .45);
+      --focus: #1b64d8;
+      --scrim: rgba(40, 30, 15, .55);
+    }
+    html.dark {
+      color-scheme: dark;
+      --bg: #06120e;
+      --mat-1: #164a3c;
+      --mat-2: #0c2d24;
+      --mat-3: #04120d;
+      --spot: rgba(255, 196, 110, .22);
+      --grain-blend: overlay;
+      --grain-op: .55;
+      --ink: #f3ecd9;
+      --ink-2: #b9c7ba;
+      --ink-3: #809487;
+      --line: rgba(243, 236, 217, .12);
+      --line-2: rgba(243, 236, 217, .26);
+      --panel: rgba(3, 14, 10, .5);
+      --panel-2: rgba(6, 20, 15, .86);
+      --paper: #ece5d2;
+      --paper-2: #e0d7c0;
+      --gold: #f1c45c;
+      --gold-hi: #ffe3a0;
+      --accent: #ff6b4d;
+      --accent-ink: #1a0d08;
+      --chip: rgba(243, 236, 217, .08);
+      --binder: #16181b;
+      --binder-edge: #2b2e33;
+      --page: #1f2226;
+      --pocket: rgba(255, 255, 255, .035);
+      --pocket-line: rgba(255, 255, 255, .09);
+      --zone: rgba(243, 236, 217, .1);
+      --shadow-lg: 0 34px 70px -30px rgba(0, 0, 0, .85), 0 12px 26px -14px rgba(0, 0, 0, .6);
+      --shadow-md: 0 16px 32px -16px rgba(0, 0, 0, .8);
+      --focus: #ffd166;
+      --scrim: rgba(1, 8, 6, .72);
+    }
+
+    /* set colors: frame gradient (s1 → s2) + light ink (s3). cards keep these in both modes. */
+    [data-set="origin"]     { --s1: #f4b746; --s2: #8a4610; --s3: #fff3d6; }
+    [data-set="gatorai"]    { --s1: #ff6c2c; --s2: #1c3aa8; --s3: #fff1e8; }
+    [data-set="adtran"]     { --s1: #2fc7e6; --s2: #0a4863; --s3: #e6fbff; }
+    [data-set="nvidia"]     { --s1: #92d31c; --s2: #1d3a05; --s3: #f2ffe0; }
+    [data-set="asia"]       { --s1: #f04d61; --s2: #5c0c24; --s3: #fff0f2; }
+    [data-set="usa"]        { --s1: #4f8af2; --s2: #0d2257; --s3: #eef4ff; }
+    [data-set="promo"]      { --s1: #a77dff; --s2: #2a1162; --s3: #f4eeff; }
+    [data-set="career"]     { --s1: #bcc5cf; --s2: #2a3037; --s3: #f3f6f9; }
+    [data-set="prerelease"] { --s1: #ffa449; --s2: #8a3306; --s3: #fff4e8; }
+
+    /* =====================================================================
+       2. base + playmat
+       ===================================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; -webkit-text-size-adjust: 100%; overflow-x: clip; }
+    html.lock { overflow: hidden; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font: 400 16px/1.55 var(--f-ui);
+      overflow-x: clip;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; }
+    a { color: inherit; }
+    button { font: inherit; color: inherit; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+    .sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    .mat { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(900px 520px at 50% -120px, var(--spot), transparent 72%),
+        radial-gradient(140% 100% at 50% 10%, var(--mat-1) 0%, var(--mat-2) 48%, var(--mat-3) 100%);
+    }
+    .mat::before { /* felt / cardstock grain */
+      content: ""; position: absolute; inset: 0; opacity: var(--grain-op); mix-blend-mode: var(--grain-blend);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .mat::after { /* vignette */
+      content: ""; position: absolute; inset: 0;
+      background: radial-gradient(120% 90% at 50% 30%, transparent 55%, rgba(0,0,0,.28) 100%);
+    }
+    html:not(.dark) .mat::after { background: radial-gradient(120% 90% at 50% 30%, transparent 60%, rgba(120,90,40,.12) 100%); }
+
+    .wrap { width: min(1280px, 100% - 32px); margin-inline: auto; }
+    main { position: relative; }
+    section { position: relative; }
+
+    /* shared type */
+    .eyebrow { margin: 0 0 6px; font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+    .eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--accent); border-radius: 2px; }
+    .h2 { margin: 0; font: 900 clamp(38px, 6vw, 64px)/.9 var(--f-display); letter-spacing: .005em; text-transform: uppercase; }
+    .h2 small { font: 500 12px/1 var(--f-mono); letter-spacing: .04em; color: var(--ink-3); text-transform: none; vertical-align: middle; margin-left: 10px; }
+    .lede { margin: 10px 0 0; color: var(--ink-2); max-width: 60ch; }
+    .sec { padding-block: clamp(56px, 8vw, 96px) 0; }
+    .sec-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 24px; }
+    .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+    .btn {
+      --b: var(--ink);
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 42px; padding: 0 18px; border-radius: 999px;
+      border: 1.5px solid var(--line-2); background: var(--panel-2); color: var(--ink);
+      font: 700 14px/1 var(--f-ui); font-stretch: 92%; letter-spacing: .01em; text-decoration: none;
+      cursor: pointer; transition: transform .18s var(--ease-back), background .2s, border-color .2s, box-shadow .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-2px); border-color: var(--ink-2); box-shadow: var(--shadow-md); }
+    .btn:active { transform: translateY(0) scale(.97); }
+    .btn.primary { background: var(--accent); border-color: transparent; color: var(--accent-ink); box-shadow: 0 10px 24px -12px var(--accent); }
+    .btn.gold { background: linear-gradient(135deg, #7a5410, #f5d27a 35%, #b8841f 60%, #ffe9a8); border-color: rgba(0,0,0,.25); color: #2b1c02; }
+    .btn.small { min-height: 34px; padding: 0 14px; font-size: 13px; }
+    .btn.icon { width: 42px; padding: 0; }
+    .btn[disabled] { opacity: .45; pointer-events: none; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px;
+      border: 1px solid var(--line-2); background: var(--chip); font: 600 12.5px/1 var(--f-ui); text-decoration: none;
+      transition: background .2s, border-color .2s, transform .18s var(--ease-back);
+    }
+    .chip:hover { border-color: var(--ink-2); transform: translateY(-1px); }
+    .chip svg { width: 11px; height: 11px; }
+
+    /* rarity symbols */
+    .rar { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; flex: none; }
+    .rar-common { color: #2a2a2a; }
+    .rar-uncommon { color: #2c5d8f; }
+    .rar-rare { color: #b27d12; }
+    .rar-holo { color: #8a5cf6; }
+    .rar-secret { color: #d19a16; filter: drop-shadow(0 0 2px rgba(255, 200, 80, .7)); }
+    .rar-promo { color: #d8412a; }
+    html.dark .rar-common { color: #d6d0bf; }
+    html.dark .rar-uncommon { color: #8cc3ff; }
+    html.dark .rar-rare { color: #f1c45c; }
+    html.dark .rar-holo { color: #c3a6ff; }
+    html.dark .rar-promo { color: #ff8a6e; }
+
+    /* =====================================================================
+       3. chrome — versions strip + top bar
+       ===================================================================== */
+    .versions {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px;
+      padding: 7px 16px; font: 500 11px/1.3 var(--f-mono); color: var(--ink-3);
+      border-bottom: 1px dashed var(--line);
+    }
+    .versions a { text-decoration: none; padding: 3px 8px; border-radius: 999px; color: var(--ink-2); }
+    .versions a:hover { color: var(--ink); background: var(--chip); }
+    .versions a[aria-current="page"] {
+      color: #231500; font-weight: 600;
+      background: linear-gradient(120deg, #f7d77f, #fff3c4 30%, #e2a83a 55%, #ffe7a0 80%);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.2) inset;
+    }
+    .versions .cur-site { margin-left: 6px; color: var(--ink); }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(12px) saturate(1.2); -webkit-backdrop-filter: blur(12px) saturate(1.2);
+      background: color-mix(in srgb, var(--bg) 62%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar .wrap { display: flex; align-items: center; gap: 14px; min-height: 58px; }
+    .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .brand-mark {
+      width: 30px; height: 40px; border-radius: 5px; flex: none; position: relative; overflow: hidden;
+      background: repeating-conic-gradient(from 0deg at 50% 50%, #241b58 0 8deg, #17123d 8deg 16deg);
+      box-shadow: inset 0 0 0 2.5px #ecdfc2, inset 0 0 0 3.5px #9b7a3a, 0 3px 8px -3px rgba(0,0,0,.6);
+      transform: rotate(-6deg); transition: transform .35s var(--ease-back);
+    }
+    .brand:hover .brand-mark { transform: rotate(6deg) scale(1.06); }
+    .brand-mark b { position: absolute; inset: 0; display: grid; place-items: center; color: #f3e3bb; font: 900 15px/1 var(--f-display); letter-spacing: -.02em; }
+    .brand-word { font: 900 22px/1 var(--f-display); letter-spacing: .02em; }
+    .brand-word span { color: var(--accent); }
+    .nav { display: flex; gap: 2px; margin-left: 10px; }
+    .nav a { text-decoration: none; padding: 7px 10px; border-radius: 8px; font: 600 13px/1 var(--f-ui); font-stretch: 90%; color: var(--ink-2); }
+    .nav a:hover { color: var(--ink); background: var(--chip); }
+    .bar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .counter {
+      display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px 0 6px; border-radius: 999px;
+      text-decoration: none; border: 1px solid var(--line-2); background: var(--panel-2);
+      font: 600 12px/1 var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    .counter svg { width: 28px; height: 28px; transform: rotate(-90deg); }
+    .counter .ring-bg { stroke: var(--line-2); }
+    .counter .ring { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset .8s var(--ease-out); }
+    .counter .j { color: var(--ink-3); }
+    .counter.pulse { animation: pulse .7s var(--ease-back); }
+    @keyframes pulse { 0% { transform: scale(1); } 40% { transform: scale(1.14); box-shadow: 0 0 0 6px color-mix(in srgb, var(--gold) 35%, transparent); } 100% { transform: scale(1); } }
+    .socials { display: flex; gap: 2px; }
+    .icon-btn {
+      width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; border: 0; background: transparent;
+      cursor: pointer; text-decoration: none; transition: background .2s, transform .2s var(--ease-back);
+    }
+    .icon-btn:hover { background: var(--chip); transform: translateY(-1px); }
+    .mask-icon { width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
+    .theme-toggle svg { width: 20px; height: 20px; }
+    .theme-toggle .sun { display: none; }
+    html.dark .theme-toggle .sun { display: block; }
+    html.dark .theme-toggle .moon { display: none; }
+    .socials-hero { display: none; }
+
+    /* =====================================================================
+       4. hero — logo lockup, player card, bio, notice
+       ===================================================================== */
+    .hero {
+      display: grid; gap: 28px 64px; align-items: center;
+      grid-template-columns: minmax(270px, 370px) minmax(0, 1fr);
+      grid-template-areas: "player head" "player bio";
+      padding-block: clamp(32px, 6vw, 72px) 8px;
+    }
+    .hero-head { grid-area: head; align-self: end; }
+    .hero-player { grid-area: player; position: relative; isolation: isolate; }
+    .hero-player::before, .hero-player::after {
+      content: ""; position: absolute; left: 50%; top: 50%; width: min(100%, 370px); aspect-ratio: 63 / 88; z-index: -1; border-radius: 17px;
+      background: radial-gradient(circle at 50% 50%, rgba(255,205,120,.4), transparent 40%), repeating-conic-gradient(from 0deg at 50% 50%, #261d5c 0deg 7.5deg, #16113b 7.5deg 15deg);
+      box-shadow: inset 0 0 0 12px #ecdfc2, inset 0 0 0 15px #9b7a3a, var(--shadow-md);
+      translate: -50% -50%; rotate: -9deg; transform: translate(-34px, 10px); transition: transform .5s var(--ease-back), rotate .5s var(--ease-back);
+    }
+    .hero-player::after { rotate: 7deg; transform: translate(30px, 16px); }
+    .hero-player:hover::before { rotate: -13deg; transform: translate(-52px, 8px); }
+    .hero-player:hover::after { rotate: 11deg; transform: translate(48px, 14px); }
+    .intro .hero-player::before, .intro .hero-player::after { animation: fanIn .9s var(--ease-back) .9s both; }
+    @keyframes fanIn { from { rotate: 0deg; transform: none; opacity: 0; } }
+    .hero-bio { grid-area: bio; align-self: start; }
+    .zone { /* printed playmat zone outline */
+      position: absolute; inset: -18px; border: 1.5px dashed var(--zone); border-radius: 26px; pointer-events: none;
+    }
+    .zone span { position: absolute; top: -22px; left: 4px; font: 500 10px/18px var(--f-mono); letter-spacing: .12em; color: var(--ink-3); text-transform: uppercase; }
+
+    .lockup { position: relative; display: inline-block; }
+    .logo {
+      margin: 0; font: 900 clamp(72px, 22vw, 168px)/.8 var(--f-display); letter-spacing: -.01em; text-transform: uppercase;
+      background: linear-gradient(100deg, var(--ink) 0 38%, var(--gold-hi) 45%, #fff 48%, var(--gold) 52%, var(--ink) 60% 100%);
+      background-size: 300% 100%; background-position: 100% 0;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      padding-bottom: .04em;
+    }
+    .logo-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+    .tcg-badge {
+      display: inline-flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px;
+      background: var(--accent); color: var(--accent-ink); font: 900 30px/1 var(--f-display); letter-spacing: .08em;
+      box-shadow: 0 8px 18px -10px var(--accent), inset 0 -3px 0 rgba(0,0,0,.18);
+      transform: rotate(-3deg);
+    }
+    .edition-line { font: 500 11.5px/1.4 var(--f-mono); color: var(--ink-2); letter-spacing: .02em; }
+    .first-ed {
+      position: absolute; right: -58px; top: -6px; width: 64px; height: 64px; border-radius: 50%;
+      display: grid; place-items: center; text-align: center; transform: rotate(14deg);
+      border: 2px solid var(--ink); background: var(--panel-2); color: var(--ink);
+      font: 800 10px/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase;
+      box-shadow: 0 0 0 4px var(--panel-2), 0 0 0 5.5px var(--ink);
+    }
+    .first-ed b { display: block; font-size: 24px; letter-spacing: 0; margin-bottom: 1px; }
+    .whoami { margin: 18px 0 0; font: 700 clamp(18px, 2.1vw, 22px)/1.3 var(--f-ui); font-stretch: 94%; }
+    .whoami .role { color: var(--accent); }
+    .intro-line { margin: 8px 0 0; font: italic 400 clamp(18px, 2vw, 21px)/1.4 var(--f-flavor); color: var(--ink-2); max-width: 46ch; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+
+    .bio {
+      position: relative; margin: 0; padding: 20px 22px 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+      display: grid; gap: 10px; font-size: 16px; line-height: 1.6;
+    }
+    .bio::before { content: "player bio"; font: 500 10px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+    .bio p { margin: 0; }
+    .notice {
+      position: relative; margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 14px 16px 14px 18px; border-radius: 6px; transform: rotate(-.6deg);
+      background: #fff6c9; color: #2b2610; box-shadow: 0 10px 20px -14px rgba(0,0,0,.6);
+      background-image: repeating-linear-gradient(transparent 0 23px, rgba(80, 60, 0, .08) 23px 24px);
+    }
+    .notice::before { /* tape */
+      content: ""; position: absolute; top: -10px; left: 50%; width: 86px; height: 20px; translate: -50% 0; rotate: 2deg;
+      background: rgba(255, 255, 255, .55); border: 1px solid rgba(0,0,0,.06); backdrop-filter: blur(1px);
+    }
+    .notice p { margin: 0; flex: 1 1 240px; font-size: 15px; line-height: 1.45; }
+    .notice .btn { background: #2b2610; color: #fff6c9; border-color: transparent; }
+
+    /* player card (a promo card with stats) */
+    .player { position: relative; width: 100%; max-width: 370px; margin-inline: auto; aspect-ratio: 63 / 88; perspective: 1100px; container-type: inline-size; }
+    .player .card-tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+    .player .cf { box-shadow: var(--shadow-lg), inset 0 0 0 .6cqw rgba(255,255,255,.35), inset 0 0 0 1.2cqw rgba(0,0,0,.2); }
+    .player .cf-in { gap: 1.8cqw; }
+    .player .cf-name { padding-right: 1.6cqw; }
+    .player .cf-title { font-size: 8.4cqw; }
+    .pl-tag { font: 600 2.6cqw/1 var(--f-mono); letter-spacing: .1em; color: #1b1405; background: linear-gradient(120deg, #f7d77f, #fff3c4 40%, #e2a83a); padding: 1.2cqw 1.8cqw; border-radius: 1cqw; }
+    .player .pl-art { aspect-ratio: 16 / 10; cursor: pointer; }
+    .player .pl-art img { position: absolute; inset: 0; object-position: 50% 22%; transition: opacity .35s ease, transform .6s var(--ease-out); }
+    .pl-art .pl-alt { opacity: 0; object-position: 50% 28%; transform: scale(1.06); }
+    .player.alt .pl-alt, .player:hover .pl-alt { opacity: 1; transform: scale(1); }
+    .player.alt .pl-main, .player:hover .pl-main { opacity: 0; }
+    .egg {
+      position: absolute; left: 50%; bottom: 2.4cqw; translate: -50% 6px; z-index: 3; white-space: nowrap;
+      font: 600 3cqw/1 var(--f-mono); color: #fff; background: rgba(10,10,14,.72); padding: 1.6cqw 2.4cqw; border-radius: 99px;
+      opacity: 0; transition: opacity .3s, translate .3s var(--ease-back); pointer-events: none;
+    }
+    .player.alt .egg, .player:hover .egg { opacity: 1; translate: -50% 0; }
+    .pl-swap {
+      position: absolute; top: 2cqw; right: 2cqw; z-index: 4; border: 0; cursor: pointer;
+      font: 600 2.7cqw/1 var(--f-mono); padding: 1.4cqw 2cqw; border-radius: 99px; background: rgba(255,255,255,.88); color: #1b1a17;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .pl-swap:focus-visible { outline-offset: 1px; }
+    .pl-stats { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1cqw; }
+    .pl-stats div { background: #fff; border-radius: 1.4cqw; padding: 1cqw 1.8cqw; border: .3cqw solid rgba(42,17,98,.18); min-width: 0; }
+    .pl-stats dt { font: 600 2.2cqw/1 var(--f-mono); letter-spacing: .08em; color: #6f5aa6; text-transform: uppercase; }
+    .pl-stats dd { margin: .7cqw 0 0; font: 800 4.3cqw/1 var(--f-display); color: #1b1a17; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pl-stats dd.mono { font: 600 3.3cqw/1.15 var(--f-mono); letter-spacing: -.02em; }
+    .pl-stats .wide { grid-column: 1 / -1; }
+    .player .cf-text { flex: 0 0 auto; }
+    .player .cf-flavor { font-size: 4.1cqw; }
+
+    /* =====================================================================
+       5. shelf (pack rack) + career checklist
+       ===================================================================== */
+    .counter-row { display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); gap: 40px; align-items: start; }
+    .shelf {
+      position: sticky; top: 78px; padding: 22px 20px 26px; border-radius: 20px;
+      background: linear-gradient(180deg, var(--panel), transparent 70%); border: 1px solid var(--line);
+    }
+    .shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+    .shelf-head h3 { margin: 0; font: 900 30px/1 var(--f-display); text-transform: uppercase; letter-spacing: .01em; }
+    .shelf-head p { margin: 0; font: 500 11px/1.3 var(--f-mono); color: var(--ink-3); text-align: right; }
+    .rack { position: relative; z-index: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px 18px; list-style: none; margin: 0; padding: 0; }
+    .rack li { position: relative; }
+    .rack li::after { /* shelf lip under every row */
+      content: ""; position: absolute; left: -9px; right: -9px; bottom: 40px; height: 10px; border-radius: 3px; z-index: -1;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 18%, transparent), color-mix(in srgb, var(--ink) 6%, transparent));
+      box-shadow: 0 10px 16px -8px rgba(0,0,0,.45);
+    }
+    .rack-pack {
+      --i: 0; position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+      perspective: 700px;
+    }
+    .rack-pack .pack-3d { display: block; position: relative; transform-style: preserve-3d; transition: transform .35s var(--ease-back); transform: translateY(0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+    .rack-pack:hover .pack-3d, .rack-pack:focus-visible .pack-3d { transform: translateY(-10px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+    .rack-pack.is-hot .pack-3d { transition: transform .12s linear; }
+    .rack-pack:focus-visible { outline: none; }
+    .rack-pack:focus-visible .pk { outline: 3px solid var(--focus); outline-offset: 4px; }
+    .rack-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-top: 12px; font: 600 12px/1.2 var(--f-mono); color: var(--ink-2); }
+    .rack-meta b { font: 800 16px/1 var(--f-display); letter-spacing: .04em; color: var(--ink); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rack-meta .done { color: var(--gold); }
+    .rack-pack .stamp-mini {
+      position: absolute; top: 8%; right: -6px; z-index: 5; transform: rotate(12deg) scale(.6); opacity: 0;
+      font: 800 11px/1 var(--f-display); letter-spacing: .1em; padding: 4px 7px; border: 2px solid var(--gold); color: var(--gold); border-radius: 4px;
+      background: color-mix(in srgb, var(--bg) 70%, transparent); transition: opacity .3s, transform .4s var(--ease-back);
+    }
+    .rack-pack.complete .stamp-mini { opacity: 1; transform: rotate(12deg) scale(1); }
+
+    /* pack art (shared by rack + opener) */
+    .pk {
+      --x: .5; display: block; position: relative; width: 100%; aspect-ratio: 5 / 8; container-type: inline-size; border-radius: 3px;
+      filter: drop-shadow(0 14px 14px rgba(0,0,0,.35));
+    }
+    .pk-art {
+      --z: 3.6cqw;
+      position: absolute; inset: 0; overflow: hidden; color: var(--s3);
+      background:
+        linear-gradient(100deg, transparent 25%, rgba(255,255,255,.42) 36%, rgba(255,255,255,.08) 44%, transparent 52%) calc(var(--x) * 160% - 30%) 0 / 260% 100% no-repeat,
+        radial-gradient(120% 60% at 50% 0%, rgba(255,255,255,.3), transparent 60%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 4px),
+        linear-gradient(168deg, var(--s1) 0%, color-mix(in srgb, var(--s1) 55%, var(--s2)) 45%, var(--s2) 100%);
+      -webkit-mask:
+        conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) var(--z) repeat-x,
+        linear-gradient(#000 0 0) center / 100% calc(100% - 2 * var(--z) + 1px) no-repeat,
+        conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) var(--z) repeat-x;
+      mask:
+        conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) var(--z) repeat-x,
+        linear-gradient(#000 0 0) center / 100% calc(100% - 2 * var(--z) + 1px) no-repeat,
+        conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) var(--z) repeat-x;
+    }
+    .pk-crimp { position: absolute; left: 0; right: 0; height: 11%; background: repeating-linear-gradient(90deg, rgba(0,0,0,.22) 0 1.4cqw, rgba(255,255,255,.18) 1.4cqw 2.8cqw); opacity: .55; }
+    .pk-crimp.top { top: 0; }
+    .pk-crimp.bot { bottom: 0; height: 8%; }
+    .pk-brand { position: absolute; top: 18.5%; left: 0; right: 0; text-align: center; font: 900 7.4cqw/1 var(--f-display); letter-spacing: .12em; text-shadow: 0 .5cqw 0 rgba(0,0,0,.25); }
+    .pk-brand b { color: #fff; background: rgba(0,0,0,.28); padding: .4cqw 1.6cqw; border-radius: 1cqw; margin-left: 1cqw; }
+    .pk-window { position: absolute; left: 50%; top: 26%; width: 48%; aspect-ratio: 63 / 88; translate: -50% 0; }
+    .pk-window i, .pk-window .pk-img { position: absolute; inset: 0; border-radius: 3.2cqw; }
+    .pk-window i { background: repeating-conic-gradient(from 0deg at 50% 50%, #241b58 0 8deg, #17123d 8deg 16deg); box-shadow: inset 0 0 0 1.6cqw #ecdfc2, 0 1cqw 3cqw rgba(0,0,0,.35); }
+    .pk-window i:nth-child(1) { rotate: -13deg; translate: -14% 3%; }
+    .pk-window i:nth-child(2) { rotate: 11deg; translate: 14% 2%; }
+    .pk-window .pk-img { overflow: hidden; background: #fff; box-shadow: inset 0 0 0 1.6cqw #fff, 0 1.4cqw 4cqw rgba(0,0,0,.45); padding: 1.6cqw; }
+    .pk-window .pk-img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; border-radius: 1.8cqw; display: block; }
+    .pk-window .pk-img.logo img { object-fit: contain; padding: 14%; background: var(--s3); }
+    .pk-name { position: absolute; left: 0; right: 0; bottom: 19.5%; text-align: center; font: 900 15cqw/.9 var(--f-display); letter-spacing: .02em; text-transform: uppercase; color: #fff; text-shadow: 0 .8cqw 0 rgba(0,0,0,.28), 0 0 6cqw rgba(0,0,0,.25); }
+    .pk-name.long { font-size: 12cqw; }
+    .pk-sub { position: absolute; left: 0; right: 0; bottom: 13%; text-align: center; font: 600 4.4cqw/1 var(--f-mono); letter-spacing: .04em; opacity: .92; }
+    .pk-sym { position: absolute; left: 7%; bottom: 10.5%; width: 9cqw; height: 9cqw; opacity: .9; }
+    .pk-ed { position: absolute; right: 6%; bottom: 10%; font: 800 4cqw/1 var(--f-display); letter-spacing: .06em; padding: 1cqw 1.6cqw; border: .5cqw solid currentColor; border-radius: 99px; opacity: .85; text-transform: uppercase; }
+    .pk-sticker { position: absolute; right: 7%; top: 27%; z-index: 3; width: 24cqw; height: 24cqw; border-radius: 50%; display: grid; place-items: center; text-align: center; rotate: 14deg;
+      font: 800 4cqw/1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; color: #2b1c02; background: radial-gradient(circle at 35% 30%, #fff6cf, #f1c45c 55%, #b8841f); box-shadow: 0 1cqw 2.4cqw rgba(0,0,0,.4), inset 0 0 0 .8cqw rgba(255,255,255,.35); }
+    .pk-sticker b { display: block; font-size: 7cqw; line-height: .9; }
+    .pk[data-set="prerelease"] { animation: sealedGlow 2.6s ease-in-out infinite; }
+    @keyframes sealedGlow { 0%, 100% { filter: drop-shadow(0 14px 14px rgba(0,0,0,.35)) drop-shadow(0 0 0 rgba(255,150,50,0)); } 50% { filter: drop-shadow(0 14px 14px rgba(0,0,0,.35)) drop-shadow(0 0 18px rgba(255,150,50,.75)); } }
+    .pk-seal { position: absolute; left: 50%; top: 50%; translate: -50% -50%; rotate: -8deg; z-index: 2; white-space: nowrap; font: 900 7cqw/1 var(--f-display); letter-spacing: .1em; color: #2b1100; background: repeating-linear-gradient(45deg, #ffd24a 0 3cqw, #ffb02e 3cqw 6cqw); padding: 1.6cqw 3cqw; box-shadow: 0 1cqw 2cqw rgba(0,0,0,.4); }
+
+    /* career checklist (printed insert) */
+    .checklist {
+      position: relative; background: var(--paper); color: var(--paper-ink); border-radius: 6px; padding: 26px clamp(16px, 3vw, 30px) 22px;
+      box-shadow: var(--shadow-lg); transform: rotate(.35deg);
+      background-image: linear-gradient(90deg, transparent 0 calc(100% - 10px), rgba(0,0,0,.03) calc(100% - 10px));
+    }
+    .checklist::before { content: ""; position: absolute; inset: 8px; border: 1px solid var(--paper-line); border-radius: 3px; pointer-events: none; }
+    .cl-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; padding-bottom: 12px; border-bottom: 2px solid var(--paper-ink); flex-wrap: wrap; }
+    .cl-head h3 { margin: 0; font: 900 34px/.9 var(--f-display); text-transform: uppercase; }
+    .cl-head p { margin: 0; font: 500 11px/1.4 var(--f-mono); color: var(--paper-ink-2); }
+    .cl-sub { margin: 10px 0 0; font: italic 400 16px/1.3 var(--f-flavor); color: var(--paper-ink-2); }
+    .cl { list-style: none; margin: 6px 0 0; padding: 0; }
+    .cl-row { display: grid; grid-template-columns: 22px 44px minmax(0, 1fr); gap: 4px 12px; padding: 14px 0; border-bottom: 1px dashed var(--paper-line); align-items: start; }
+    .cl-row:last-child { border-bottom: 0; }
+    .chk { width: 18px; height: 18px; margin-top: 3px; border: 1.8px solid var(--paper-ink); border-radius: 3px; display: grid; place-items: center; }
+    .chk svg { width: 14px; height: 14px; opacity: 0; transform: scale(.4); transition: opacity .2s, transform .35s var(--ease-back); color: #c0341f; }
+    .chk.on svg { opacity: 1; transform: scale(1); }
+    .cl-logo { width: 44px; height: 44px; border-radius: 10px; background: #fff; border: 1px solid var(--paper-line); display: grid; place-items: center; overflow: hidden; padding: 0; cursor: pointer; }
+    .cl-logo img { width: 78%; height: 78%; object-fit: contain; display: block; }
+    .cl-logo.fill img { width: 100%; height: 100%; object-fit: cover; }
+    .cl-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+    .cl-no { font: 600 11px/1 var(--f-mono); color: var(--paper-ink-2); }
+    .cl-co { font: 900 22px/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; }
+    .cl-fav { color: #c98a12; font-size: 14px; }
+    .cl-now { font: 700 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; padding: 4px 7px; border-radius: 99px; background: #1f7a4d; color: #fff; }
+    .cl-now.pre { background: #e56f14; }
+    .cl-role { margin: 5px 0 0; font-size: 15px; line-height: 1.4; }
+    .cl-role b { font-weight: 700; }
+    .cl-meta { display: block; font: 500 11.5px/1.5 var(--f-mono); color: var(--paper-ink-2); letter-spacing: -.01em; }
+    .cl-note { margin: 5px 0 0; font: italic 400 16px/1.35 var(--f-flavor); color: #3d372c; }
+    .cl-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .cl-links .chip { border-color: var(--paper-line); background: rgba(0,0,0,.04); color: var(--paper-ink); min-height: 28px; }
+    .cl-links .chip.view { background: var(--paper-ink); color: var(--paper); border-color: transparent; cursor: pointer; }
+
+    /* =====================================================================
+       6. binder
+       ===================================================================== */
+    .binder-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; margin-bottom: 18px; }
+    .progress { flex: 1 1 360px; min-width: 0; }
+    .progress-count { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font: 600 13px/1 var(--f-mono); color: var(--ink-2); }
+    .progress-count b { font: 900 44px/1 var(--f-display); color: var(--ink); letter-spacing: .01em; }
+    .pips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 10px; }
+    .pip { width: 11px; height: 15px; border-radius: 2.5px; background: var(--pocket); border: 1px solid var(--line-2); transition: background .3s, transform .3s var(--ease-back); }
+    .pip.on { background: linear-gradient(160deg, var(--s1), var(--s2)); border-color: transparent; }
+    .pip.gap { margin-left: 8px; }
+    .binder-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 14px; padding: 0; list-style: none; font: 500 11.5px/1 var(--f-mono); color: var(--ink-2); }
+    .legend li { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .rar { width: 14px; height: 14px; }
+
+    .binder {
+      position: relative; max-width: 1100px; margin-inline: auto; padding: 18px clamp(10px, 2vw, 22px) 22px; border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%),
+        var(--binder);
+      border: 1px solid var(--binder-edge);
+      box-shadow: var(--shadow-lg), inset 0 0 0 6px color-mix(in srgb, var(--binder-edge) 45%, transparent);
+    }
+    html.dark .binder { background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 30%), repeating-linear-gradient(45deg, rgba(255,255,255,.012) 0 2px, transparent 2px 5px), var(--binder); }
+    .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 0 4px 0; margin: -4px 0 12px; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: none; position: relative; border: 0; cursor: pointer; padding: 8px 12px 9px; border-radius: 10px 10px 4px 4px;
+      font: 800 14px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--s3);
+      background: linear-gradient(170deg, var(--s1), var(--s2)); opacity: .62; transition: opacity .2s, transform .2s var(--ease-back);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .tab:hover { opacity: .9; transform: translateY(-2px); }
+    .tab[aria-current="true"] { opacity: 1; transform: translateY(-3px); box-shadow: 0 6px 14px -8px rgba(0,0,0,.6); }
+    .tab .tick { width: 13px; height: 13px; display: none; }
+    .tab.complete .tick { display: block; }
+    .book { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 6px; }
+    .turn { width: 40px; height: 64px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--panel-2); cursor: pointer; display: grid; place-items: center; transition: transform .2s var(--ease-back), background .2s; }
+    .turn:hover { transform: scale(1.06); }
+    .turn svg { width: 18px; height: 18px; }
+    .turn[disabled] { opacity: .3; pointer-events: none; }
+    .spread { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 34px; perspective: 1800px; }
+    .spread.single { grid-template-columns: 1fr; }
+    .rings { position: absolute; left: 50%; top: 8%; bottom: 8%; width: 30px; translate: -50% 0; display: flex; flex-direction: column; justify-content: space-around; pointer-events: none; z-index: 2; }
+    .rings i { display: block; height: 16px; border-radius: 99px; background: linear-gradient(180deg, #f4f4f4, #9aa0a6 45%, #5b6066 55%, #d9dde1); box-shadow: 0 3px 5px rgba(0,0,0,.35); }
+    .spread.single .rings { display: none; }
+    .page {
+      position: relative; min-width: 0; padding: 14px 14px 16px; border-radius: 10px; background: var(--page);
+      box-shadow: inset 0 0 0 1px var(--pocket-line), inset 0 12px 20px -18px rgba(0,0,0,.35);
+      transform-origin: left center; transition: transform .28s var(--ease-out), opacity .28s;
+    }
+    .page + .page { transform-origin: right center; }
+    .spread.turn-out .page { opacity: 0; transform: rotateY(var(--turn, -10deg)) translateX(var(--shift, -2%)); }
+    .spread.turn-in .page { transition: none; opacity: 0; transform: rotateY(calc(var(--turn, -10deg) * -1)) translateX(calc(var(--shift, -2%) * -1)); }
+    .page-head { display: flex; align-items: center; gap: 8px; margin: 0 2px 12px; min-height: 26px; }
+    .page-head svg { width: 20px; height: 20px; color: var(--s1); flex: none; }
+    .page-head h3 { margin: 0; font: 900 22px/1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; }
+    .page-head small { font: 500 11px/1 var(--f-mono); color: var(--ink-3); letter-spacing: 0; }
+    .page-head .pg { margin-left: auto; font: 500 11px/1 var(--f-mono); color: var(--ink-3); white-space: nowrap; }
+    .page-stamp {
+      position: absolute; right: 12px; top: 8px; z-index: 6; pointer-events: none; transform: rotate(-7deg);
+      font: 900 15px/1 var(--f-display); letter-spacing: .12em; color: #c9352b; border: 3px double #c9352b; padding: 5px 8px; border-radius: 6px;
+      text-transform: uppercase; opacity: .85; mix-blend-mode: multiply; background: rgba(255,255,255,.05);
+    }
+    html.dark .page-stamp { mix-blend-mode: normal; color: #ff7a66; border-color: #ff7a66; }
+    .page-stamp.new { animation: stamp .5s var(--ease-back) both; }
+    @keyframes stamp { 0% { transform: rotate(-7deg) scale(2.6); opacity: 0; } 70% { opacity: .9; } 100% { transform: rotate(-7deg) scale(1); } }
+    .page.done .page-head .pg { visibility: hidden; }
+    .pockets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(6px, 1.2vw, 12px); }
+    .pocket { position: relative; aspect-ratio: 63 / 88; border-radius: 6px; background: var(--pocket); box-shadow: inset 0 0 0 1px var(--pocket-line); container-type: inline-size; }
+    .pocket::after { /* plastic sleeve sheen + lip */
+      content: ""; position: absolute; inset: 0; border-radius: 6px; pointer-events: none; z-index: 4;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.55) 0 1.4%, transparent 1.4% 6%, rgba(255,255,255,.1) 6% 6.8%, transparent 7%),
+        linear-gradient(115deg, transparent 20%, rgba(255,255,255,.2) 32%, transparent 40%, transparent 62%, rgba(255,255,255,.1) 70%, transparent 76%);
+      mix-blend-mode: screen; opacity: .7;
+    }
+    .pocket > .card { position: absolute; inset: 3.5%; width: auto; }
+    .ghost {
+      position: absolute; inset: 3.5%; border: 1.5px dashed var(--pocket-line); border-radius: 5cqw; background: transparent; cursor: pointer; padding: 0; overflow: hidden;
+      display: grid; place-items: center; color: var(--ink-3); transition: border-color .2s, background .2s;
+    }
+    .ghost:hover { border-color: var(--ink-3); background: var(--chip); }
+    .ghost img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(6px) grayscale(1) contrast(.8); opacity: .26; transform: scale(1.2); }
+    html:not(.dark) .ghost img { opacity: .3; }
+    .ghost .g-sym { position: relative; width: 26cqw; height: 26cqw; opacity: .55; }
+    .ghost .g-no { position: absolute; left: 0; right: 0; bottom: 8cqw; text-align: center; font: 600 7.5cqw/1 var(--f-mono); letter-spacing: .02em; }
+    .ghost .g-q { position: absolute; top: 9cqw; left: 0; right: 0; text-align: center; font: 900 11cqw/1 var(--f-display); letter-spacing: .1em; opacity: .5; }
+    .blank { position: absolute; inset: 3.5%; border-radius: 5cqw; }
+    .new-tag { position: absolute; top: -4px; left: -4px; z-index: 7; font: 800 10px/1 var(--f-display); letter-spacing: .1em; padding: 4px 6px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); transform: rotate(-8deg); pointer-events: none; animation: newTag 1.6s ease-in-out infinite; }
+    @keyframes newTag { 50% { transform: rotate(-8deg) scale(1.1); } }
+    .binder-foot { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; border: 0; padding: 0; background: var(--line-2); cursor: pointer; transition: width .3s var(--ease-out), background .3s; }
+    .dot[aria-current="true"] { width: 22px; border-radius: 99px; background: var(--accent); }
+
+    /* =====================================================================
+       7. cards — frame, art, text, foil layers, back, details
+       every size inside a card is in cqw, so one design scales from a
+       binder pocket to the inspect view.
+       ===================================================================== */
+    .card {
+      --cw: 180px;
+      position: relative; display: block; width: var(--cw); aspect-ratio: 63 / 88; padding: 0; margin: 0; border: 0; background: none;
+      cursor: pointer; perspective: 900px; container-type: inline-size; text-align: left; color: #1b1a17;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card:focus-visible { outline: none; }
+    .card:focus-visible .card-tilt { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 5cqw; }
+    .card-tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); scale: 1; transition: scale .3s var(--ease-back); }
+    .card.is-hot .card-tilt { scale: 1.035; }
+    .pocket:has(.card.is-hot) { z-index: 5; }
+    .pocket .card.is-hot .card-tilt { scale: 1.07; }
+    .card-flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .75s var(--ease-back); }
+    .card.is-down .card-flip, .card.is-flipped .card-flip { transform: rotateY(180deg); }
+    .card.slow .card-flip { transition: transform 1.5s cubic-bezier(.65, 0, .2, 1); }
+    .cf, .cb, .cd { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+
+    .cf {
+      position: absolute; inset: 0; border-radius: 4.6cqw; padding: 3.4cqw; overflow: hidden; isolation: isolate;
+      background: linear-gradient(155deg, var(--s1), color-mix(in srgb, var(--s1) 40%, var(--s2)) 55%, var(--s2));
+      box-shadow: inset 0 0 0 .6cqw rgba(255,255,255,.35), inset 0 0 0 1.2cqw rgba(0,0,0,.18), 0 1.2cqw 3.5cqw -1cqw rgba(0,0,0,.5);
+    }
+    .cf::before { /* frame texture */
+      content: ""; position: absolute; inset: 0; z-index: -1;
+      background: repeating-linear-gradient(135deg, rgba(255,255,255,.09) 0 .5cqw, transparent .5cqw 1.5cqw), radial-gradient(120% 70% at 20% 0%, rgba(255,255,255,.35), transparent 60%);
+    }
+    .cf-in {
+      position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; gap: 1.6cqw;
+      background: linear-gradient(180deg, #faf6ec, #efe8d7); border-radius: 2.6cqw; padding: 2.2cqw; box-shadow: 0 0 0 .5cqw rgba(0,0,0,.32);
+    }
+    .cf-name {
+      display: flex; align-items: center; gap: 1.6cqw; min-height: 10.5cqw; padding: 1.2cqw 1.6cqw 1.2cqw 2.4cqw; border-radius: 1.8cqw;
+      background: linear-gradient(180deg, #2c2e34, #111215); color: #fff; box-shadow: inset 0 -.6cqw 0 rgba(255,255,255,.06);
+    }
+    .cf-title { flex: 1; min-width: 0; font: 800 6.3cqw/1 var(--f-display); letter-spacing: .025em; text-transform: uppercase; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .cf-title.long { font-size: 5cqw; }
+    .cf-title.xlong { font-size: 4.1cqw; }
+    .cf-var { flex: none; font: 600 2.5cqw/1 var(--f-mono); letter-spacing: .04em; padding: .8cqw 1.2cqw; border-radius: 1cqw; border: .3cqw solid rgba(255,255,255,.45); color: rgba(255,255,255,.9); text-transform: lowercase; }
+    .cf-gem { flex: none; width: 6.4cqw; height: 6.4cqw; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #d9d4c6 60%, #a9a293); box-shadow: 0 0 0 .4cqw rgba(0,0,0,.4); }
+    .cf-gem .rar { width: 4.2cqw; height: 4.2cqw; }
+    .cf-art { display: block; position: relative; flex: none; aspect-ratio: 5 / 4; border-radius: 1.4cqw; overflow: hidden; background: #1b1c20; box-shadow: 0 0 0 .6cqw color-mix(in srgb, var(--s2) 85%, #000), 0 0 0 1.1cqw rgba(255,255,255,.55); }
+    .cf-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 32%; display: block; }
+    .cf-type {
+      display: flex; align-items: center; justify-content: space-between; gap: 1.6cqw; padding: 1.3cqw 1.8cqw; border-radius: 1.2cqw;
+      font: 600 2.75cqw/1.2 var(--f-mono); letter-spacing: -.01em; text-transform: uppercase; color: #211f1a;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--s1) 34%, #fff), #fffdf6 85%);
+      border: .35cqw solid color-mix(in srgb, var(--s2) 35%, transparent);
+    }
+    .cf-type span { min-width: 0; }
+    .cf-type svg { width: 4.6cqw; height: 4.6cqw; flex: none; color: var(--s2); }
+    .cf-text { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; gap: 1.2cqw; padding: .4cqw 1.6cqw; }
+    .cf-flavor { display: block; margin: 0; font: italic 400 4.25cqw/1.28 var(--f-flavor); color: #3a352b; }
+    .cf-desc { display: block; margin: 0; font: 400 3.3cqw/1.35 var(--f-ui); color: #5a554b; }
+    .cf-desc::before { content: "in frame: "; font: 600 2.6cqw/1 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; color: #8a8274; }
+    .cf-role { display: block; margin: 0; font: 700 3.5cqw/1.2 var(--f-ui); font-stretch: 92%; color: #1d1b17; }
+    .cf-role span { display: block; margin-top: .5cqw; font: 500 2.55cqw/1.3 var(--f-mono); color: #5a554b; letter-spacing: -.02em; }
+    .cf-foot { display: flex; align-items: center; gap: 1.4cqw; padding: 0 .6cqw; font: 500 2.4cqw/1 var(--f-mono); color: #5c574c; white-space: nowrap; }
+    .cf-no { font-weight: 600; color: #1b1a17; }
+    .cf-foot .rar { width: 3cqw; height: 3cqw; }
+    .cf-cred { margin-left: auto; overflow: hidden; text-overflow: ellipsis; }
+
+    /* job card art: logo on a patterned brand field */
+    .job-field { position: absolute; inset: 0; background-color: var(--brand, #555); overflow: hidden;
+      background-image: radial-gradient(90% 70% at 30% 15%, rgba(255,255,255,.4), transparent 60%), repeating-linear-gradient(45deg, rgba(0,0,0,.12) 0 2.2cqw, transparent 2.2cqw 4.4cqw); }
+    .job-tile { position: absolute; inset: -40%; background-size: 10cqw 10cqw; background-repeat: repeat; background-position: center; opacity: .16; transform: rotate(-18deg); filter: grayscale(1) contrast(2); mix-blend-mode: multiply; }
+    .job-emblem { position: absolute; left: 50%; top: 50%; width: 32cqw; aspect-ratio: 1; translate: -50% -50%; border-radius: 24%; background: #fff; display: grid; place-items: center; overflow: hidden;
+      box-shadow: 0 1.8cqw 4cqw rgba(0,0,0,.35), 0 0 0 1.2cqw rgba(255,255,255,.35); }
+    .job-emblem img { position: static; width: 74%; height: 74%; object-fit: contain; }
+    .job-emblem.fill img { width: 100%; height: 100%; object-fit: cover; }
+    .job-soon { position: absolute; left: -10%; right: -10%; top: 70%; rotate: -8deg; text-align: center; font: 900 6cqw/1 var(--f-display); letter-spacing: .14em; color: #2b1100; padding: 1.4cqw 0; background: repeating-linear-gradient(45deg, #ffd24a 0 3cqw, #ffb02e 3cqw 6cqw); box-shadow: 0 1cqw 2cqw rgba(0,0,0,.35); }
+    .job-soon::after { content: attr(data-sub); display: block; margin-top: .8cqw; font: 600 2.4cqw/1 var(--f-mono); letter-spacing: .06em; }
+
+    /* full-art frames (secret rare + alt art promo) */
+    .cf-full .cf-in { background: transparent; box-shadow: none; padding: 2.2cqw; }
+    .cf-full .cf-art { position: absolute; inset: 0; aspect-ratio: auto; border-radius: 2.6cqw; box-shadow: inset 0 0 0 .5cqw rgba(0,0,0,.4); z-index: 0; }
+    .cf-full .cf-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.28), transparent 20%, transparent 48%, rgba(0,0,0,.82)); }
+    .cf-full .cf-art img { object-position: 50% 25%; }
+    .cf-full .cf-name, .cf-full .cf-type, .cf-full .cf-text, .cf-full .cf-foot { position: relative; z-index: 2; }
+    .cf-full .cf-name { background: linear-gradient(180deg, rgba(20,16,8,.72), rgba(10,8,4,.55)); }
+    .cf-full .cf-type { margin-top: auto; background: rgba(12,10,6,.55); color: #fff; border-color: rgba(255,255,255,.28); }
+    .cf-full .cf-type svg { color: #fff; }
+    .cf-full .cf-text { flex: none; min-height: 12cqw; }
+    .cf-full .cf-flavor { color: #fff; text-shadow: 0 .3cqw 1cqw rgba(0,0,0,.8); }
+    .cf-full .cf-foot, .cf-full .cf-no { color: rgba(255,255,255,.9); }
+
+    /* foil layers */
+    .foil, .shine, .glare { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+    .foil { z-index: 2; }
+    .shine { z-index: 6; }
+    .glare { z-index: 8; mix-blend-mode: overlay; opacity: calc(var(--o, 0) * .7);
+      background: radial-gradient(farthest-corner circle at calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%), rgba(255,255,255,.85) 6%, rgba(255,255,255,.4) 22%, rgba(0,0,0,.4) 95%); }
+    [data-r="common"] .glare { opacity: calc(var(--o, 0) * .5); }
+    [data-r="uncommon"] .cf-art .foil {
+      mix-blend-mode: overlay; opacity: calc(.15 + var(--o, 0) * .85);
+      background: linear-gradient(112deg, transparent 32%, rgba(255,255,255,.75) 46%, rgba(255,255,255,.1) 52%, transparent 60%) calc(var(--x, .5) * 100%) 0 / 320% 100% no-repeat;
+    }
+    [data-r="holo"] .cf-art .foil, [data-r="promo"] .cf-art .foil {
+      mix-blend-mode: color-dodge; opacity: calc(.14 + var(--o, 0) * .8);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='1' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 11 -8.4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
+        repeating-linear-gradient(115deg, #ff6f8a 0%, #ffcf5c 5%, #7dff9a 10%, #5ce1ff 15%, #9d7bff 20%, #ff6fd5 25%, #ff6f8a 30%),
+        repeating-linear-gradient(35deg, rgba(20,20,40,.75) 0 1.4%, rgba(20,20,40,.15) 1.4% 3%);
+      background-size: 60cqw 60cqw, 400% 400%, 220% 220%;
+      background-position: calc(var(--x, .5) * 24cqw) calc(var(--y, .5) * 24cqw), calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%), calc(40% + var(--x, .5) * 20%) calc(40% + var(--y, .5) * 20%);
+      background-blend-mode: screen, hard-light, normal;
+      filter: brightness(.62) contrast(1.5) saturate(1.25);
+    }
+    [data-r="holo"] .cf-art .foil { opacity: calc(.2 + var(--o, 0) * .75); }
+    [data-r="holo"] .cf-name, [data-r="promo"] .cf-name { border: .5cqw solid transparent; background: linear-gradient(180deg, #2c2e34, #111215) padding-box, linear-gradient(90deg, #ff6f8a, #ffcf5c, #7dff9a, #5ce1ff, #9d7bff, #ff6fd5) border-box; }
+    [data-r="rare"] .cf::after { /* reverse holo: the frame is foil, the art is not */
+      content: ""; position: absolute; inset: 0; z-index: 0; mix-blend-mode: color-dodge; opacity: calc(.22 + var(--o, 0) * .6); filter: brightness(.8) saturate(1.2);
+      background: repeating-linear-gradient(120deg, #ff8f9c 0%, #ffe08f 7%, #98ffae 14%, #8fe6ff 21%, #bba0ff 28%, #ff8f9c 35%) calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%) / 300% 300%;
+    }
+    [data-r="secret"] .cf { background: linear-gradient(135deg, #6a490b, #f7d981 22%, #a8761a 42%, #fff0b8 60%, #b8841f 78%, #6a490b); }
+    [data-r="secret"] .cf-title { background: linear-gradient(100deg, #fff3c7, #e7b44a 40%, #fff9e2 55%, #d59f2f); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    [data-r="secret"] .shine {
+      mix-blend-mode: color-dodge; opacity: calc(.34 + var(--o, 0) * .5);
+      background-image:
+        repeating-linear-gradient(45deg, transparent 0 1.1cqw, rgba(255,206,105,.6) 1.1cqw 1.45cqw),
+        repeating-linear-gradient(-45deg, transparent 0 1.1cqw, rgba(255,206,105,.35) 1.1cqw 1.45cqw),
+        radial-gradient(farthest-corner circle at calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%), rgba(255,236,170,.95), rgba(140,95,15,.35) 50%, transparent 85%);
+      -webkit-mask-image: radial-gradient(circle at calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%), #000 0 22%, rgba(0,0,0,.4) 70%);
+      mask-image: radial-gradient(circle at calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%), #000 0 22%, rgba(0,0,0,.4) 70%);
+    }
+    .shine.alt {
+      mix-blend-mode: color-dodge; opacity: calc(.25 + var(--o, 0) * .6);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='1' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 11 -8.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
+        radial-gradient(farthest-corner circle at calc(var(--x, .5) * 100%) calc(var(--y, .5) * 100%), rgba(255,255,255,.7), transparent 45%),
+        conic-gradient(from calc(var(--x, .5) * 180deg) at 50% 60%, #ff6f8a, #ffcf5c, #7dff9a, #5ce1ff, #9d7bff, #ff6fd5, #ff6f8a);
+      background-size: 50cqw 50cqw, 100% 100%, 100% 100%;
+      filter: brightness(.55) contrast(1.4) saturate(1.3);
+    }
+
+    /* face-down back */
+    .cb {
+      position: absolute; inset: 0; border-radius: 4.6cqw; overflow: hidden; transform: rotateY(180deg);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,205,120,.5), transparent 40%),
+        repeating-conic-gradient(from 0deg at 50% 50%, #261d5c 0deg 7.5deg, #16113b 7.5deg 15deg);
+      box-shadow: inset 0 0 0 3.2cqw #ecdfc2, inset 0 0 0 4cqw #9b7a3a, inset 0 0 0 5.4cqw rgba(0,0,0,.28), 0 1.2cqw 3.5cqw -1cqw rgba(0,0,0,.55);
+    }
+    .cb svg { position: absolute; left: 50%; top: 50%; width: 74cqw; height: 74cqw; translate: -50% -50%; }
+    .cb::after { content: ""; position: absolute; inset: 7cqw; border: .4cqw solid rgba(236,223,194,.35); border-radius: 2.4cqw; }
+
+    /* burst behind rare reveals */
+    .burst { position: absolute; inset: -55%; z-index: -1; pointer-events: none; opacity: 0; border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, rgba(255,244,200,.95) 0 3deg, transparent 3deg 15deg);
+      -webkit-mask: radial-gradient(circle, #000 0 18%, transparent 64%); mask: radial-gradient(circle, #000 0 18%, transparent 64%); }
+    [data-r="holo"] > .burst, [data-r="promo"] > .burst { background: repeating-conic-gradient(from 0deg, #ff8fa3 0 3deg, transparent 3deg 10deg, #8fe6ff 10deg 13deg, transparent 13deg 20deg, #ffe08f 20deg 23deg, transparent 23deg 30deg); }
+    [data-r="secret"] > .burst { inset: -90%; background: repeating-conic-gradient(from 0deg, #ffe7a0 0 4deg, transparent 4deg 12deg); }
+    .card.bursting > .burst { animation: burst 1.1s ease-out; }
+    @keyframes burst { 0% { opacity: 0; transform: scale(.35) rotate(0deg); } 22% { opacity: 1; } 100% { opacity: 0; transform: scale(1.3) rotate(35deg); } }
+    .card.charging .card-tilt { animation: charge 1.5s ease-in both; }
+    @keyframes charge {
+      0% { translate: 0 0; filter: none; }
+      10% { translate: -1px 0; } 20% { translate: 1px 0; } 30% { translate: -2px 1px; } 40% { translate: 2px -1px; }
+      50% { translate: -3px 1px; filter: drop-shadow(0 0 10px rgba(255,210,100,.7)); } 60% { translate: 3px -2px; } 70% { translate: -4px 2px; }
+      80% { translate: 4px -1px; } 90% { translate: -5px 1px; }
+      100% { translate: 0 0; filter: drop-shadow(0 0 34px rgba(255,210,100,1)) brightness(1.25); }
+    }
+
+    /* details (inspect back) */
+    .cd { position: absolute; inset: 0; border-radius: 4.6cqw; overflow: hidden; transform: rotateY(180deg); padding: 3.4cqw;
+      background: linear-gradient(155deg, var(--s1), var(--s2)); box-shadow: inset 0 0 0 .6cqw rgba(255,255,255,.35), 0 2cqw 5cqw -2cqw rgba(0,0,0,.6); }
+    .cd-in { height: 100%; overflow: auto; overscroll-behavior: contain; border-radius: 2.6cqw; padding: 4cqw 4.4cqw; background: #f8f3e7; color: #1d1b17;
+      font-size: clamp(12.5px, 3.5cqw, 15px); line-height: 1.5; scrollbar-width: thin; }
+    .cd-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 600 clamp(10px, 2.7cqw, 12px)/1.2 var(--f-mono); color: #5a554b; text-transform: uppercase; letter-spacing: .03em; }
+    .cd-top .rar { width: 1.2em; height: 1.2em; }
+    .cd h3 { margin: 2.4cqw 0 1cqw; font: 900 clamp(24px, 8.4cqw, 38px)/.92 var(--f-display); text-transform: uppercase; letter-spacing: .01em; }
+    .cd-type { margin: 0; font: 600 clamp(10px, 2.8cqw, 12px)/1.3 var(--f-mono); text-transform: uppercase; color: #5a554b; }
+    .cd-photo { position: relative; margin: 3cqw 0 0; border-radius: 2cqw; overflow: hidden; background: #111; }
+    .cd-photo img { display: block; width: 100%; max-height: 62cqw; object-fit: contain; }
+    .cd-photo figcaption { position: absolute; right: 2cqw; bottom: 2cqw; font: 600 10px/1 var(--f-mono); color: #fff; background: rgba(0,0,0,.55); padding: 4px 7px; border-radius: 99px; }
+    .cd-flavor { margin: 3cqw 0 0; padding-left: 3cqw; border-left: 3px solid var(--s1); font: italic 400 clamp(15px, 4.4cqw, 19px)/1.35 var(--f-flavor); color: #3a352b; }
+    .cd dl { margin: 3.4cqw 0 0; display: grid; grid-template-columns: auto 1fr; gap: .6em 1em; }
+    .cd dt { font: 600 clamp(9.5px, 2.5cqw, 11px)/1.7 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: #8a8274; }
+    .cd dd { margin: 0; }
+    .cd-job { margin-top: 4cqw; padding: 3cqw; border-radius: 2.4cqw; background: #fff; border: 1px solid rgba(0,0,0,.1); display: grid; gap: 1.6cqw; }
+    .cd-job-head { display: flex; align-items: center; gap: 2.4cqw; }
+    .cd-job-head img { width: 9.5cqw; height: 9.5cqw; min-width: 34px; min-height: 34px; object-fit: contain; border-radius: 22%; background: #fff; border: 1px solid rgba(0,0,0,.1); }
+    .cd-job-head b { font: 900 clamp(18px, 5.4cqw, 24px)/1 var(--f-display); text-transform: uppercase; }
+    .cd-job p { margin: 0; }
+    .cd-role b { display: block; }
+    .cd-role span { font: 500 clamp(10px, 2.7cqw, 12px)/1.45 var(--f-mono); color: #5a554b; }
+    .cd-note { font: italic 400 clamp(15px, 4.2cqw, 18px)/1.35 var(--f-flavor); }
+    .cd-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3cqw; }
+    .cd-links .chip { color: #1d1b17; background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.18); }
+    .cd-links .chip.solid { background: #1d1b17; color: #f8f3e7; border-color: transparent; cursor: pointer; }
+    .cd-hint { margin: 4cqw 0 0; font: 500 10.5px/1.4 var(--f-mono); color: #8a8274; }
+
+    /* =====================================================================
+       8. pack opener (dialog)
+       ===================================================================== */
+    .opener { position: fixed; inset: 0; z-index: 80; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; color: #f5efdf; }
+    .opener[hidden] { display: none; }
+    .opener-bg { position: absolute; inset: 0; background: radial-gradient(70% 60% at 50% 45%, rgba(255,200,120,.16), transparent 70%), rgba(3,10,8,.86); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fade .3s both; }
+    html:not(.dark) .opener-bg { background: radial-gradient(70% 60% at 50% 45%, rgba(255,220,160,.25), transparent 70%), rgba(34,26,14,.8); }
+    .opener.secret-mode .opener-bg { background: radial-gradient(60% 50% at 50% 50%, rgba(255,205,90,.28), transparent 70%), rgba(0,0,0,.93); transition: background .6s; }
+    @keyframes fade { from { opacity: 0; } }
+    .opener-head { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px clamp(14px, 3vw, 28px); }
+    .opener-title { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+    .opener-title > div { min-width: 0; }
+    .opener-title svg { width: 30px; height: 30px; color: var(--s1); flex: none; }
+    .opener-title p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 11px/1.3 var(--f-mono); color: rgba(245,239,223,.7); letter-spacing: .04em; }
+    .opener-title h2 { margin: 2px 0 0; font: 900 clamp(26px, 4vw, 38px)/1 var(--f-display); letter-spacing: .03em; text-transform: uppercase; }
+    .opener-actions { display: flex; gap: 8px; align-items: center; flex: none; }
+    .opener .btn { background: rgba(255,255,255,.1); color: #f5efdf; border-color: rgba(255,255,255,.22); }
+    .opener .btn.primary { background: var(--accent); color: #1a0d08; border-color: transparent; }
+    .opener-stage { position: relative; z-index: 2; }
+    .opener-foot { position: relative; z-index: 3; min-height: 44px; padding: 8px 16px 18px; text-align: center; font: 500 12px/1.4 var(--f-mono); color: rgba(245,239,223,.72); }
+    .opener-foot kbd { font: inherit; padding: 1px 6px; border: 1px solid rgba(255,255,255,.3); border-radius: 4px; }
+
+    .opack { position: absolute; left: 50%; top: 50%; translate: -50% -50%; --tear: 0; z-index: 2; }
+    .opack-inner { position: absolute; inset: 0; }
+    .opack.sealed .opack-inner { animation: wiggle 2.2s ease-in-out .5s infinite; }
+    .opack.tearing .opack-inner { animation: crinkle .1s steps(2) infinite; }
+    @keyframes wiggle { 0%, 62%, 100% { transform: rotate(0); } 68% { transform: rotate(-3.5deg) scale(1.02); } 74% { transform: rotate(3deg) scale(1.02); } 80% { transform: rotate(-2deg); } 86% { transform: rotate(1.2deg); } 92% { transform: rotate(-.5deg); } }
+    @keyframes crinkle { 0% { transform: skewX(.7deg) scale(1.006); } 100% { transform: skewX(-.7deg) scale(.997); } }
+    .opack-piece { position: absolute; inset: 0; }
+    .opack-piece .pk { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; }
+    .opack-piece.top { clip-path: polygon(0 0, 100% 0, 100% 16%, 96% 15.4%, 92% 16.3%, 88% 15.5%, 84% 16.4%, 80% 15.3%, 76% 16.2%, 72% 15.4%, 68% 16.4%, 64% 15.5%, 60% 16.3%, 56% 15.3%, 52% 16.2%, 48% 15.4%, 44% 16.4%, 40% 15.5%, 36% 16.3%, 32% 15.4%, 28% 16.2%, 24% 15.3%, 20% 16.4%, 16% 15.5%, 12% 16.3%, 8% 15.4%, 4% 16.2%, 0 15.6%);
+      transform-origin: 100% 16%; transform: translateY(calc(var(--tear) * -2.5%)) rotate(calc(var(--tear) * -7deg)); z-index: 2; }
+    .opack-piece.body { clip-path: polygon(0 15.6%, 4% 16.2%, 8% 15.4%, 12% 16.3%, 16% 15.5%, 20% 16.4%, 24% 15.3%, 28% 16.2%, 32% 15.4%, 36% 16.3%, 40% 15.5%, 44% 16.4%, 48% 15.4%, 52% 16.2%, 56% 15.3%, 60% 16.3%, 64% 15.5%, 68% 16.4%, 72% 15.4%, 76% 16.2%, 80% 15.3%, 84% 16.4%, 88% 15.5%, 92% 16.3%, 96% 15.4%, 100% 16%, 100% 100%, 0 100%); }
+    .opack.torn .opack-piece.top { transition: transform .7s var(--ease-out), opacity .6s .1s; transform: translate(34%, -95%) rotate(32deg); opacity: 0; }
+    .opack.spent .opack-piece.body { transition: transform .8s cubic-bezier(.55, 0, .8, .2), opacity .45s .35s; transform: translateY(85%) rotate(5deg) scale(.96); opacity: 0; }
+    .opack .perf { position: absolute; left: 4%; right: 4%; top: 15.9%; border-top: 2px dashed rgba(255,255,255,.75); z-index: 3; pointer-events: none; opacity: calc(1 - var(--tear) * 1.4); filter: drop-shadow(0 1px 0 rgba(0,0,0,.4)); }
+    .opack .tear-glow { position: absolute; left: 0; top: 15.9%; height: 3px; width: calc(var(--tear) * 100%); z-index: 1; translate: 0 -50%;
+      background: linear-gradient(90deg, #fff, #ffe7a0); box-shadow: 0 0 22px 8px rgba(255,226,150,.85); opacity: calc(var(--tear) * 2); }
+    .opack.torn .tear-glow { width: 100%; transition: width .2s, opacity .8s .3s; opacity: 0; }
+    .opack .strip { position: absolute; left: -8%; right: -8%; top: -4%; height: 26%; z-index: 4; cursor: grab; touch-action: none; }
+    .opack .strip:active { cursor: grabbing; }
+    .opack .strip-hint { position: absolute; left: 50%; top: -34px; translate: -50% 0; white-space: nowrap; font: 600 12px/1 var(--f-mono); color: #fff; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.25); padding: 7px 10px; border-radius: 99px; animation: nudge 1.4s ease-in-out infinite; pointer-events: none; }
+    .opack.torn .strip-hint, .opack.tearing .strip-hint { opacity: 0; transition: opacity .2s; }
+    @keyframes nudge { 50% { translate: calc(-50% + 10px) 0; } }
+    .opack .light { position: absolute; left: 50%; top: 16%; width: 160%; aspect-ratio: 1; translate: -50% -50%; z-index: 0; pointer-events: none; opacity: 0;
+      background: radial-gradient(circle, rgba(255,240,200,.9), rgba(255,210,120,.25) 30%, transparent 62%); }
+    .opack.torn .light { animation: light 1.2s ease-out both; }
+    @keyframes light { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.3); } }
+    .dealt { position: absolute; z-index: 5; transition: transform .85s var(--ease-deal), opacity .35s; }
+    .dealt .own { position: absolute; top: -8px; right: -6px; z-index: 6; font: 700 9.5px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 6px; border-radius: 99px; background: rgba(255,255,255,.9); color: #1b1a17; opacity: 0; transition: opacity .3s .4s; pointer-events: none; }
+    .dealt:not(.is-down) .own { opacity: 1; }
+    .flash { position: fixed; inset: 0; z-index: 95; pointer-events: none; background: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), #fff 0, rgba(255,230,150,.85) 18%, rgba(255,200,80,.2) 45%, transparent 70%); animation: flash 1.1s ease-out forwards; }
+    @keyframes flash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+    .spark { position: fixed; z-index: 96; width: 10px; height: 10px; pointer-events: none; background: linear-gradient(135deg, #fff6d0, #f2b53a); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: spark 1.3s cubic-bezier(.15, .8, .3, 1) forwards; }
+    @keyframes spark { 0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r)) scale(var(--s, 1)); opacity: 0; } }
+
+    /* =====================================================================
+       9. inspect (dialog)
+       ===================================================================== */
+    .inspect { position: fixed; inset: 0; z-index: 100; color: #f5efdf; }
+    .inspect[hidden] { display: none; }
+    .inspect-scrim { position: absolute; inset: 0; background: rgba(2,8,6,.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; transition: opacity .35s; }
+    html:not(.dark) .inspect-scrim { background: rgba(38,28,14,.72); }
+    .inspect.open .inspect-scrim { opacity: 1; }
+    .inspect-meta { position: absolute; left: 0; right: 0; top: max(12px, env(safe-area-inset-top)); text-align: center; font: 500 11.5px/1.4 var(--f-mono); letter-spacing: .04em; opacity: 0; transition: opacity .3s .15s; padding: 0 60px; }
+    .inspect.open .inspect-meta { opacity: .85; }
+    .inspect-slot { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .inspect-slot .card { width: 100%; }
+    .inspect-slot .card .card-tilt { scale: 1; }
+    .inspect-bar { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); translate: -50% 0; display: flex; gap: 8px; opacity: 0; transition: opacity .3s .15s; }
+    .inspect.open .inspect-bar { opacity: 1; }
+    .inspect .btn { background: rgba(255,255,255,.12); color: #f5efdf; border-color: rgba(255,255,255,.25); }
+    .inspect .btn.primary { background: #f5efdf; color: #1b1a17; }
+    .inspect-close { position: absolute; top: max(8px, env(safe-area-inset-top)); right: 10px; }
+
+    /* =====================================================================
+       10. deck list, worlds, trade partners, expansions, footer
+       ===================================================================== */
+    .decklist { position: relative; background: var(--paper); color: var(--paper-ink); border-radius: 6px; padding: 28px clamp(16px, 3.5vw, 40px) 18px; box-shadow: var(--shadow-lg); transform: rotate(-.3deg); }
+    .decklist::before { content: ""; position: absolute; inset: 8px; border: 1px solid var(--paper-line); border-radius: 3px; pointer-events: none; }
+    .dl-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-bottom: 14px; border-bottom: 2px solid var(--paper-ink); }
+    .dl-field { border: 1px solid var(--paper-line); border-radius: 4px; padding: 6px 10px; background: rgba(255,255,255,.35); min-width: 0; }
+    .dl-field span { display: block; font: 600 9.5px/1.4 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--paper-ink-2); }
+    .dl-field b { display: block; font: 700 15px/1.3 var(--f-ui); font-stretch: 92%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dl { list-style: none; margin: 0; padding: 0; }
+    .dl-row { display: grid; grid-template-columns: 40px 200px minmax(0, 1fr); gap: 18px; padding: 18px 0; border-bottom: 1px dashed var(--paper-line); align-items: center; }
+    .dl-row:last-child { border-bottom: 0; }
+    .dl-qty { font: 600 18px/1 var(--f-mono); color: var(--paper-ink-2); text-align: center; }
+    .dl-thumb { display: block; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; background: #111; border: 4px solid #fff; box-shadow: 0 8px 18px -10px rgba(0,0,0,.6); transform: rotate(-1.5deg); transition: transform .35s var(--ease-back); }
+    .dl-row:nth-child(even) .dl-thumb { transform: rotate(1.4deg); }
+    .dl-row:hover .dl-thumb { transform: rotate(0) scale(1.04); }
+    .dl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dl-thumb.contain { background: #fff; }
+    .dl-thumb.contain img { object-fit: contain; padding: 12px; }
+    .dl-name { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font: 900 28px/1 var(--f-display); text-transform: uppercase; letter-spacing: .01em; }
+    .sig { font: 700 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 99px; background: linear-gradient(120deg, #f7d77f, #fff3c4 40%, #e2a83a); color: #2b1c02; }
+    .dl-desc { margin: 6px 0 0; font-size: 15.5px; line-height: 1.5; color: #35312a; max-width: 68ch; }
+    .dl-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .dl-links .chip { color: var(--paper-ink); border-color: var(--paper-line); background: rgba(0,0,0,.04); }
+    .dl-total { display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid var(--paper-ink); font: 600 11px/1.4 var(--f-mono); color: var(--paper-ink-2); flex-wrap: wrap; gap: 6px; }
+
+    .worlds-head { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font: 500 12px/1.4 var(--f-mono); color: var(--ink-2); }
+    .worlds-head b { font: 900 34px/1 var(--f-display); color: var(--ink); letter-spacing: .01em; }
+    .worlds { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 22px; list-style: none; margin: 22px 0 0; padding: 0; }
+    .worlds li { grid-column: span 2; }
+    .worlds li:nth-child(-n+2) { grid-column: span 3; }
+    @media (max-width: 960px) { .worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); } .worlds li, .worlds li:nth-child(-n+2) { grid-column: span 1; } .worlds li:first-child { grid-column: 1 / -1; } }
+    @media (max-width: 600px) { .worlds { grid-template-columns: 1fr; } }
+    .world { display: block; text-decoration: none; color: #1b1a17; perspective: 900px; container-type: inline-size; }
+    .world .w-tilt { display: block; position: relative; border-radius: 14px; padding: 7px; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: scale .3s var(--ease-back);
+      background: linear-gradient(155deg, #5a6068, #1c1f24 60%, #33373d); box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(255,255,255,.2); }
+    .world.is-hot .w-tilt { scale: 1.02; }
+    .world .w-in { position: relative; display: grid; gap: 7px; border-radius: 9px; padding: 7px; background: linear-gradient(180deg, #faf6ec, #efe8d7); overflow: hidden; }
+    .w-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 7px; background: linear-gradient(180deg, #2c2e34, #111215); color: #fff; font: 800 19px/1 var(--f-display); letter-spacing: .03em; text-transform: uppercase; }
+    .w-name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .w-name .w-rank { flex: none; font: 600 10px/1 var(--f-mono); color: #f1c45c; }
+    .w-art { position: relative; aspect-ratio: 500 / 280; border-radius: 6px; overflow: hidden; background: #111; box-shadow: 0 0 0 2px #1d1b17; }
+    .w-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .w-art .glare { border-radius: 0; }
+    .w-type { display: flex; justify-content: space-between; gap: 8px; font: 600 10.5px/1.3 var(--f-mono); text-transform: uppercase; color: #5a554b; padding: 0 3px; }
+    .w-visits { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 2px 3px 0; }
+    .w-visits b { font: 600 clamp(20px, 7.2cqw, 26px)/1 var(--f-mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    .w-visits span { font: 600 10.5px/1 var(--f-mono); color: #5a554b; text-transform: uppercase; }
+    .w-bar { height: 7px; border-radius: 99px; background: rgba(0,0,0,.08); overflow: hidden; margin: 0 3px 3px; }
+    .w-bar i { display: block; height: 100%; width: var(--w); border-radius: inherit; background: linear-gradient(90deg, #e2452b, #f1c45c); }
+
+    .trades { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 235px), 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+    .trade a { position: relative; display: flex; flex-direction: column; gap: 3px; height: 100%; padding: 14px 16px 15px 20px; border-radius: 12px; text-decoration: none; overflow: hidden;
+      border: 1px solid var(--line-2); background: var(--panel); transition: transform .25s var(--ease-back), border-color .2s, background .2s; }
+    .trade a::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(180deg, var(--s1), var(--s2)); }
+    .trade a:hover { transform: translateY(-3px) rotate(-.6deg); border-color: var(--ink-2); background: var(--panel-2); }
+    .t-name { font: 800 21px/1.05 var(--f-display); letter-spacing: .02em; text-transform: uppercase; padding-right: 54px; }
+    .t-note { font: italic 400 17px/1.3 var(--f-flavor); color: var(--ink-2); }
+    .t-tag { position: absolute; top: 12px; right: 12px; font: 600 9.5px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 4px; }
+    .t-tag svg { width: 12px; height: 12px; transition: transform .4s var(--ease-back); }
+    .trade a:hover .t-tag svg { transform: rotate(180deg); }
+
+    .expansions { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
+    .xp { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; padding: 16px 16px 14px; border-radius: 10px; text-decoration: none; color: var(--s3); overflow: hidden;
+      background:
+        linear-gradient(100deg, transparent 30%, rgba(255,255,255,.25) 42%, transparent 54%) 120% 0 / 250% 100% no-repeat,
+        repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 5px),
+        linear-gradient(160deg, var(--s1), var(--s2));
+      box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(255,255,255,.2), inset 0 -8px 0 rgba(0,0,0,.18);
+      transition: transform .3s var(--ease-back), background-position .8s var(--ease-out); }
+    .xp:hover { transform: translateY(-5px) rotate(-1deg); background-position: -60% 0, 0 0, 0 0; }
+    .xp-top { display: flex; justify-content: space-between; font: 600 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+    .xp b { font: 900 clamp(28px, 3vw, 40px)/.9 var(--f-display); letter-spacing: .02em; text-transform: uppercase; color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.2); }
+    .xp-blurb { display: block; margin: 6px 0 0; font: italic 400 16px/1.25 var(--f-flavor); color: #fff; opacity: .92; }
+
+    .footer { margin-top: clamp(72px, 10vw, 120px); padding: 32px 0 44px; border-top: 1px dashed var(--line-2); }
+    .footer-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px 40px; align-items: start; }
+    .footer h2 { margin: 0 0 12px; font: 900 34px/1 var(--f-display); text-transform: uppercase; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+    .links .chip { min-height: 38px; padding: 0 16px; font-size: 14px; }
+    .credit { margin: 18px 0 0; font-size: 14px; color: var(--ink-2); }
+    .fine { margin: 0; font: 500 11px/1.6 var(--f-mono); color: var(--ink-3); }
+    .fine a { color: var(--ink-2); }
+    .footer .versions { justify-content: flex-start; padding: 0; border: 0; margin-top: 10px; }
+
+    /* toasts */
+    .toasts { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); translate: -50% 0; z-index: 120; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(92vw, 440px); pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: 12px; background: #15171b; color: #f5efdf; border: 1px solid rgba(255,255,255,.14);
+      font: 600 13.5px/1.35 var(--f-ui); box-shadow: 0 16px 34px -14px rgba(0,0,0,.7); animation: toastIn .45s var(--ease-back) both; }
+    .toast .rar { width: 16px; height: 16px; }
+    .toast.gold { background: linear-gradient(120deg, #6a490b, #f7d981 30%, #b8841f 60%, #fff0b8); color: #231500; border-color: rgba(0,0,0,.25); }
+    .toast.out { animation: toastOut .35s ease forwards; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(16px) scale(.94); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateY(8px) scale(.96); } }
+
+    /* =====================================================================
+       11. entrance + scroll reveals (only when motion is allowed)
+       ===================================================================== */
+    .intro .logo { animation: logoIn .9s var(--ease-out) .05s both, shimmer 2.4s ease-in-out .6s both; }
+    @keyframes logoIn { from { opacity: 0; transform: translateY(24px) scale(1.05); } }
+    @keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+    .intro .tcg-badge { animation: pop .55s var(--ease-back) .55s both; }
+    .intro .first-ed { animation: stampIn .5s var(--ease-back) .95s both; }
+    @keyframes pop { from { opacity: 0; transform: rotate(-3deg) scale(.4); } }
+    @keyframes stampIn { from { opacity: 0; transform: rotate(14deg) scale(2.2); } }
+    .intro .hero-player .player { animation: dealIn 1.15s var(--ease-deal) .25s both; }
+    @keyframes dealIn { from { opacity: 0; transform: translate(-30px, 140px) rotate(-16deg) scale(.82); } }
+    .intro .player .sweep { animation: sweep 1.3s ease-in-out 1.25s both; }
+    .player .sweep { position: absolute; inset: 0; z-index: 9; border-radius: 4.6cqw; pointer-events: none; opacity: 0; mix-blend-mode: overlay;
+      background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.95) 50%, transparent 65%) 0 0 / 300% 100% no-repeat; }
+    @keyframes sweep { 0% { opacity: 1; background-position: 100% 0; } 100% { opacity: 1; background-position: 0 0; } }
+    .intro .up { animation: up .7s var(--ease-out) both; animation-delay: calc(.35s + var(--d, 0) * .09s); }
+    @keyframes up { from { opacity: 0; translate: 0 18px; } }
+    .intro .rack-pack { animation: packIn .7s var(--ease-back) both; animation-delay: calc(.7s + var(--i) * .07s); }
+    @keyframes packIn { from { opacity: 0; transform: translateY(40px) rotate(8deg); } }
+    .intro .reveal { opacity: 0; translate: 0 26px; transition: opacity .8s var(--ease-out), translate .8s var(--ease-out); }
+    .intro .reveal.in { opacity: 1; translate: none; }
+
+    /* =====================================================================
+       12. responsive
+       ===================================================================== */
+    @media (max-width: 1120px) {
+      .counter-row { grid-template-columns: minmax(0, 1fr); }
+      .shelf { position: relative; top: 0; }
+      .rack { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+      .shelf { max-width: none; }
+      .checklist { transform: none; }
+    }
+    @media (max-width: 1120px) and (min-width: 980px) {
+      .rack { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 22px 12px; }
+    }
+    @media (max-width: 960px) {
+      .expansions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .nav { display: none; }
+      .hero { grid-template-columns: 1fr; grid-template-areas: "head" "player" "bio"; gap: 36px; }
+      .hero-head { text-align: left; }
+      .player { max-width: 340px; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .shelf { padding: 18px 0 20px; background: none; border: 0; }
+      .shelf-head { padding: 0 2px; }
+      .rack { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 18px 16px 8px; margin: -18px -16px 0; scrollbar-width: thin; }
+      .rack li { flex: 0 0 122px; scroll-snap-align: center; }
+      .rack li::after { bottom: 38px; }
+      .dl-form { grid-template-columns: 1fr 1fr; }
+      .dl-row { grid-template-columns: 28px minmax(0, 1fr); gap: 12px; }
+      .dl-row .dl-thumb { grid-column: 2; }
+      .dl-row .dl-body { grid-column: 2; }
+      .dl-qty { align-self: start; margin-top: 4px; grid-row: 1 / span 2; }
+      .book { grid-template-columns: 1fr 1fr; grid-template-areas: "spread spread" "prev next"; row-gap: 12px; }
+      .spread { grid-area: spread; }
+      .turn { width: 64px; height: 40px; }
+      .turn.prev { grid-area: prev; justify-self: start; }
+      .turn.next { grid-area: next; justify-self: end; }
+      .binder-foot { margin-top: -30px; min-height: 20px; align-items: center; pointer-events: none; }
+      .binder-foot .dot { pointer-events: auto; }
+      .binder { padding-inline: 10px; }
+      .page { padding: 10px 10px 12px; }
+    }
+    @media (max-width: 600px) {
+      .expansions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .xp { min-height: 150px; padding: 14px 13px 12px; }
+    }
+    @media (max-width: 520px) {
+      .socials-bar { display: none; }
+      .socials-hero { display: flex; margin-top: 16px; gap: 6px; }
+      .socials-hero .icon-btn { border: 1px solid var(--line-2); background: var(--panel); }
+      .brand-word { font-size: 19px; }
+      .counter { padding-right: 10px; }
+      .counter .j { display: none; }
+      .first-ed { width: 52px; height: 52px; right: -46px; top: -12px; font-size: 8.5px; }
+      .hero-player { margin-top: 18px; }
+      .first-ed b { font-size: 20px; }
+      .opener-actions .btn:not(.icon) { padding: 0 13px; font-size: 13px; }
+      .opener-actions .btn.icon { width: 38px; min-height: 38px; }
+      .opener-title svg { display: none; }
+      .dl-form { grid-template-columns: 1fr; }
+      .cta-row .btn { flex: 1 1 auto; }
+      .page-stamp { font-size: 13px; right: 8px; top: 7px; }
+    }
+    @media (hover: none) {
+      .player .egg { display: none; }
+      .player.alt .egg { display: block; }
+      .player:hover .pl-alt { opacity: 0; }
+      .player:hover .pl-main { opacity: 1; }
+      .player.alt .pl-alt { opacity: 1; }
+      .player.alt .pl-main { opacity: 0; }
+    }
+
+    /* =====================================================================
+       13. reduced motion: no tilt, no foil drift, instant reveals
+       ===================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; transition-duration: .001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+      .pk[data-set="prerelease"] { animation: none; filter: drop-shadow(0 14px 14px rgba(0,0,0,.35)) drop-shadow(0 0 14px rgba(255,150,50,.6)); }
+      .opack .strip-hint, .new-tag { animation: none; }
+      .glare { opacity: .12 !important; }
+    }
+  </style>
+</head>
+<body>
+{%- set n_photos = 3 + d.travel|length + d.galleries.nvidia.photos|length + d.galleries.adtran.photos|length + d.galleries.gatorai.photos|length -%}
+{%- set n_jobs = d.experience|length -%}
+{%- set PRE = "cloudflare" -%}
+{%- set cyc = ["origin", "gatorai", "adtran", "nvidia", "asia", "usa", "promo", "prerelease", "career"] -%}
+<div class="mat" aria-hidden="true"></div>
+
+<div id="app">
+  <!-- ============ versions strip ============ -->
+  <nav class="versions" aria-label="prototype versions">
+    <span>prototype · versions:</span>
+    {%- for v in d.versions %}
+    <a href="{{ v.href }}"{% if v.id == "cards" %} aria-current="page"{% endif %}>{{ v.label }}</a>
+    {%- endfor %}
+    <a class="cur-site" href="/">← current site</a>
+  </nav>
+
+  <!-- ============ top bar ============ -->
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="#top" aria-label="Andy Vu TCG, back to top">
+        <span class="brand-mark" aria-hidden="true"><b>AV</b></span>
+        <span class="brand-word" aria-hidden="true">ANDY VU <span>TCG</span></span>
+      </a>
+      <nav class="nav" aria-label="sections">
+        <a href="#shelf">packs</a><a href="#career">career</a><a href="#binder">binder</a><a href="#decklist">deck list</a><a href="#games">worlds</a><a href="#trades">trades</a>
+      </nav>
+      <div class="bar-right">
+        <a class="counter" id="counter" href="#binder" aria-label="binder progress">
+          <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="ring-bg" cx="18" cy="18" r="15" fill="none" stroke-width="3.5"/><circle class="ring" id="ring" cx="18" cy="18" r="15" fill="none" stroke-width="3.5" stroke-dasharray="94.25" stroke-dashoffset="94.25"/></svg>
+          <span><b data-count-photo>0</b>/{{ n_photos }}</span><span class="j">· J <b data-count-job>0</b>/{{ n_jobs }}</span>
+        </a>
+        <div class="socials socials-bar">
+          {%- for s in d.socials %}
+          <a class="icon-btn" href="{{ s.href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ s.label }}" title="{{ s.label }}"><span class="mask-icon" style="--m: url('{{ s.icon }}')"></span></a>
+          {%- endfor %}
+        </div>
+        <button class="icon-btn theme-toggle" id="theme" type="button" aria-label="switch to light mode" title="toggle light / dark">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ zone 01 · hero / player ============ -->
+    <section class="wrap hero" id="top" aria-label="player">
+      <div class="hero-head">
+        <p class="eyebrow up" style="--d:0">zone 01 · player one</p>
+        <div class="lockup">
+          <h1 class="logo">Andy Vu</h1>
+          <span class="first-ed" aria-hidden="true"><span><b>1st</b>edition</span></span>
+        </div>
+        <div class="logo-row">
+          <span class="tcg-badge" aria-hidden="true">TCG</span>
+          <span class="edition-line up" style="--d:1" id="edition-line">first edition · {{ n_photos }} photo cards · {{ n_jobs }} job cards</span>
+        </div>
+        <p class="whoami up" style="--d:2">{{ name }} · <span class="role">{{ cur_role }}</span></p>
+        <p class="intro-line up" style="--d:3">my life as a trading card game. every photo on here is a card, every chapter is a booster pack. rip one open and start filling the binder :D</p>
+        <div class="cta-row up" style="--d:4">
+          <a class="btn primary" href="#shelf">rip a pack
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M5 12l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <button class="btn gold" type="button" data-recruiter>i'm a recruiter, just show me everything</button>
+        </div>
+        <div class="socials socials-hero">
+          {%- for s in d.socials %}
+          <a class="icon-btn" href="{{ s.href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ s.label }}" title="{{ s.label }}"><span class="mask-icon" style="--m: url('{{ s.icon }}')"></span></a>
+          {%- endfor %}
+        </div>
+      </div>
+
+      <div class="hero-player">
+        <div class="zone" aria-hidden="true"><span>player card</span></div>
+        <div class="player" id="player" data-set="promo" data-r="promo" data-tilt="9">
+          <div class="card-tilt">
+            <div class="cf">
+              <div class="cf-in">
+                <div class="cf-name"><span class="cf-title">Andy Vu</span><span class="pl-tag">PLAYER</span></div>
+                <div class="cf-art pl-art">
+                  <img class="pl-main" src="{{ d.photo_thumb }}" width="{{ d.photo_dims.w }}" height="{{ d.photo_dims.h }}" alt="Andy Vu: {{ d.photo_dims.scene }}" fetchpriority="high" decoding="async">
+                  <img class="pl-alt" src="{{ d.photo_alt_thumb }}" width="{{ d.photo_alt_dims.w }}" height="{{ d.photo_alt_dims.h }}" alt="alt art of Andy Vu: {{ d.photo_alt_dims.scene }}" loading="lazy" decoding="async">
+                  <i class="foil"></i>
+                  <span class="egg">{{ d.easter_egg }}</span>
+                  <button class="pl-swap" type="button" aria-pressed="false">alt art ↻</button>
+                </div>
+                <div class="cf-type"><span>player — cs @ uf · roblox dev</span><svg aria-hidden="true"><use href="#sym-promo"/></svg></div>
+                <dl class="pl-stats">
+                  <div><dt>games</dt><dd>{{ d.games|length }}</dd></div>
+                  <div><dt>cards</dt><dd class="mono"><span data-count-photo>0</span>/{{ n_photos }}</dd></div>
+                  <div class="wide"><dt>total game visits</dt><dd class="mono">{{ "{:,}".format(d.games_total_visits) }}</dd></div>
+                  <div class="wide"><dt>current role</dt><dd>{{ cur_role }}</dd></div>
+                </dl>
+                <div class="cf-text"><p class="cf-flavor">“{{ d.motto.text }}” — {{ d.motto.source }}</p></div>
+                <div class="cf-foot"><span class="cf-no">P01</span><svg class="rar rar-promo" aria-hidden="true"><use href="#r-promo"/></svg><span>promo</span><span class="cf-cred">photo: andy's camera roll</span></div>
+              </div>
+              <i class="glare"></i>
+              <i class="sweep"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-bio up" style="--d:5">
+        <div class="bio">
+          {%- for p in d.about %}
+          <p>{{ p }}</p>
+          {%- endfor %}
+        </div>
+        <div class="notice">
+          <p>{{ d.visitors.text }}</p>
+          <a class="btn small" href="{{ d.visitors.href }}">{{ d.visitors.label }} →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ zone 02 · booster shelf + career checklist ============ -->
+    <section class="wrap sec" id="shelf" aria-labelledby="shelf-title">
+      <div class="sec-head reveal">
+        <div>
+          <p class="eyebrow">zone 02 · the counter</p>
+          <h2 class="h2" id="shelf-title">rip a pack</h2>
+          <p class="lede">each chapter of my life is a booster. open one, tear the top strip, flip the cards. the whole career is also printed on the checklist, no packs required.</p>
+        </div>
+      </div>
+      <div class="counter-row">
+        <div class="shelf reveal">
+          <div class="shelf-head"><h3>booster shelf</h3><p>tap a pack to open it<br>drag the top strip to tear</p></div>
+          <ul class="rack" id="rack" aria-label="booster packs"></ul>
+        </div>
+
+        <div class="checklist reveal" id="career">
+          <div class="cl-head">
+            <h3>set checklist · career</h3>
+            <p>J01–J{{ "%02d"|format(n_jobs) }} · newest first<br>☐ = not pulled yet</p>
+          </div>
+          <p class="cl-sub">the more professional-looking part of this</p>
+          <ol class="cl">
+            {%- for e in d.experience %}
+            {%- set jid = "j%02d"|format(loop.index) %}
+            <li class="cl-row">
+              <span class="chk" data-chk="{{ jid }}" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>
+              <button class="cl-logo{% if e.id in ['ucf', 'vuplay'] %} fill{% endif %}" type="button" data-inspect="{{ jid }}" aria-label="inspect the {{ e.company }} job card"><img src="{{ e.logo }}" alt="{{ e.company }} logo" loading="lazy" decoding="async"></button>
+              <div>
+                <div class="cl-top">
+                  <span class="cl-no">J{{ "%02d"|format(loop.index) }}</span>
+                  <span class="cl-co">{{ e.company }}</span>
+                  {%- if e.favorite %}<span class="cl-fav" title="favorite" aria-label="favorite">★</span>{% endif %}
+                  {%- if e.current %}<span class="cl-now{% if e.id == PRE %} pre{% endif %}">{% if e.id == PRE %}pre-release · now{% else %}now{% endif %}</span>{% endif %}
+                </div>
+                {%- for r in e.roles %}
+                <p class="cl-role"><b>{{ r.title }}</b>{% if r.team %} · {{ r.team }}{% endif %}<span class="cl-meta">{{ r.dates }} · {{ r.location }}</span></p>
+                {%- endfor %}
+                {%- if e.note %}<p class="cl-note">{{ e.note }}</p>{% endif %}
+                <div class="cl-links">
+                  {%- for l in e.links %}
+                  <a class="chip" href="{{ l.href }}"{% if not l.href.startswith('#') %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ l.label }}</a>
+                  {%- endfor %}
+                  <button class="chip view" type="button" data-inspect="{{ jid }}">view card</button>
+                </div>
+              </div>
+            </li>
+            {%- endfor %}
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ zone 03 · binder ============ -->
+    <section class="wrap sec" id="binder" aria-labelledby="binder-title">
+      <div class="sec-head reveal">
+        <div>
+          <p class="eyebrow">zone 03 · collection</p>
+          <h2 class="h2" id="binder-title">the binder</h2>
+          <p class="lede">3×3 sleeves, sorted by set. every card you pull slides in here, and it remembers your collection next time you visit.</p>
+        </div>
+      </div>
+      <div class="binder-top reveal">
+        <div class="progress">
+          <div class="progress-count"><b><span data-count-photo>0</span>/{{ n_photos }}</b><span>photo cards collected</span><span>· job cards <span data-count-job>0</span>/{{ n_jobs }}</span></div>
+          <div class="pips" id="pips" aria-hidden="true"></div>
+        </div>
+        <div class="binder-actions">
+          <button class="btn gold small" type="button" data-recruiter>i'm a recruiter, just show me everything</button>
+          <button class="btn small" type="button" id="reset">reset collection</button>
+        </div>
+      </div>
+      <ul class="legend reveal" id="legend" aria-label="rarity legend"></ul>
+      <div class="binder reveal" id="binder-book">
+        <div class="tabs" id="tabs" aria-label="binder sets"></div>
+        <div class="book">
+          <button class="turn prev" id="turn-prev" type="button" aria-label="previous page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="spread" id="spread"></div>
+          <button class="turn next" id="turn-next" type="button" aria-label="next page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <div class="binder-foot" id="dots"></div>
+      </div>
+    </section>
+
+    <!-- ============ zone 04 · deck list (projects) ============ -->
+    <section class="wrap sec" id="decklist" aria-labelledby="deck-title">
+      <div class="sec-head reveal">
+        <div>
+          <p class="eyebrow">zone 04 · tournament registration</p>
+          <h2 class="h2" id="deck-title">deck list</h2>
+          <p class="lede">the projects i'd sleeve up and bring to a tournament.</p>
+        </div>
+      </div>
+      <div class="decklist reveal">
+        <div class="dl-form">
+          <div class="dl-field"><span>player</span><b>{{ name }}</b></div>
+          <div class="dl-field"><span>deck</span><b>projects</b></div>
+          <div class="dl-field"><span>main deck</span><b>{{ d.projects|length }} cards</b></div>
+        </div>
+        <ol class="dl">
+          {%- for p in d.projects %}
+          <li class="dl-row">
+            <span class="dl-qty">1×</span>
+            <a class="dl-thumb{% if p.thumb_contain %} contain{% endif %}" href="{{ p.links[0].href }}" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true"><img src="{{ p.thumb }}" alt="{{ p.name }} project thumbnail" loading="lazy" decoding="async"></a>
+            <div class="dl-body">
+              <h3 class="dl-name">{{ p.name }}{% if p.favorite %}<span class="sig">★ signature card</span>{% endif %}</h3>
+              <p class="dl-desc">{{ p.desc }}</p>
+              <div class="dl-links">
+                {%- for l in p.links %}
+                <a class="chip" href="{{ l.href }}" target="_blank" rel="noopener noreferrer">{{ l.label }} <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></a>
+                {%- endfor %}
+              </div>
+            </div>
+          </li>
+          {%- endfor %}
+        </ol>
+        <div class="dl-total"><span>main deck: {{ d.projects|length }}</span><span>sideboard: whatever "weekend" idea i start next</span></div>
+      </div>
+    </section>
+
+    <!-- ============ zone 05 · worlds (games) ============ -->
+    {%- set maxv = d.games|map(attribute="visits")|max %}
+    <section class="wrap sec" id="games" aria-labelledby="games-title">
+      <div class="sec-head reveal">
+        <div>
+          <p class="eyebrow">zone 05 · field cards</p>
+          <h2 class="h2" id="games-title">my games :D</h2>
+          <p class="lede">the roblox worlds i've made, as field cards. you've probably played one.</p>
+        </div>
+        <div class="worlds-head"><span><b>{{ "{:,}".format(d.games_total_visits) }}</b> total visits</span><span>current visits as of {{ d.games_as_of }}</span></div>
+      </div>
+      <ul class="worlds">
+        {%- for g in d.games %}
+        <li class="reveal">
+          <a class="world" href="{{ g.href }}" target="_blank" rel="noopener noreferrer" data-tilt="6">
+            <span class="w-tilt"><span class="w-in">
+              <span class="w-name"><span>{{ g.name }}</span><span class="w-rank">W{{ "%02d"|format(loop.index) }}</span></span>
+              <span class="w-art"><img src="{{ g.img }}" alt="{{ g.name }} thumbnail" loading="lazy" decoding="async"><i class="glare"></i></span>
+              <span class="w-type"><span>world — roblox</span><span>created {{ g.created }}</span></span>
+              <span class="w-visits"><b>{{ "{:,}".format(g.visits) }}</b><span>visits</span></span>
+              <span class="w-bar" aria-hidden="true"><i style="--w: {{ (g.visits / maxv * 100)|round(1) }}%"></i></span>
+            </span></span>
+          </a>
+        </li>
+        {%- endfor %}
+      </ul>
+    </section>
+
+    <!-- ============ zone 06 · trade partners (friends) ============ -->
+    <section class="wrap sec" id="trades" aria-labelledby="trades-title">
+      <div class="sec-head reveal">
+        <div>
+          <p class="eyebrow">zone 06 · trade partners</p>
+          <h2 class="h2" id="trades-title">trade partners</h2>
+          <p class="lede">cool friends. go visit their sites.</p>
+        </div>
+      </div>
+      <ul class="trades">
+        {%- for f in d.friends %}
+        <li class="trade reveal" data-set="{{ cyc[loop.index0 % cyc|length] }}">
+          <a href="{{ f.href }}" target="_blank" rel="noopener noreferrer">
+            <span class="t-name">{{ f.name }}</span>
+            <span class="t-note">{{ f.note }}</span>
+            <span class="t-tag" aria-hidden="true">trade <svg viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </a>
+        </li>
+        {%- endfor %}
+      </ul>
+    </section>
+
+    <!-- ============ zone 07 · other expansions (random pages) ============ -->
+    <section class="wrap sec" id="expansions" aria-labelledby="xp-title">
+      <div class="sec-head reveal">
+        <div>
+          <p class="eyebrow">zone 07 · other expansions</p>
+          <h2 class="h2" id="xp-title">other expansions</h2>
+          <p class="lede">random pages i made. each one is its own little set.</p>
+        </div>
+      </div>
+      <ul class="expansions">
+        {%- for r in d.random_pages %}
+        <li class="reveal">
+          <a class="xp" data-set="{{ ['usa', 'promo', 'origin', 'asia', 'nvidia'][loop.index0 % 5] }}" href="{{ r.href }}">
+            <span class="xp-top"><span>expansion</span><span>{{ "%02d"|format(loop.index) }}/{{ "%02d"|format(d.random_pages|length) }}</span></span>
+            <span><b>{{ r.label }}</b><span class="xp-blurb">{{ r.blurb }}</span></span>
+          </a>
+        </li>
+        {%- endfor %}
+      </ul>
+    </section>
+  </main>
+
+  <!-- ============ footer ============ -->
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <h2>links!</h2>
+        <ul class="links">
+          {%- for l in d.links %}
+          <li><a class="chip" href="{{ l.href }}"{% if not l.href.startswith('mailto:') %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ l.label }}</a></li>
+          {%- endfor %}
+        </ul>
+        {%- set cparts = d.credit.text.split(" thanks to ") %}
+        <p class="credit">{% if cparts|length == 2 %}<a href="{{ d.credit.source_href }}" target="_blank" rel="noopener noreferrer">{{ cparts[0] }}</a> thanks to <a href="{{ d.credit.author_href }}" target="_blank" rel="noopener noreferrer">{{ cparts[1] }}</a>{% else %}<a href="{{ d.credit.source_href }}" target="_blank" rel="noopener noreferrer">{{ d.credit.text }}</a>{% endif %}</p>
+      </div>
+      <div>
+        <p class="fine">ANDY VU TCG · first edition · a prototype homepage. not a real card game (yet). your collection lives in this browser only.</p>
+        <nav class="versions" aria-label="prototype versions (footer)">
+          <span>versions:</span>
+          {%- for v in d.versions %}
+          <a href="{{ v.href }}"{% if v.id == "cards" %} aria-current="page"{% endif %}>{{ v.label }}</a>
+          {%- endfor %}
+          <a class="cur-site" href="/">← current site</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ============ dialogs ============ -->
+<div class="opener" id="opener" role="dialog" aria-modal="true" aria-labelledby="op-title" hidden>
+  <div class="opener-bg"></div>
+  <div class="opener-head">
+    <div class="opener-title">
+      <svg aria-hidden="true"><use id="op-sym" href="#sym-origin"/></svg>
+      <div><p id="op-sub">booster pack</p><h2 id="op-title">pack</h2></div>
+    </div>
+    <div class="opener-actions">
+      <button class="btn primary" id="op-main" type="button">tear it open</button>
+      <button class="btn icon" id="op-close" type="button" aria-label="close pack (esc)"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+  <div class="opener-stage" id="op-stage"></div>
+  <div class="opener-foot" id="op-foot" aria-live="polite"></div>
+</div>
+
+<div class="inspect" id="inspect" role="dialog" aria-modal="true" aria-label="inspect card" hidden>
+  <div class="inspect-scrim" id="in-scrim"></div>
+  <p class="inspect-meta" id="in-meta"></p>
+  <button class="btn icon inspect-close" id="in-close" type="button" aria-label="close (esc)"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+  <div class="inspect-slot" id="in-slot"></div>
+  <div class="inspect-bar">
+    <button class="btn icon" id="in-prev" type="button" aria-label="previous card"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="btn primary" id="in-flip" type="button" aria-pressed="false">flip card ↻</button>
+    <button class="btn icon" id="in-next" type="button" aria-label="next card"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<p class="sr" id="live" aria-live="polite"></p>
+
+<!-- ============ svg sprite: set symbols, rarity marks, card-back emblem ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="emblem-ring" d="M100,100 m-73,0 a73,73 0 1,1 146,0 a73,73 0 1,1 -146,0"/>
+  </defs>
+  <symbol id="sym-origin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M9.5 3v3.5M14.5 3v3.5M9.5 17.5V21M14.5 17.5V21M3 9.5h3.5M3 14.5h3.5M17.5 9.5H21M17.5 14.5H21"/><rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="sym-gatorai" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="7" r="2.6"/><circle cx="18" cy="7" r="2.6"/><circle cx="12" cy="18" r="2.6"/><path d="M8.3 8.6l2.5 6.9M15.7 8.6l-2.5 6.9M8.6 7h6.8"/></symbol>
+  <symbol id="sym-adtran" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="17.5" r="2" fill="currentColor" stroke="none"/><path d="M8 13.8a5.6 5.6 0 0 1 8 0M5 10.6a9.8 9.8 0 0 1 14 0M2.2 7.4a13.6 13.6 0 0 1 19.6 0"/></symbol>
+  <symbol id="sym-nvidia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.6l8.2 4.7v9.4L12 21.4l-8.2-4.7V7.3z"/><path d="M12 8.2l3.3 1.9v3.8L12 15.8l-3.3-1.9v-3.8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="sym-asia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9.5" r="4.5"/><path d="M2.5 16.5c2.2 0 2.2-1.6 4.7-1.6s2.5 1.6 4.8 1.6 2.4-1.6 4.8-1.6 2.5 1.6 4.7 1.6M5 20.4c1.6 0 1.8-1 3.5-1s1.9 1 3.5 1 1.8-1 3.5-1 1.9 1 3.5 1"/></symbol>
+  <symbol id="sym-usa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2.5 19.5l6-9.5 3.5 5.2 2.4-3.4 7.1 7.7z"/><path d="M17.6 2.6l.9 2 2.2.3-1.6 1.5.4 2.1-1.9-1-2 1 .4-2.1-1.6-1.5 2.2-.3z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="sym-promo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l2.3 4.4 4.8-1.2-1.2 4.8L22 12l-4.1 2 1.2 4.8-4.8-1.2L12 22l-2.3-4.4-4.8 1.2 1.2-4.8L2 12l4.1-2-1.2-4.8 4.8 1.2z"/><circle cx="12" cy="12" r="2.8" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="sym-career" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M9 7.5v-2A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v2M3 12.5h18"/></symbol>
+  <symbol id="sym-prerelease" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 18.5h10.4a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 9.2 4.7 4.7 0 0 0 7 18.5z"/><path d="M12 11v4M10 13h4" stroke-linecap="round"/></symbol>
+
+  <symbol id="r-common" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5" fill="currentColor"/></symbol>
+  <symbol id="r-uncommon" viewBox="0 0 24 24"><path d="M12 3.2l8.8 8.8-8.8 8.8L3.2 12z" fill="currentColor"/></symbol>
+  <symbol id="r-rare" viewBox="0 0 24 24"><path d="M12 2.4l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.2 1.3-6.5L2.5 9.2l6.6-.8z" fill="currentColor"/></symbol>
+  <symbol id="r-holo" viewBox="0 0 24 24"><path d="M11 4.4l2.5 5.1 5.6.7-4.1 3.9 1.1 5.5-5.1-2.8-5 2.8 1.1-5.5L3 10.2l5.6-.7z" fill="currentColor"/><path d="M20 .8l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z" fill="currentColor"/></symbol>
+  <symbol id="r-secret" viewBox="0 0 24 24"><path d="M3 17.2h18L19.6 7.6l-4.4 3.6L12 4.2l-3.2 7-4.4-3.6z" fill="currentColor"/><rect x="3" y="18.6" width="18" height="2.6" rx="1.2" fill="currentColor"/></symbol>
+  <symbol id="r-promo" viewBox="0 0 24 24"><path d="M12 1.8l2.4 5 5.4-1.2-1.6 5.3L22.2 14l-5.3 1.4.3 5.5L12 18.5 6.8 21l.3-5.5L1.8 14l4-3.1-1.6-5.3 5.4 1.2z" fill="currentColor"/><path d="M10.4 9.2h2.3a1.9 1.9 0 0 1 0 3.8h-1.4v2.2h-.9z" fill="#fff"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+
+  <symbol id="emblem" viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="95" fill="#1a1442" stroke="#ecdfc2" stroke-width="3"/>
+    <circle cx="100" cy="100" r="86" fill="none" stroke="#9b7a3a" stroke-width="1.5" stroke-dasharray="2 4"/>
+    <text font-family="Martian Mono, ui-monospace, monospace" font-size="11" font-weight="600" letter-spacing="2.2" fill="#ecdfc2"><textPath href="#emblem-ring">ANDY VU · TRADING CARD GAME · FIRST EDITION ·</textPath></text>
+    <circle cx="100" cy="100" r="58" fill="#ecdfc2"/>
+    <circle cx="100" cy="100" r="52" fill="#e0452d"/>
+    <path d="M100 52 A48 48 0 0 1 148 100 L100 100 Z" fill="#ff6a4d" opacity=".55"/>
+    <text x="100" y="119" text-anchor="middle" font-family="Big Shoulders Display, Impact, sans-serif" font-weight="900" font-size="56" fill="#fff6e0" letter-spacing="-1">AV</text>
+    <path d="M100 30l3 7 7.5.6-5.7 4.9 1.8 7.3-6.6-4-6.6 4 1.8-7.3-5.7-4.9 7.5-.6z" fill="#f1c45c"/>
+    <path d="M100 170l-3-7-7.5-.6 5.7-4.9-1.8-7.3 6.6 4 6.6-4-1.8 7.3 5.7 4.9-7.5.6z" fill="#f1c45c"/>
+  </symbol>
+</svg>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =====================================================================
+     0. data (all content from redesigns/data.html) + helpers
+     ===================================================================== */
+  const DATA = {{ {
+    "photo": d.photo, "photoAlt": d.photo_alt,
+    "photoThumb": d.photo_thumb, "photoAltThumb": d.photo_alt_thumb,
+    "photoDims": d.photo_dims, "photoAltDims": d.photo_alt_dims,
+    "egg": d.easter_egg, "motto": d.motto,
+    "origin": d.origin, "travel": d.travel, "galleries": d.galleries,
+    "experience": d.experience
+  }|tojson }};
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const root = document.documentElement;
+  const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  /* wait for a Web Animation, but never hang if the timeline is paused (hidden tab) */
+  const settle = (anim, ms) => Promise.race([anim.finished.catch(() => {}), new Promise((r) => setTimeout(r, ms + 120))]);
+  const pad = (n, w) => String(n).padStart(w, "0");
+  /* a stable id from a thumb path: basename up to ".thumb" (so it survives the build's webp rename) */
+  const slug = (p) => String(p || "").split("/").pop().split(".thumb")[0];
+
+  /* =====================================================================
+     1. the card game: sets, rarity, packs (mapping lives here, content in DATA)
+     ===================================================================== */
+  const SETS = {
+    origin:     { label: "origin",      sym: "origin" },
+    gatorai:    { label: "gatorai",     sym: "gatorai", kind: "club" },
+    adtran:     { label: "adtran",      sym: "adtran",  kind: "work" },
+    nvidia:     { label: "nvidia",      sym: "nvidia",  kind: "work" },
+    asia:       { label: "asia",        sym: "asia" },
+    usa:        { label: "usa",         sym: "usa" },
+    promo:      { label: "promo",       sym: "promo" },
+    career:     { label: "career",      sym: "career" },
+    prerelease: { label: "pre-release", sym: "prerelease" },
+  };
+  const RARITY = {
+    common:   { label: "common",      rank: 0 },
+    uncommon: { label: "uncommon",    rank: 1 },
+    rare:     { label: "rare",        rank: 2 },
+    holo:     { label: "holo rare",   rank: 3 },
+    promo:    { label: "promo",       rank: 4 },
+    secret:   { label: "secret rare", rank: 5 },
+  };
+  /* travel = common, club/work candids = uncommon, job cards = rare. standouts below. */
+  const RARITY_OVERRIDE = {
+    "lore-why-cs": "holo",
+    "gatorai-first-gbm-hosted-250-attendance": "holo",
+    "nvidia-sky-diving": "holo",
+    "nvidia-hong-kong": "holo",
+    "travel-nyc-againnnn": "holo",
+    "travel-new-symrna-beach-florida": "holo",
+    "nvidia-picture-with-jensen-huang": "secret",
+  };
+  const JOB_SET = { cloudflare: "prerelease", nvidia: "nvidia", adtran: "adtran", gatorai: "gatorai" }; /* rest → career */
+  const BRAND = { cloudflare: "#f38020", nvidia: "#76b900", adtran: "#1fb4d8", gatorai: "#3558d8", vuplay: "#8b5cf6", ucf: "#ffc904", roblox: "#dfe3e8", gamefam: "#5a6cff" };
+  const FILL_LOGO = { ucf: true, vuplay: true };
+  const RACK_ORDER = ["origin", "gatorai", "adtran", "nvidia", "prerelease", "career", "asia", "usa", "promo"];
+  const BOOKS = [
+    { id: "origin", sets: ["origin"] }, { id: "gatorai", sets: ["gatorai"] }, { id: "adtran", sets: ["adtran"] },
+    { id: "nvidia", sets: ["nvidia"] }, { id: "asia", sets: ["asia"] }, { id: "usa", sets: ["usa"] },
+    { id: "promo", sets: ["promo"] }, { id: "career", sets: ["prerelease", "career"] },
+  ];
+
+  const CARDS = [];
+  const BY = {};
+  const add = (c) => { CARDS.push(c); BY[c.id] = c; return c; };
+  const jobIdOf = {};
+  DATA.experience.forEach((e, i) => { jobIdOf[e.id] = "j" + pad(i + 1, 2); });
+
+  let num = 0;
+  function photoCard(set, p, extra) {
+    num += 1;
+    const c = Object.assign({ id: "p" + pad(num, 3), num, kind: "photo", set, thumb: p.thumb, src: p.src, w: p.w, h: p.h, credit: "photo: andy's camera roll", rarity: "common" }, extra);
+    c.rarity = RARITY_OVERRIDE[slug(p.thumb)] || c.rarity;
+    return add(c);
+  }
+  /* 001 · origin */
+  photoCard("origin", DATA.origin, {
+    name: "first pc build", type: `origin — ${DATA.origin.year}`, year: DATA.origin.year,
+    flavor: `${DATA.origin.caption} — ${DATA.origin.note}`, alt: DATA.origin.scene, scene: DATA.origin.scene,
+  });
+  /* club / work galleries, tied to their experience entries */
+  ["gatorai", "adtran", "nvidia"].forEach((key) => {
+    const g = DATA.galleries[key];
+    const e = DATA.experience.find((x) => x.gallery === key);
+    g.photos.forEach((p) => photoCard(key, p, {
+      name: p.caption, type: `${SETS[key].kind} — ${e.company} · ${e.start_year}`,
+      flavor: g.subtitle, alt: p.caption, rarity: "uncommon", job: jobIdOf[e.id], from: g.title,
+    }));
+  });
+  /* travel: asia, then usa. repeat places get numbered art variants, like real reprints. */
+  const placeCount = {}, placeSeen = {};
+  DATA.travel.forEach((t) => { placeCount[t.place] = (placeCount[t.place] || 0) + 1; });
+  [["asia", "asia"], ["usa", "us"]].forEach(([set, region]) => {
+    DATA.travel.filter((t) => t.region === region).forEach((t) => {
+      placeSeen[t.place] = (placeSeen[t.place] || 0) + 1;
+      photoCard(set, t, {
+        name: t.place, variant: placeCount[t.place] > 1 ? `art ${placeSeen[t.place]}/${placeCount[t.place]}` : null,
+        type: `travel — ${set} · ${t.place.split(", ").pop()}`, flavor: t.caption, alt: t.scene, scene: t.scene, place: t.place,
+      });
+    });
+  });
+  /* promo: the portrait + its goofy alt art (the easter egg) */
+  photoCard("promo", { thumb: DATA.photoThumb, src: DATA.photo, w: DATA.photoDims.w, h: DATA.photoDims.h }, {
+    name: "Andy Vu", type: "player — promo", flavor: `“${DATA.motto.text}” — ${DATA.motto.source}`,
+    alt: DATA.photoDims.scene, scene: DATA.photoDims.scene, rarity: "promo",
+  });
+  photoCard("promo", { thumb: DATA.photoAltThumb, src: DATA.photoAlt, w: DATA.photoAltDims.w, h: DATA.photoAltDims.h }, {
+    name: "Andy Vu", variant: "alt art", type: "player — alt art promo", flavor: DATA.egg,
+    alt: DATA.photoAltDims.scene, scene: DATA.photoAltDims.scene, rarity: "promo", full: true, egg: true,
+  });
+  const PHOTO_TOTAL = num;
+  /* job cards J01… (newest first, like the checklist) */
+  DATA.experience.forEach((e, i) => {
+    const single = e.roles.length === 1;
+    add({
+      id: jobIdOf[e.id], num: i + 1, kind: "job", set: JOB_SET[e.id] || "career", exp: e, name: e.company,
+      type: single ? `job — ${e.roles[0].title}` : `job — ${e.roles.length} roles`, flavor: e.note,
+      alt: `${e.company} logo`, logo: e.logo, brand: BRAND[e.id] || "#6b7280", rarity: "rare",
+      credit: "art: company logo", soon: JOB_SET[e.id] === "prerelease",
+    });
+  });
+  const JOB_TOTAL = DATA.experience.length;
+  CARDS.forEach((c) => {
+    c.no = c.kind === "photo" ? `${pad(c.num, 3)}/${pad(PHOTO_TOTAL, 3)}` : `J${pad(c.num, 2)}/J${pad(JOB_TOTAL, 2)}`;
+  });
+  const byKindNum = (a, b) => (a.kind === b.kind ? a.num - b.num : a.kind === "photo" ? -1 : 1);
+
+  /* packs: rarest cards go in the back, like a real booster */
+  const PACKS = {};
+  RACK_ORDER.forEach((set) => {
+    const cards = CARDS.filter((c) => c.set === set).sort((a, b) => RARITY[a.rarity].rank - RARITY[b.rarity].rank || byKindNum(a, b));
+    const cover = cards.find((c) => c.kind === "photo" && c.rarity === "holo")
+      || cards.find((c) => c.kind === "photo" && c.rarity !== "secret" && !c.egg) || cards[0];
+    PACKS[set] = { id: set, set, cards, cover };
+  });
+
+  /* binder pages: one set per page (3×3), long sets spill onto a second page */
+  const PAGES = [];
+  BOOKS.forEach((b) => {
+    b.cards = CARDS.filter((c) => b.sets.includes(c.set)).sort(byKindNum);
+    const chunks = Math.ceil(b.cards.length / 9);
+    for (let k = 0; k < chunks; k++) {
+      const slice = b.cards.slice(k * 9, k * 9 + 9);
+      const slots = Array(9).fill(null);
+      if (chunks === 1 && slice.length === 1) slots[4] = slice[0];
+      else if (chunks === 1 && slice.length === 2) { slots[3] = slice[0]; slots[5] = slice[1]; }
+      else slice.forEach((c, j) => { slots[j] = c; });
+      PAGES.push({ book: b.id, k, of: chunks, slots });
+    }
+  });
+  const BINDER_ORDER = BOOKS.flatMap((b) => b.cards.map((c) => c.id));
+
+  /* =====================================================================
+     2. collection (localStorage, optional)
+     ===================================================================== */
+  const KEY = "andyvu-tcg-collection";
+  const owned = new Set();
+  const fresh = new Set();
+  const newStamps = new Set();
+  const completedQueue = [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) || "[]");
+    if (Array.isArray(raw)) raw.forEach((id) => { if (BY[id]) owned.add(id); });
+  } catch (e) { /* private mode etc. — play without saving */ }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...owned])); } catch (e) {} };
+  const bookOf = (c) => BOOKS.find((b) => b.sets.includes(c.set));
+  const bookDone = (b) => b.cards.every((c) => owned.has(c.id));
+
+  function collect(ids, { quiet = false, mark = true } = {}) {
+    const before = new Set(BOOKS.filter(bookDone).map((b) => b.id));
+    let added = 0;
+    ids.forEach((id) => { if (!owned.has(id)) { owned.add(id); if (mark) fresh.add(id); added += 1; } });
+    if (!added) return 0;
+    save();
+    BOOKS.filter((b) => bookDone(b) && !before.has(b.id)).forEach((b) => { newStamps.add(b.id); if (!quiet) completedQueue.push(b.id); });
+    refresh();
+    if (!OP) flushCompleted();
+    return added;
+  }
+  function flushCompleted() {
+    completedQueue.splice(0).forEach((id, i) => setTimeout(() => toast(`${rarSvg("secret")} set complete: ${esc(SETS[id].label)}! stamped in the binder`, "gold"), 350 + i * 500));
+  }
+
+  /* =====================================================================
+     3. markup builders
+     ===================================================================== */
+  const symSvg = (name, cls = "") => `<svg class="${cls}" aria-hidden="true"><use href="#sym-${name}"/></svg>`;
+  const rarSvg = (r) => `<svg class="rar rar-${r}" aria-hidden="true"><use href="#r-${r}"/></svg>`;
+  const titleCls = (s) => (s.length > 40 ? " xlong" : s.length > 22 ? " long" : "");
+
+  function artHTML(c, eager) {
+    const load = eager ? "" : ' loading="lazy"';
+    if (c.kind === "job") {
+      return `<span class="cf-art"><span class="job-field" style="--brand:${c.brand}"><span class="job-tile" style="background-image:url('${esc(c.logo)}')"></span>`
+        + `<span class="job-emblem${FILL_LOGO[c.exp.id] ? " fill" : ""}"><img src="${esc(c.logo)}" alt="${esc(c.alt)}"${load} decoding="async"></span>`
+        + (c.soon ? `<span class="job-soon" data-sub="${esc(c.exp.roles[0].dates)}">photos coming soon</span>` : "")
+        + `</span><i class="foil"></i></span>`;
+    }
+    return `<span class="cf-art"><img src="${esc(c.thumb)}" alt="${esc(c.alt)}"${load} decoding="async"><i class="foil"></i></span>`;
+  }
+  function textHTML(c) {
+    if (c.kind === "job") {
+      const e = c.exp;
+      const roles = e.roles.length === 1
+        ? `<span class="cf-role">${esc(e.roles[0].team || "")}<span>${esc(e.roles[0].dates)} · ${esc(e.roles[0].location)}</span></span>`
+        : e.roles.map((r) => `<span class="cf-role">${esc(r.title)}<span>${esc(r.dates)} · ${esc(r.location)}</span></span>`).join("");
+      return roles + (e.note ? `<span class="cf-flavor">${esc(e.note)}</span>` : "");
+    }
+    return c.flavor ? `<span class="cf-flavor">${esc(c.flavor)}</span>` : `<span class="cf-desc">${esc(c.scene || c.alt)}</span>`;
+  }
+  function faceHTML(c, eager) {
+    const full = c.full || c.rarity === "secret";
+    return `<span class="cf${full ? " cf-full" : ""}"><span class="cf-in">`
+      + `<span class="cf-name"><span class="cf-title${titleCls(c.name)}">${esc(c.name)}</span>${c.variant ? `<span class="cf-var">${esc(c.variant)}</span>` : ""}<span class="cf-gem">${rarSvg(c.rarity)}</span></span>`
+      + artHTML(c, eager)
+      + `<span class="cf-type"><span>${esc(c.type)}</span>${symSvg(SETS[c.set].sym)}</span>`
+      + `<span class="cf-text">${textHTML(c)}</span>`
+      + `<span class="cf-foot"><span class="cf-no">${c.no}</span>${rarSvg(c.rarity)}<span>${RARITY[c.rarity].label}</span><span class="cf-cred">${esc(c.credit)}</span></span>`
+      + `</span>${full ? `<i class="shine${c.rarity === "promo" ? " alt" : ""}"></i>` : ""}<i class="glare"></i></span>`;
+  }
+  const backHTML = () => `<span class="cb"><svg aria-hidden="true"><use href="#emblem"/></svg><i class="glare"></i></span>`;
+  function cardLabel(el, c, down, i) {
+    el.setAttribute("aria-label", down ? `face-down card ${i + 1}: flip it` : `${c.no} ${c.name}${c.variant ? " (" + c.variant + ")" : ""}, ${RARITY[c.rarity].label}: inspect`);
+  }
+  function cardEl(c, { mode = "pocket", down = false, eager = false, i = 0 } = {}) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "card" + (down ? " is-down" : "");
+    b.dataset.id = c.id; b.dataset.r = c.rarity; b.dataset.set = c.set;
+    b.dataset.tilt = mode === "pocket" ? "14" : "16";
+    b.innerHTML = `<i class="burst"></i><span class="card-tilt"><span class="card-flip">${faceHTML(c, eager)}${mode === "deal" ? backHTML() : ""}</span></span>`;
+    cardLabel(b, c, down, i);
+    return b;
+  }
+  function packArtHTML(p) {
+    const s = SETS[p.set], c = p.cover, logo = c.kind === "job";
+    const n = p.cards.length;
+    return `<span class="pk" data-set="${p.set}"><span class="pk-art">`
+      + `<span class="pk-crimp top"></span><span class="pk-brand">ANDY VU<b>TCG</b></span>`
+      + `<span class="pk-window"><i></i><i></i><span class="pk-img${logo ? " logo" : ""}"><img src="${esc(logo ? c.logo : c.thumb)}" alt="${esc(logo ? c.alt : "pack art: " + c.alt)}" loading="lazy" decoding="async"></span></span>`
+      + (p.set === "prerelease" ? `<span class="pk-seal">sealed · pre-release</span>` : "")
+      + `<span class="pk-name${s.label.length > 7 ? " long" : ""}">${esc(s.label)}</span>`
+      + (p.cards.some((x) => x.rarity === "secret") ? `<span class="pk-sticker"><span><b>♛</b>secret<br>rare<br>inside?</span></span>` : "")
+      + `<span class="pk-sub">${n} card${n > 1 ? "s" : ""}</span>`
+      + `${symSvg(s.sym, "pk-sym")}<span class="pk-ed">1st ed</span><span class="pk-crimp bot"></span></span></span>`;
+  }
+  function ghostHTML(c) {
+    const p = PACKS[c.set];
+    return `<button type="button" class="ghost" data-open="${p.id}" data-set="${c.set}" aria-label="${c.no}: not pulled yet. open the ${esc(SETS[p.set].label)} pack">`
+      + `<img src="${esc(c.kind === "job" ? c.logo : c.thumb)}" alt="blurred preview of an uncollected card" loading="lazy" decoding="async">`
+      + `<span class="g-q">???</span>${symSvg(SETS[c.set].sym, "g-sym")}<span class="g-no">${c.no.split("/")[0]}</span></button>`;
+  }
+  function jobBlock(e, withHead) {
+    const roles = e.roles.map((r) => `<p class="cd-role"><b>${esc(r.title)}</b>${r.team ? `<span>${esc(r.team)}</span><br>` : ""}<span>${esc(r.dates)} · ${esc(r.location)}</span></p>`).join("");
+    const links = e.links.map((l) => `<a class="chip" href="${esc(l.href)}"${l.href.startsWith("#") ? "" : ' target="_blank" rel="noopener noreferrer"'}>${esc(l.label)}</a>`).join("");
+    return `<div class="cd-job">${withHead ? `<div class="cd-job-head"><img src="${esc(e.logo)}" alt="${esc(e.company)} logo" loading="lazy"><b>${esc(e.company)}</b></div>` : ""}`
+      + roles + (e.note ? `<p class="cd-note">${esc(e.note)}</p>` : "") + (links ? `<div class="cd-links">${links}</div>` : "") + `</div>`;
+  }
+  function detailsHTML(c) {
+    const s = SETS[c.set];
+    let h = `<div class="cd-top"><span>${c.no} · ${esc(s.label)}</span><span>${rarSvg(c.rarity)} ${RARITY[c.rarity].label}</span></div>`;
+    if (c.kind === "photo") {
+      h += `<h3>${esc(c.name)}</h3><p class="cd-type">${esc(c.type)}${c.variant ? " · " + esc(c.variant) : ""}</p>`;
+      h += `<figure class="cd-photo"><img src="${esc(c.thumb)}" alt="${esc(c.alt)}" decoding="async"><figcaption>uncropped</figcaption></figure>`;
+      if (c.flavor) h += `<p class="cd-flavor">${esc(c.flavor)}</p>`;
+      const rows = [];
+      if (c.place) rows.push(["place", esc(c.place)]);
+      if (c.year) rows.push(["year", esc(c.year)]);
+      if (c.from) rows.push(["from", esc(c.from)]);
+      if (c.scene) rows.push(["in frame", esc(c.scene)]);
+      rows.push(["pack", `${esc(s.label)} booster`]);
+      h += `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
+      if (c.job) h += jobBlock(BY[c.job].exp, true);
+    } else {
+      h += `<h3>${esc(c.exp.company)}</h3><p class="cd-type">${esc(c.type)}</p>` + jobBlock(c.exp, false);
+      const pics = CARDS.filter((x) => x.job === c.id).length;
+      if (pics) h += `<p class="cd-hint">${pics} photo cards from this one live in the ${esc(s.label)} pack.</p>`;
+      if (c.soon) h += `<p class="cd-hint">pre-release: no photo cards printed for this set yet.</p>`;
+    }
+    h += `<div class="cd-links"><button type="button" class="chip solid" data-open="${PACKS[c.set].id}">open the ${esc(s.label)} pack</button></div>`;
+    h += `<p class="cd-hint">enter / click flips · ← → browse · esc closes</p>`;
+    return `<div class="cd"><div class="cd-in">${h}</div></div>`;
+  }
+
+  /* =====================================================================
+     4. tilt + foil engine — only the hovered card runs pointer effects
+     ===================================================================== */
+  const tilt = new WeakMap();
+  const moving = new Set();
+  let hot = null, raf = 0;
+  const T = (el) => {
+    let s = tilt.get(el);
+    if (!s) { s = { x: .5, y: .5, o: 0, vx: 0, vy: 0, tx: .5, ty: .5, to: 0 }; tilt.set(el, s); }
+    return s;
+  };
+  function release(el) {
+    const s = T(el); s.tx = .5; s.ty = .5; s.to = 0;
+    el.classList.remove("is-hot"); kick(el);
+  }
+  function kick(el) { moving.add(el); if (!raf) raf = requestAnimationFrame(frame); }
+  function frame() {
+    raf = 0;
+    moving.forEach((el) => {
+      const s = T(el);
+      s.vx = (s.vx + (s.tx - s.x) * .16) * .74; s.x += s.vx;
+      s.vy = (s.vy + (s.ty - s.y) * .16) * .74; s.y += s.vy;
+      s.o += (s.to - s.o) * .14;
+      const m = +el.dataset.tilt || 12;
+      el.style.setProperty("--x", s.x.toFixed(4));
+      el.style.setProperty("--y", s.y.toFixed(4));
+      el.style.setProperty("--o", s.o.toFixed(3));
+      el.style.setProperty("--rx", ((.5 - s.y) * m * 2).toFixed(2) + "deg");
+      el.style.setProperty("--ry", ((s.x - .5) * m * 2).toFixed(2) + "deg");
+      const settled = Math.abs(s.tx - s.x) < .001 && Math.abs(s.ty - s.y) < .001 && Math.abs(s.vx) < .0005 && Math.abs(s.vy) < .0005 && Math.abs(s.to - s.o) < .005;
+      if (settled && el !== hot) moving.delete(el);
+    });
+    if (moving.size) raf = requestAnimationFrame(frame);
+  }
+  if (!REDUCED) {
+    document.addEventListener("pointermove", (e) => {
+      let el = e.target.closest ? e.target.closest("[data-tilt]") : null;
+      if (el && e.pointerType === "touch" && !el.dataset.touch) el = null;
+      if (el && el.closest("[inert]")) el = null;
+      if (el !== hot) { if (hot) release(hot); hot = el; if (el) el.classList.add("is-hot"); }
+      if (!el) return;
+      const r = el.getBoundingClientRect(), s = T(el);
+      s.tx = clamp((e.clientX - r.left) / r.width, 0, 1);
+      s.ty = clamp((e.clientY - r.top) / r.height, 0, 1);
+      s.to = 1;
+      kick(el);
+    }, { passive: true });
+    const drop = () => { if (hot) { release(hot); hot = null; } };
+    document.addEventListener("pointerout", (e) => { if (!e.relatedTarget) drop(); });
+    window.addEventListener("blur", drop);
+    document.addEventListener("pointerup", (e) => { if (e.pointerType === "touch") drop(); });
+  } else {
+    root.style.setProperty("--o", ".45"); /* static foil so holos still read as holo */
+  }
+
+  /* =====================================================================
+     5. toasts + live region
+     ===================================================================== */
+  const toasts = $("#toasts");
+  function toast(msg, kind = "") {
+    const t = document.createElement("div");
+    t.className = "toast " + kind;
+    t.innerHTML = msg;
+    toasts.append(t);
+    while (toasts.children.length > 3) toasts.firstElementChild.remove();
+    setTimeout(() => t.classList.add("out"), 3400);
+    setTimeout(() => t.remove(), 3800);
+  }
+  const say = (msg) => { $("#live").textContent = msg; };
+
+  /* =====================================================================
+     6. rack, counters, checklist
+     ===================================================================== */
+  const rack = $("#rack");
+  rack.innerHTML = RACK_ORDER.map((id, i) => {
+    const p = PACKS[id], s = SETS[p.set];
+    return `<li><button type="button" class="rack-pack" data-pack="${id}" data-set="${p.set}" data-tilt="12" style="--i:${i}" aria-label="open the ${esc(s.label)} pack, ${p.cards.length} cards">`
+      + `<span class="pack-3d">${packArtHTML(p)}</span><span class="stamp-mini">complete</span>`
+      + `<span class="rack-meta"><b>${esc(s.label)}</b><span data-prog="${id}">0/${p.cards.length}</span></span></button></li>`;
+  }).join("");
+  $("#edition-line").textContent = `first edition · ${PHOTO_TOTAL} photo cards · ${JOB_TOTAL} job cards · ${RACK_ORDER.length} packs`;
+
+  const pips = $("#pips");
+  pips.innerHTML = [...CARDS].sort(byKindNum).map((c, i, a) => `<i class="pip${c.kind === "job" && a[i - 1] && a[i - 1].kind === "photo" ? " gap" : ""}" data-set="${c.set}" data-pip="${c.id}"></i>`).join("");
+  $("#legend").innerHTML = ["common", "uncommon", "rare", "holo", "promo", "secret"].map((r) => `<li>${rarSvg(r)}${RARITY[r].label}</li>`).join("")
+    + `<li>· travel common · club/work uncommon · job cards rare</li>`;
+
+  function refresh() {
+    const photos = CARDS.filter((c) => c.kind === "photo" && owned.has(c.id)).length;
+    const jobs = CARDS.filter((c) => c.kind === "job" && owned.has(c.id)).length;
+    $$("[data-count-photo]").forEach((el) => { el.textContent = photos; });
+    $$("[data-count-job]").forEach((el) => { el.textContent = jobs; });
+    $("#ring").style.strokeDashoffset = (94.25 * (1 - photos / PHOTO_TOTAL)).toFixed(2);
+    $("#counter").setAttribute("aria-label", `binder: ${photos} of ${PHOTO_TOTAL} photo cards and ${jobs} of ${JOB_TOTAL} job cards collected`);
+    $$("[data-pip]").forEach((el) => el.classList.toggle("on", owned.has(el.dataset.pip)));
+    RACK_ORDER.forEach((id) => {
+      const p = PACKS[id], have = p.cards.filter((c) => owned.has(c.id)).length;
+      const prog = $(`[data-prog="${id}"]`);
+      prog.textContent = `${have}/${p.cards.length}`;
+      prog.classList.toggle("done", have === p.cards.length);
+      prog.closest(".rack-pack").classList.toggle("complete", have === p.cards.length);
+    });
+    $$("[data-chk]").forEach((el) => el.classList.toggle("on", owned.has(el.dataset.chk)));
+    renderTabs();
+    if (!OP) renderBinder(0);
+  }
+
+  /* =====================================================================
+     7. binder
+     ===================================================================== */
+  const spreadEl = $("#spread"), tabsEl = $("#tabs"), dotsEl = $("#dots");
+  const mqWide = matchMedia("(min-width: 761px)");
+  let per = mqWide.matches ? 2 : 1;
+  let spread = 0;
+  const spreadCount = () => Math.ceil(PAGES.length / per);
+  const firstPageOf = (bookId) => PAGES.findIndex((p) => p.book === bookId);
+
+  function pageHTML(pg, idx) {
+    const b = BOOKS.find((x) => x.id === pg.book);
+    const have = b.cards.filter((c) => owned.has(c.id)).length, done = have === b.cards.length;
+    const stampNew = done && newStamps.has(b.id);
+    return `<div class="page${done ? " done" : ""}" data-set="${b.id}">`
+      + `<div class="page-head">${symSvg(SETS[b.id].sym)}<h3>${esc(SETS[b.id].label)}${pg.of > 1 ? ` <small class="mono">${pg.k + 1}/${pg.of}</small>` : ""}</h3><span class="pg">${have}/${b.cards.length} · p${idx + 1}</span></div>`
+      + `<div class="pockets">${pg.slots.map((c) => (c
+        ? (owned.has(c.id) ? `<div class="pocket" data-slot="${c.id}"></div>` : `<div class="pocket">${ghostHTML(c)}</div>`)
+        : `<div class="pocket"><span class="blank"></span></div>`)).join("")}</div>`
+      + (done ? `<span class="page-stamp${stampNew ? " new" : ""}">set complete</span>` : "")
+      + `</div>`;
+  }
+  function buildSpread() {
+    const pages = PAGES.slice(spread * per, spread * per + per);
+    spreadEl.classList.toggle("single", per === 1);
+    spreadEl.innerHTML = pages.map((pg, j) => pageHTML(pg, spread * per + j)).join("")
+      + (per === 2 ? `<div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i></div>` : "");
+    $$("[data-slot]", spreadEl).forEach((slot) => {
+      const c = BY[slot.dataset.slot];
+      slot.append(cardEl(c, { mode: "pocket" }));
+      if (fresh.has(c.id)) slot.insertAdjacentHTML("beforeend", `<span class="new-tag">new!</span>`);
+    });
+    pages.forEach((pg) => { if (bookDone(BOOKS.find((b) => b.id === pg.book))) newStamps.delete(pg.book); });
+    $("#turn-prev").disabled = spread === 0;
+    $("#turn-next").disabled = spread >= spreadCount() - 1;
+    dotsEl.innerHTML = Array.from({ length: spreadCount() }, (_, i) => `<button type="button" class="dot" data-spread="${i}" aria-label="binder page ${i * per + 1}"${i === spread ? ' aria-current="true"' : ""}></button>`).join("");
+    renderTabs();
+  }
+  function renderBinder(dir) {
+    spread = clamp(spread, 0, spreadCount() - 1);
+    if (!dir || REDUCED) { buildSpread(); return; }
+    spreadEl.style.setProperty("--turn", dir > 0 ? "-12deg" : "12deg");
+    spreadEl.style.setProperty("--shift", dir > 0 ? "-3%" : "3%");
+    spreadEl.classList.add("turn-out");
+    setTimeout(() => {
+      spreadEl.classList.remove("turn-out");
+      spreadEl.classList.add("turn-in");
+      buildSpread();
+      void spreadEl.offsetWidth;
+      spreadEl.classList.remove("turn-in");
+    }, 230);
+  }
+  function renderTabs() {
+    const pages = PAGES.slice(spread * per, spread * per + per).map((p) => p.book);
+    tabsEl.innerHTML = BOOKS.map((b) => `<button type="button" class="tab${bookDone(b) ? " complete" : ""}" data-book="${b.id}" data-set="${b.id}"${pages.includes(b.id) ? ' aria-current="true"' : ""}>${esc(SETS[b.id].label)}<svg class="tick" aria-hidden="true"><use href="#i-check"/></svg><span class="sr">${bookDone(b) ? " (complete)" : ""}</span></button>`).join("");
+  }
+  function turnPage(d) {
+    const next = clamp(spread + d, 0, spreadCount() - 1);
+    if (next === spread) return;
+    spread = next; renderBinder(d);
+    const first = PAGES[spread * per];
+    say(`binder page ${spread * per + 1} of ${PAGES.length}: ${SETS[first.book].label}`);
+  }
+  function goToBook(id, animate) {
+    const target = Math.floor(firstPageOf(id) / per);
+    const d = Math.sign(target - spread);
+    spread = target; renderBinder(animate ? d : 0);
+  }
+  $("#turn-prev").addEventListener("click", () => turnPage(-1));
+  $("#turn-next").addEventListener("click", () => turnPage(1));
+  tabsEl.addEventListener("click", (e) => { const t = e.target.closest("[data-book]"); if (t) goToBook(t.dataset.book, true); });
+  dotsEl.addEventListener("click", (e) => { const t = e.target.closest("[data-spread]"); if (t) turnPage(+t.dataset.spread - spread); });
+  mqWide.addEventListener("change", () => {
+    const firstPage = spread * per; per = mqWide.matches ? 2 : 1;
+    spread = Math.floor(firstPage / per); renderBinder(0);
+  });
+  let sx = null, sy = null;
+  spreadEl.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  spreadEl.addEventListener("touchend", (e) => {
+    if (sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 50) turnPage(dx < 0 ? 1 : -1);
+    sx = null;
+  }, { passive: true });
+  spreadEl.addEventListener("click", (e) => {
+    const card = e.target.closest(".card");
+    if (card) { inspect(card.dataset.id, card, BINDER_ORDER.filter((id) => owned.has(id))); return; }
+    const g = e.target.closest("[data-open]");
+    if (g) openPack(g.dataset.open, null, g);
+  });
+
+  /* =====================================================================
+     8. pack opener — wiggle, tear, burst, flip, slide into binder
+     ===================================================================== */
+  const opener = $("#opener"), stage = $("#op-stage"), opMain = $("#op-main"), opFoot = $("#op-foot"), app = $("#app");
+  let OP = null;
+  function lockPage(on) { root.classList.toggle("lock", on); app.inert = on; }
+  function setMain(label, act) { opMain.textContent = label; opMain.dataset.act = act; }
+  const foot = (h) => { opFoot.innerHTML = h; };
+
+  function openPack(id, fromEl, returnEl) {
+    if (OP) return;
+    const p = PACKS[id];
+    if (!p) return;
+    const have = p.cards.filter((c) => owned.has(c.id)).length;
+    OP = { p, items: [], phase: "sealed", back: returnEl || fromEl, added: 0 };
+    opener.dataset.set = p.set;
+    $("#op-title").textContent = SETS[p.set].label;
+    $("#op-sub").textContent = `booster pack · ${p.cards.length} card${p.cards.length > 1 ? "s" : ""}${have ? ` · ${have} already in your binder` : ""}`;
+    $("#op-sym").setAttribute("href", `#sym-${SETS[p.set].sym}`);
+    stage.innerHTML = `<div class="opack sealed" id="opack"><div class="opack-inner"><span class="light"></span>`
+      + `<div class="opack-piece body">${packArtHTML(p)}</div><div class="opack-piece top">${packArtHTML(p)}</div>`
+      + `<span class="tear-glow"></span><span class="perf"></span>`
+      + `<div class="strip" id="strip"><span class="strip-hint">drag across to tear →</span></div></div></div>`;
+    opener.hidden = false;
+    lockPage(true);
+    const pk = $("#opack");
+    pk.style.transformOrigin = "0 0";
+    sizePack();
+    setMain("tear it open", "tear");
+    foot(`drag across the top strip to tear it (or hit “tear it open”) · <kbd>esc</kbd> closes`);
+    const from = fromEl && fromEl.querySelector(".pk");
+    if (from && !REDUCED) {
+      const a = from.getBoundingClientRect(), b = pk.getBoundingClientRect();
+      pk.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})` }, { transform: "none" }], { duration: 560, easing: "cubic-bezier(.2,.9,.25,1.05)" });
+    }
+    bindStrip(pk);
+    opMain.focus({ preventScroll: true });
+  }
+  function sizePack() {
+    const pk = $("#opack"); if (!pk) return;
+    const r = stage.getBoundingClientRect();
+    const h = Math.max(220, Math.min(r.height * .8, 480, r.width * .72 * 8 / 5));
+    pk.style.height = h + "px"; pk.style.width = (h * 5 / 8) + "px";
+  }
+  function bindStrip(pk) {
+    const strip = $("#strip", pk);
+    let drag = null;
+    strip.addEventListener("pointerdown", (e) => {
+      if (!OP || OP.phase !== "sealed") return;
+      e.preventDefault();
+      try { strip.setPointerCapture(e.pointerId); } catch (err) {}
+      drag = { x0: e.clientX, w: pk.getBoundingClientRect().width, t: 0 };
+      pk.classList.remove("sealed"); pk.classList.add("tearing");
+    });
+    strip.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      drag.t = Math.max(drag.t, clamp(Math.abs(e.clientX - drag.x0) / (drag.w * .8), 0, 1));
+      pk.style.setProperty("--tear", drag.t.toFixed(3));
+      if (drag.t >= 1) { drag = null; tear(); }
+    });
+    const end = () => {
+      if (!drag) return;
+      const t = drag.t; drag = null;
+      pk.classList.remove("tearing");
+      if (t > .55) { tear(); return; }
+      pk.classList.add("sealed");
+      tweenTear(pk, t, 0, 260);
+    };
+    strip.addEventListener("pointerup", end);
+    strip.addEventListener("pointercancel", end);
+    pk.addEventListener("click", (e) => {
+      if (!OP || OP.phase !== "sealed" || e.target.closest("#strip")) return;
+      foot(`psst: drag across the <b>top strip</b> to tear it · or hit “tear it open”`);
+    });
+  }
+  function tweenTear(pk, a, b, ms) {
+    if (REDUCED) { pk.style.setProperty("--tear", b); return Promise.resolve(); }
+    return new Promise((res) => {
+      const t0 = performance.now();
+      let done = false;
+      const finish = () => { if (done) return; done = true; pk.style.setProperty("--tear", b); res(); };
+      const step = (now) => {
+        if (done) return;
+        const k = clamp((now - t0) / ms, 0, 1), e = 1 - Math.pow(1 - k, 3);
+        pk.style.setProperty("--tear", (a + (b - a) * e).toFixed(3));
+        if (k < 1) requestAnimationFrame(step); else finish();
+      };
+      requestAnimationFrame(step);
+      setTimeout(finish, ms + 80); /* rAF can be paused (background tab); never leave the pack half-torn */
+    });
+  }
+  async function tear() {
+    if (!OP || OP.phase !== "sealed") return;
+    OP.phase = "torn";
+    const pk = $("#opack");
+    pk.classList.remove("sealed", "tearing");
+    await tweenTear(pk, parseFloat(pk.style.getPropertyValue("--tear")) || 0, 1, 180);
+    pk.classList.add("torn");
+    setMain("…", "wait");
+    await wait(360);
+    if (OP) deal();
+  }
+  function layout(n) {
+    const r = stage.getBoundingClientRect();
+    const W = r.width - 32, H = r.height - 28, gap = W < 520 ? 10 : 18;
+    let best = { w: 0, cols: 1, rows: n };
+    for (let cols = 1; cols <= n; cols++) {
+      const rows = Math.ceil(n / cols);
+      const w = Math.min((W - gap * (cols - 1)) / cols, ((H - gap * (rows - 1)) / rows) * 63 / 88, 232);
+      if (w > best.w + .5) best = { w, cols, rows };
+    }
+    const w = Math.floor(best.w), h = w * 88 / 63;
+    const totalH = best.rows * h + (best.rows - 1) * gap, y0 = (r.height - totalH) / 2;
+    const pos = [];
+    for (let i = 0; i < n; i++) {
+      const row = Math.floor(i / best.cols), col = i % best.cols;
+      const inRow = Math.min(best.cols, n - row * best.cols);
+      const x0 = (r.width - (inRow * w + (inRow - 1) * gap)) / 2;
+      pos.push({ x: x0 + col * (w + gap), y: y0 + row * (h + gap) });
+    }
+    return { w, h, pos };
+  }
+  function placeCards(L) {
+    OP.items.forEach((it, i) => {
+      Object.assign(it.el.style, { left: L.pos[i].x + "px", top: L.pos[i].y + "px", width: L.w + "px" });
+    });
+  }
+  function deal() {
+    OP.phase = "dealt";
+    const pk = $("#opack");
+    const sr = stage.getBoundingClientRect(), pr = pk.getBoundingClientRect();
+    const cx = pr.left + pr.width / 2 - sr.left, cy = pr.top + pr.height * .32 - sr.top;
+    pk.classList.add("spent");
+    const L = layout(OP.p.cards.length);
+    OP.items = OP.p.cards.map((c, i) => {
+      const el = cardEl(c, { mode: "deal", down: true, eager: true, i });
+      el.classList.add("dealt");
+      if (owned.has(c.id)) el.insertAdjacentHTML("beforeend", `<span class="own">owned</span>`);
+      const pos = L.pos[i];
+      const dx = cx - (pos.x + L.w / 2), dy = cy - (pos.y + L.h / 2);
+      el.style.transform = REDUCED ? "none" : `translate(${dx}px, ${dy}px) scale(.45) rotate(${(Math.random() * 20 - 10).toFixed(1)}deg)`;
+      el.style.opacity = REDUCED ? "1" : "0";
+      stage.append(el);
+      return { c, el, revealed: false, rot: (Math.random() * 5 - 2.5).toFixed(1) };
+    });
+    placeCards(L);
+    void stage.offsetWidth;
+    OP.items.forEach((it, i) => {
+      it.el.style.transitionDelay = REDUCED ? "0s" : `${.12 + i * .075}s`;
+      it.el.style.transform = `rotate(${it.rot}deg)`;
+      it.el.style.opacity = "1";
+    });
+    const items = OP.items;
+    setTimeout(() => items.forEach((it) => { it.el.style.transitionDelay = "0s"; }), 1600);
+    setMain("reveal all", "reveal");
+    foot(`tap a card to flip it · rares flash · tap a revealed card to inspect it`);
+    setTimeout(() => { if (OP && OP.items[0]) OP.items[0].el.focus({ preventScroll: true }); }, REDUCED ? 0 : 900);
+  }
+  function burst(el) {
+    el.classList.remove("bursting"); void el.offsetWidth; el.classList.add("bursting");
+    setTimeout(() => el.classList.remove("bursting"), 1200);
+  }
+  function flashAt(el) {
+    if (REDUCED) return;
+    const r = el.getBoundingClientRect();
+    const f = document.createElement("div");
+    f.className = "flash";
+    f.style.setProperty("--fx", `${r.left + r.width / 2}px`);
+    f.style.setProperty("--fy", `${r.top + r.height / 2}px`);
+    document.body.append(f);
+    setTimeout(() => f.remove(), 1200);
+    for (let i = 0; i < 34; i++) {
+      const s = document.createElement("i");
+      const a = (i / 34) * Math.PI * 2 + Math.random() * .3, d = 120 + Math.random() * 220;
+      s.className = "spark";
+      s.style.left = `${r.left + r.width / 2}px`; s.style.top = `${r.top + r.height / 2}px`;
+      s.style.setProperty("--dx", `${Math.cos(a) * d}px`); s.style.setProperty("--dy", `${Math.sin(a) * d}px`);
+      s.style.setProperty("--r", `${Math.random() * 540 - 270}deg`); s.style.setProperty("--s", (.6 + Math.random() * 1.2).toFixed(2));
+      s.style.animationDelay = `${Math.random() * .12}s`;
+      document.body.append(s);
+      setTimeout(() => s.remove(), 1600);
+    }
+  }
+  async function reveal(it) {
+    if (!OP || it.revealed || it.busy) return;
+    const c = it.c;
+    const rank = RARITY[c.rarity].rank;
+    if (c.rarity === "secret" && !REDUCED) {
+      it.busy = true;
+      opener.classList.add("secret-mode");
+      foot(`…something in this pack is glowing`);
+      it.el.classList.add("charging");
+      await wait(1500);
+      if (!OP) return;
+      it.el.classList.remove("charging");
+      it.el.classList.add("slow");
+    }
+    it.revealed = true;
+    it.el.classList.remove("is-down");
+    cardLabel(it.el, c, false);
+    OP.added += collect([c.id], { quiet: false });
+    if (c.rarity === "secret" && !REDUCED) {
+      await wait(720);
+      if (!OP) return;
+      flashAt(it.el); burst(it.el);
+      toast(`${rarSvg("secret")} secret rare pulled: ${esc(c.name)}`, "gold");
+      await wait(900);
+      it.el.classList.remove("slow");
+      opener.classList.remove("secret-mode");
+      it.busy = false;
+    } else if (rank >= 2) {
+      setTimeout(() => burst(it.el), REDUCED ? 0 : 280);
+      if (rank >= 3) say(`${RARITY[c.rarity].label}: ${c.name}`);
+    }
+    if (OP && OP.items.every((x) => x.revealed)) {
+      setMain("add to binder", "done");
+      foot(`all revealed! slide them into your binder →`);
+    }
+  }
+  async function revealAll() {
+    if (!OP || OP.revealing) return;
+    OP.revealing = true;
+    for (const it of OP.items.filter((x) => !x.revealed)) {
+      if (!OP) return;
+      if (it.c.rarity === "secret") { await wait(350); await reveal(it); }
+      else { reveal(it); await wait(160); }
+    }
+    if (OP) OP.revealing = false;
+  }
+  async function finish() {
+    if (!OP || OP.phase === "closing") return;
+    if (OP.items.some((x) => !x.revealed)) { await revealAll(); await wait(450); }
+    if (!OP) return;
+    OP.phase = "closing";
+    const t = $("#counter").getBoundingClientRect();
+    const tx = t.left + t.width / 2, ty = t.top + t.height / 2;
+    if (!REDUCED) {
+      await Promise.all(OP.items.map((it, i) => {
+        const r = it.el.getBoundingClientRect();
+        const anim = it.el.animate([
+          { transform: it.el.style.transform, opacity: 1 },
+          { transform: `translate(${tx - (r.left + r.width / 2)}px, ${ty - (r.top + r.height / 2)}px) scale(.05) rotate(${i % 2 ? 24 : -24}deg)`, opacity: .3 },
+        ], { duration: 640, delay: i * 45, easing: "cubic-bezier(.55,0,.8,.25)", fill: "forwards" });
+        return settle(anim, 640 + i * 45);
+      }));
+    }
+    const added = OP.added, p = OP.p;
+    closeOpener();
+    const counter = $("#counter");
+    counter.classList.remove("pulse"); void counter.offsetWidth; counter.classList.add("pulse");
+    toast(added ? `+${added} card${added > 1 ? "s" : ""} slid into your binder (${esc(SETS[p.set].label)} page)` : `all dupes this time. they're already in your binder`);
+    goToBook(bookOf(p.cards[0]).id, false);
+  }
+  function closeOpener() {
+    if (!OP) return;
+    const back = OP.back;
+    OP = null;
+    opener.hidden = true;
+    opener.classList.remove("secret-mode");
+    stage.innerHTML = "";
+    lockPage(false);
+    refresh();
+    flushCompleted();
+    const target = back && back.isConnected ? back : $("#binder-book");
+    if (target) { if (!target.hasAttribute("tabindex") && target.id === "binder-book") target.tabIndex = -1; target.focus({ preventScroll: true }); }
+  }
+  opMain.addEventListener("click", () => {
+    const act = opMain.dataset.act;
+    if (act === "tear") tear();
+    else if (act === "reveal") revealAll();
+    else if (act === "done") finish();
+  });
+  $("#op-close").addEventListener("click", closeOpener);
+  stage.addEventListener("click", (e) => {
+    const el = e.target.closest(".card");
+    if (!el || !OP) return;
+    const it = OP.items.find((x) => x.el === el);
+    if (!it) return;
+    if (!it.revealed) reveal(it);
+    else inspect(it.c.id, el, OP.items.filter((x) => x.revealed).map((x) => x.c.id));
+  });
+  rack.addEventListener("click", (e) => { const b = e.target.closest("[data-pack]"); if (b) openPack(b.dataset.pack, b); });
+
+  /* =====================================================================
+     9. inspect — fly to center, lazy full-res, tilt, flip for details
+     ===================================================================== */
+  const insp = $("#inspect"), slot = $("#in-slot");
+  let IN = null;
+  function inspectBox() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = Math.floor(Math.min(500, vw * .88, (vh - 140) * 63 / 88));
+    const h = w * 88 / 63;
+    return { w, h, x: (vw - w) / 2, y: Math.max(40, (vh - h) / 2 - 16) };
+  }
+  function buildInspect(c) {
+    const el = document.createElement("div");
+    el.className = "card";
+    el.tabIndex = 0;
+    el.setAttribute("role", "group");
+    el.setAttribute("aria-roledescription", "card");
+    el.setAttribute("aria-label", `${c.no} ${c.name}${c.variant ? " (" + c.variant + ")" : ""}, ${RARITY[c.rarity].label}. press enter to flip`);
+    el.dataset.r = c.rarity; el.dataset.set = c.set; el.dataset.tilt = "18"; el.dataset.touch = "1";
+    el.style.touchAction = "none";
+    el.innerHTML = `<i class="burst"></i><span class="card-tilt"><span class="card-flip">${faceHTML(c, true)}${detailsHTML(c)}</span></span>`;
+    slot.replaceChildren(el);
+    $(".cd", el).inert = true;
+    IN.el = el; IN.id = c.id;
+    $("#in-meta").textContent = `${c.no} · ${SETS[c.set].label} · ${RARITY[c.rarity].label}${owned.has(c.id) ? "" : " · not in your binder yet"}`;
+    $("#in-flip").setAttribute("aria-pressed", "false");
+    const many = IN.list.length > 1;
+    $("#in-prev").disabled = !many; $("#in-next").disabled = !many;
+  }
+  function placeSlot() {
+    const b = inspectBox();
+    Object.assign(slot.style, { width: b.w + "px", left: b.x + "px", top: b.y + "px" });
+    return b;
+  }
+  function loadHi(c) {
+    if (!IN || IN.id !== c.id || c.kind !== "photo") return;
+    const im = new Image();
+    im.decoding = "async";
+    im.onload = () => {
+      if (!IN || IN.id !== c.id) return;
+      const a = $(".cf-art img", IN.el), b = $(".cd-photo img", IN.el);
+      if (a) a.src = c.src;
+      if (b) b.src = c.src;
+    };
+    im.src = c.src;
+  }
+  function inspect(id, srcEl, list) {
+    const c = BY[id];
+    if (!c || IN) return;
+    IN = { id, list: list && list.length ? list : [id], src: srcEl || null };
+    if (IN.list.indexOf(id) < 0) IN.list = [id];
+    insp.hidden = false;
+    if (OP) opener.inert = true; else lockPage(true);
+    buildInspect(c);
+    const box = placeSlot();
+    if (srcEl && !REDUCED) {
+      const s = srcEl.getBoundingClientRect();
+      slot.animate([{ transform: `translate(${s.left - box.x}px, ${s.top - box.y}px) scale(${s.width / box.w})` }, { transform: "none" }], { duration: 560, easing: "cubic-bezier(.2,.9,.25,1.06)" });
+    }
+    if (srcEl && srcEl.classList.contains("card")) srcEl.style.visibility = "hidden";
+    requestAnimationFrame(() => insp.classList.add("open"));
+    setTimeout(() => loadHi(c), REDUCED ? 0 : 420);
+    IN.el.focus({ preventScroll: true });
+  }
+  function flip() {
+    if (!IN) return;
+    const on = !IN.el.classList.contains("is-flipped");
+    IN.el.classList.toggle("is-flipped", on);
+    IN.el.dataset.tilt = on ? "5" : "18";
+    IN.el.style.touchAction = on ? "pan-y" : "none";
+    if (on) delete IN.el.dataset.touch; else IN.el.dataset.touch = "1";
+    $(".cd", IN.el).inert = !on;
+    $("#in-flip").setAttribute("aria-pressed", String(on));
+    say(on ? "showing card details" : "showing card front");
+  }
+  function sourceFor(id) {
+    return $(`#spread .card[data-id="${id}"]`) || (OP ? (OP.items.find((x) => x.c.id === id) || {}).el : null) || null;
+  }
+  function stepCard(d) {
+    if (!IN || IN.list.length < 2) return;
+    const i = IN.list.indexOf(IN.id);
+    const next = IN.list[(i + d + IN.list.length) % IN.list.length];
+    if (IN.src) IN.src.style.visibility = "";
+    IN.src = sourceFor(next);
+    if (IN.src && IN.src.classList.contains("card")) IN.src.style.visibility = "hidden";
+    buildInspect(BY[next]);
+    if (!REDUCED) IN.el.animate([{ transform: `translateX(${d * 46}px) rotate(${d * 5}deg)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 340, easing: "cubic-bezier(.2,.9,.3,1.1)" });
+    setTimeout(() => loadHi(BY[next]), 160);
+    IN.el.focus({ preventScroll: true });
+  }
+  async function closeInspect() {
+    if (!IN || IN.closing) return;
+    IN.closing = true;
+    insp.classList.remove("open");
+    const src = IN.src && IN.src.isConnected ? IN.src : null;
+    IN.el.classList.remove("is-flipped");
+    const box = slot.getBoundingClientRect();
+    if (!REDUCED) {
+      if (src) {
+        const s = src.getBoundingClientRect();
+        await settle(slot.animate([{ transform: "none" }, { transform: `translate(${s.left - box.left}px, ${s.top - box.top}px) scale(${s.width / box.width})` }], { duration: 420, easing: "cubic-bezier(.5,0,.25,1)", fill: "forwards" }), 420);
+      } else {
+        await settle(slot.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.92)" }], { duration: 220, fill: "forwards" }), 220);
+      }
+    }
+    if (src) src.style.visibility = "";
+    slot.getAnimations().forEach((a) => a.cancel());
+    slot.replaceChildren();
+    insp.hidden = true;
+    const back = src;
+    IN = null;
+    if (OP) opener.inert = false; else lockPage(false);
+    if (back) back.focus({ preventScroll: true });
+  }
+  $("#in-close").addEventListener("click", closeInspect);
+  $("#in-scrim").addEventListener("click", closeInspect);
+  $("#in-flip").addEventListener("click", flip);
+  $("#in-prev").addEventListener("click", () => stepCard(-1));
+  $("#in-next").addEventListener("click", () => stepCard(1));
+  slot.addEventListener("click", (e) => {
+    const openBtn = e.target.closest("[data-open]");
+    if (openBtn) {
+      const id = openBtn.dataset.open;
+      const inPack = OP && OP.p.id === id;
+      closeInspect().then(() => { if (!OP) openPack(id, $(`.rack-pack[data-pack="${id}"]`)); else if (!inPack) toast("finish this pack first :)"); });
+      return;
+    }
+    const a = e.target.closest("a");
+    if (a) {
+      const href = a.getAttribute("href") || "";
+      if (href.startsWith("#")) {
+        e.preventDefault();
+        const dest = document.querySelector(href);
+        const done = () => { if (OP) closeOpener(); if (dest) dest.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); };
+        closeInspect().then(done);
+      }
+      return;
+    }
+    const card = e.target.closest(".card");
+    if (card && (!card.classList.contains("is-flipped") || !e.target.closest(".cd-in"))) flip();
+  });
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-inspect]");
+    if (!t) return;
+    const row = t.closest(".cl-row");
+    inspect(t.dataset.inspect, row ? $(".cl-logo", row) : t, CARDS.filter((c) => c.kind === "job").map((c) => c.id));
+  });
+
+  /* =====================================================================
+     10. keyboard: esc, arrows, focus trap
+     ===================================================================== */
+  function trap(e, box) {
+    const f = $$('button:not([disabled]), a[href], [tabindex="0"]', box).filter((x) => !x.closest("[inert]") && x.getClientRects().length);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !box.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !box.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  }
+  document.addEventListener("keydown", (e) => {
+    if (IN) {
+      if (e.key === "Escape") { e.preventDefault(); closeInspect(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); stepCard(1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); stepCard(-1); }
+      else if ((e.key === "Enter" || e.key === " ") && document.activeElement === IN.el) { e.preventDefault(); flip(); }
+      else if (e.key === "Tab") trap(e, insp);
+      return;
+    }
+    if (OP) {
+      if (e.key === "Escape") { e.preventDefault(); closeOpener(); }
+      else if (e.key === "Tab") trap(e, opener);
+      return;
+    }
+    if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && $("#binder-book").contains(document.activeElement)) {
+      e.preventDefault(); turnPage(e.key === "ArrowRight" ? 1 : -1);
+    }
+  });
+  if ("ResizeObserver" in window) new ResizeObserver(() => { if (OP && OP.items.length) placeCards(layout(OP.items.length)); }).observe(stage);
+  window.addEventListener("resize", () => {
+    if (OP) { sizePack(); if (OP.phase !== "sealed" && OP.items.length) placeCards(layout(OP.items.length)); }
+    if (IN && !IN.closing) placeSlot();
+  });
+
+  /* =====================================================================
+     11. player card, recruiter mode, reset, theme, scroll reveals
+     ===================================================================== */
+  const player = $("#player"), swap = $(".pl-swap", player);
+  const eggCard = CARDS.find((c) => c.egg);
+  let eggTimer = 0;
+  function foundEgg() {
+    if (eggCard && collect([eggCard.id])) toast(`${rarSvg("promo")} ${esc(DATA.egg)} alt art promo ${eggCard.no} added to your binder`, "gold");
+  }
+  player.addEventListener("mouseenter", () => { eggTimer = setTimeout(foundEgg, 650); });
+  player.addEventListener("mouseleave", () => clearTimeout(eggTimer));
+  function setAlt(on) {
+    player.classList.toggle("alt", on);
+    swap.setAttribute("aria-pressed", String(on));
+    swap.textContent = on ? "original ↻" : "alt art ↻";
+    if (on) foundEgg();
+  }
+  swap.addEventListener("click", (e) => { e.stopPropagation(); setAlt(!player.classList.contains("alt")); });
+  $(".pl-art", player).addEventListener("click", (e) => { if (e.target !== swap) setAlt(!player.classList.contains("alt")); });
+
+  $$("[data-recruiter]").forEach((b) => b.addEventListener("click", () => {
+    const missing = CARDS.filter((c) => !owned.has(c.id)).map((c) => c.id);
+    fresh.clear();
+    collect(missing, { quiet: true, mark: false });
+    completedQueue.length = 0;
+    toast(`${rarSvg("secret")} everything unlocked: ${PHOTO_TOTAL}/${PHOTO_TOTAL} photo cards + ${JOB_TOTAL}/${JOB_TOTAL} job cards. career checklist is right above the binder`, "gold");
+    spread = 0; renderBinder(0);
+    $("#binder").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" });
+  }));
+  $("#reset").addEventListener("click", () => {
+    owned.clear(); fresh.clear(); newStamps.clear(); save();
+    spread = 0; refresh();
+    toast("collection reset. go rip some packs");
+  });
+
+  const themeBtn = $("#theme");
+  const themeLabel = () => themeBtn.setAttribute("aria-label", root.classList.contains("dark") ? "switch to light mode (card shop)" : "switch to dark mode (playmat)");
+  themeBtn.addEventListener("click", () => {
+    const dark = !root.classList.contains("dark");
+    root.classList.toggle("dark", dark);
+    try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (e) {}
+    themeLabel();
+  });
+  themeLabel();
+
+  if (root.classList.contains("intro") && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+      if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+    }), { rootMargin: "0px 0px -6% 0px" });
+    $$(".reveal").forEach((el) => io.observe(el));
+  } else {
+    $$(".reveal").forEach((el) => el.classList.add("in"));
+  }
+
+  refresh();
+})();
+</script>
+</body>
+</html>

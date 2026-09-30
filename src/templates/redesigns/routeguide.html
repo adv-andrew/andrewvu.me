@@ -1924,7 +1924,7 @@
           <nav class="editions" aria-label="prototype editions">
             <span class="editions__label mono">editions</span>
             <ul>
-              {%- for v in d.versions %}
+              {%- for v in d.versions_v1 %}
               <li><a class="mono" href="{{ v.href }}"{% if v.id == "routeguide" %} aria-current="page"{% endif %}>{{ v.label|lower }}</a></li>
               {%- endfor %}
               <li><a class="mono back" href="/">{{ arr("l") }} current site</a></li>

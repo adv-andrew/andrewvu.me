@@ -3233,7 +3233,7 @@
         <nav class="servers" aria-label="homepage versions">
           <span class="servers-lbl">switch server</span>
           <ul>
-            {% for v in d.versions %}
+            {% for v in d.versions_v1 %}
               <li><a class="srv" href="{{ v.href }}"{% if v.id == current_version %} aria-current="page"{% endif %}>{{ v.label }}</a></li>
             {% endfor %}
           </ul>
